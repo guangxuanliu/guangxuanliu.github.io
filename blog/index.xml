@@ -6,7 +6,29 @@
     <description>Recent content in Blog on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 27 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 22 Aug 2021 22:38:01 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Libevent编程手册</title>
+      <link>https://guangxuanliu.github.io/blog/libevent%E7%BC%96%E7%A8%8B%E6%89%8B%E5%86%8C/</link>
+      <pubDate>Sun, 22 Aug 2021 22:38:01 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/libevent%E7%BC%96%E7%A8%8B%E6%89%8B%E5%86%8C/</guid>
+      <description>了解libevent   关于这篇文档
+  异步IO简介
+  libevent参考手册   前言
+  设置libevent
+  设置event_base
+  运行event_loop
+  事件
+  可移植的工具函数
+  Bufferevents：概念与基础
+  Bufferevents：高级主题
+  Evbuffers：缓冲IO的功能
+  Connection Listeners：接收TCP连接
+  DNS
+  </description>
+    </item>
+    
     <item>
       <title>建立博客的初衷</title>
       <link>https://guangxuanliu.github.io/blog/1.%E5%BB%BA%E7%AB%8B%E5%8D%9A%E5%AE%A2%E7%9A%84%E5%88%9D%E8%A1%B7/</link>
