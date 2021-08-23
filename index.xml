@@ -6,7 +6,17 @@
     <description>Recent content on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 22 Aug 2021 22:38:01 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 23 Aug 2021 22:01:43 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>关于这篇文档</title>
+      <link>https://guangxuanliu.github.io/blog/%E5%85%B3%E4%BA%8E%E8%BF%99%E7%AF%87%E6%96%87%E6%A1%A3/</link>
+      <pubDate>Mon, 23 Aug 2021 22:01:43 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/%E5%85%B3%E4%BA%8E%E8%BF%99%E7%AF%87%E6%96%87%E6%A1%A3/</guid>
+      <description>这篇文档会教你如何使用libevent2.0(或者更新的版本)来写快速的、可移植的网络编程，假设你：
+ 有C语言的编程基础 知道C语言网络编程调用（socket()，connect()，等等）。  </description>
+    </item>
+    
     <item>
       <title>Libevent编程手册</title>
       <link>https://guangxuanliu.github.io/blog/libevent%E7%BC%96%E7%A8%8B%E6%89%8B%E5%86%8C/</link>
@@ -26,7 +36,8 @@
   Evbuffers：缓冲IO的功能
   Connection Listeners：接收TCP连接
   DNS
-  </description>
+  本文翻译自英文版教程，因为本人水平有限，所以翻译的过程中难免有些地方措辞不当，表达不出原作者的意思，还请读者斧正。
+原教程链接：http://www.wangafu.net/~nickm/libevent-book/</description>
     </item>
     
     <item>
