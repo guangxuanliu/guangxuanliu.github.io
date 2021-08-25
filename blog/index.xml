@@ -6,7 +6,18 @@
     <description>Recent content in Blog on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 23 Aug 2021 22:01:43 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 25 Aug 2021 20:29:26 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>异步IO简介</title>
+      <link>https://guangxuanliu.github.io/blog/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/</link>
+      <pubDate>Wed, 25 Aug 2021 20:29:26 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/</guid>
+      <description>异步IO简介 大多数编程初学者使用的是阻塞的IO函数调用，也称为同步IO，当你调用它的时候，除非函数操作完成或者函数超时然后网络栈放弃的时候才会返回。举个例子，当你在TCP连接上调用connect()的时候，操作系统发送一个SYN数据包至对方主机，除非接收到了对方主机返回的SYN，ACK数据包才会返回至你的代码控制流程，或者是超时了，系统决定放弃的时候也会返回。
+下面是一个用阻塞网络编程的小例子，它建立了一个到www.google.com的连接，发送了一个http请求，并输出结果至stdout。
+/* For sockaddr_in */ #include &amp;lt;netinet/in.h&amp;gt;/* For socket functions */ #include &amp;lt;sys/socket.h&amp;gt;/* For gethostbyname */ #include &amp;lt;netdb.h&amp;gt; #include &amp;lt;unistd.h&amp;gt;#include &amp;lt;string.h&amp;gt;#include &amp;lt;stdio.h&amp;gt; int main(int c, char **v) { const char query[] = &amp;#34;GET / HTTP/1.0\r\n&amp;#34; &amp;#34;Host: www.google.com\r\n&amp;#34; &amp;#34;\r\n&amp;#34;; const char hostname[] = &amp;#34;www.google.com&amp;#34;; struct sockaddr_in sin; struct hostent *h; const char *cp; int fd; ssize_t n_written, remaining; char buf[1024]; /* Look up the IP address for the hostname. Watch out; this isn&amp;#39;t threadsafe on most platforms.</description>
+    </item>
+    
     <item>
       <title>关于这篇文档</title>
       <link>https://guangxuanliu.github.io/blog/%E5%85%B3%E4%BA%8E%E8%BF%99%E7%AF%87%E6%96%87%E6%A1%A3/</link>

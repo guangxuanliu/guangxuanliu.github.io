@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title> 异步IO简介 - 刘光轩的个人博客 </title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="" />
+    <meta property="og:site_name" content="刘光轩的个人博客" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://guangxuanliu.github.io/blog/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/" />
+    <meta property="og:title" content="异步IO简介" />
+    <meta property="og:image" content="https://guangxuanliu.github.io/" />
+    <meta property="og:description" content="" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <meta name="twitter:title" content="异步IO简介" />
+    <meta name="twitter:description" content="" />
+    <meta name="twitter:image" content="https://guangxuanliu.github.io/" />
+
+    <link rel="canonical" href="https://guangxuanliu.github.io/blog/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="https://guangxuanliu.github.io/css/custom.css" />
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/github-gist.min.css" integrity="sha512-od7JLoOTxM8w/HSKGzP9Kexc20K9p/M2zxSWsd7H1e4Ctf+8SQFtCWEZnW5u6ul5ehSECa5QmOk9ju2nQMmlVA==" crossorigin="anonymous" />
+    
+
+    
+
+    <link rel="shortcut icon"
+        href="https://guangxuanliu.github.io/images/favicon.png">
+
+    
+    <link href="https://guangxuanliu.github.io/index.xml" rel="alternate" type="application/rss+xml" title="刘光轩的个人博客" />
+    
+</head>
+
+<body>
+    
+<div class="mt-xl header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="https://guangxuanliu.github.io/">
+                    <h1 class="name">刘光轩的个人博客</h1>
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <ul class="nav nav-primary">
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/">
+                        
+                        主页
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/about/">
+                        
+                        关于
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-12 col-lg-8">
+                <h1 class="mx-0 mx-md-4 blog-post-title">异步IO简介</h1>
+
+                <div class="mb-md-4 meta">
+                    
+                    
+                    
+
+                    <span class="date middot" title='Wed Aug 25 2021 20:29:26 CST'>
+                        2021-08-25
+                    </span>
+
+                    <span class="reading-time middot">
+                        11 min read
+                    </span>
+
+                    <div class="d-none d-md-inline tags">
+                        <ul class="list-unstyled d-inline">
+                            
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="markdown blog-post-content">
+                    
+    <h3 id="异步io简介">异步IO简介</h3>
+<p>大多数编程初学者使用的是阻塞的IO函数调用，也称为同步IO，当你调用它的时候，除非函数操作完成或者函数超时然后网络栈放弃的时候才会返回。举个例子，当你在TCP连接上调用<code>connect()</code>的时候，操作系统发送一个SYN数据包至对方主机，除非接收到了对方主机返回的SYN，ACK数据包才会返回至你的代码控制流程，或者是超时了，系统决定放弃的时候也会返回。</p>
+<p>下面是一个用阻塞网络编程的小例子，它建立了一个到<code>www.google.com</code>的连接，发送了一个<code>http</code>请求，并输出结果至<code>stdout</code>。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#008000">/* For sockaddr_in */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;netinet/in.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For socket functions */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;sys/socket.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For gethostbyname */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;netdb.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;unistd.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;string.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdio.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">int</span> main(<span style="color:#2b91af">int</span> c, <span style="color:#2b91af">char</span> **v)
+{
+    <span style="color:#00f">const</span> <span style="color:#2b91af">char</span> query[] =
+        <span style="color:#a31515">&#34;GET / HTTP/1.0</span><span style="color:#a31515">\r\n</span><span style="color:#a31515">&#34;</span>
+        <span style="color:#a31515">&#34;Host: www.google.com</span><span style="color:#a31515">\r\n</span><span style="color:#a31515">&#34;</span>
+        <span style="color:#a31515">&#34;</span><span style="color:#a31515">\r\n</span><span style="color:#a31515">&#34;</span>;
+    <span style="color:#00f">const</span> <span style="color:#2b91af">char</span> hostname[] = <span style="color:#a31515">&#34;www.google.com&#34;</span>;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_in</span> sin;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">hostent</span> *h;
+    <span style="color:#00f">const</span> <span style="color:#2b91af">char</span> *cp;
+    <span style="color:#2b91af">int</span> fd;
+    ssize_t n_written, remaining;
+    <span style="color:#2b91af">char</span> buf[1024];
+
+    <span style="color:#008000">/* Look up the IP address for the hostname.   Watch out; this isn&#39;t
+</span><span style="color:#008000">       threadsafe on most platforms. */</span>
+    h = gethostbyname(hostname);
+    <span style="color:#00f">if</span> (!h) {
+        fprintf(stderr, <span style="color:#a31515">&#34;Couldn&#39;t lookup %s: %s&#34;</span>, hostname, hstrerror(h_errno));
+        <span style="color:#00f">return</span> 1;
+    }
+    <span style="color:#00f">if</span> (h-&gt;h_addrtype != AF_INET) {
+        fprintf(stderr, <span style="color:#a31515">&#34;No ipv6 support, sorry.&#34;</span>);
+        <span style="color:#00f">return</span> 1;
+    }
+
+    <span style="color:#008000">/* Allocate a new socket */</span>
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    <span style="color:#00f">if</span> (fd &lt; 0) {
+        perror(<span style="color:#a31515">&#34;socket&#34;</span>);
+        <span style="color:#00f">return</span> 1;
+    }
+
+    <span style="color:#008000">/* Connect to the remote host. */</span>
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(80);
+    sin.sin_addr = *(<span style="color:#00f">struct</span> <span style="color:#2b91af">in_addr</span>*)h-&gt;h_addr;
+    <span style="color:#00f">if</span> (connect(fd, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*) &amp;sin, <span style="color:#00f">sizeof</span>(sin))) {
+        perror(<span style="color:#a31515">&#34;connect&#34;</span>);
+        close(fd);
+        <span style="color:#00f">return</span> 1;
+    }
+
+    <span style="color:#008000">/* Write the query. */</span>
+    <span style="color:#008000">/* XXX Can send succeed partially? */</span>
+    cp = query;
+    remaining = strlen(query);
+    <span style="color:#00f">while</span> (remaining) {
+      n_written = send(fd, cp, remaining, 0);
+      <span style="color:#00f">if</span> (n_written &lt;= 0) {
+        perror(<span style="color:#a31515">&#34;send&#34;</span>);
+        <span style="color:#00f">return</span> 1;
+      }
+      remaining -= n_written;
+      cp += n_written;
+    }
+
+    <span style="color:#008000">/* Get an answer back. */</span>
+    <span style="color:#00f">while</span> (1) {
+        ssize_t result = recv(fd, buf, <span style="color:#00f">sizeof</span>(buf), 0);
+        <span style="color:#00f">if</span> (result == 0) {
+            <span style="color:#00f">break</span>;
+        } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (result &lt; 0) {
+            perror(<span style="color:#a31515">&#34;recv&#34;</span>);
+            close(fd);
+            <span style="color:#00f">return</span> 1;
+        }
+        fwrite(buf, 1, result, stdout);
+    }
+
+    close(fd);
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><p>上述代码中，所有有关网络的函数调用都是阻塞的，<code>gethostbyname</code>直到成功或者失败解析<code>www.google.com</code>才会返回；<code>connect</code>直到连接上才会返回；<code>recv</code>直到收到数据或者关闭连接才会返回；<code>send</code>直到把数据刷新到内核的写缓冲区中才会返回。</p>
+<p>现在，阻塞式编程还不错。当你的程序没有其它事情需要处理的时候，阻塞式编程是满足需求的。但是假设需要你的程序处理同时处理多个连接的时候，比如同时处理两个连接，但是你不知道哪个连接先发来数据，你可能会写出如下的代码：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#008000">/* This won&#39;t work. */</span>
+<span style="color:#2b91af">char</span> buf[1024];
+<span style="color:#2b91af">int</span> i, n;
+<span style="color:#00f">while</span> (i_still_want_to_read()) {
+    <span style="color:#00f">for</span> (i=0; i&lt;n_sockets; ++i) {
+        n = recv(fd[i], buf, <span style="color:#00f">sizeof</span>(buf), 0);
+        <span style="color:#00f">if</span> (n==0)
+            handle_close(fd[i]);
+        <span style="color:#00f">else</span> if (n&lt;0)
+            handle_error(fd[i], errno);
+        <span style="color:#00f">else</span>
+            handle_input(fd[i], buf, n);
+    }
+}
+</code></pre></div><p>这是一段错误的代码示例，因为假如fd[2]的数据先到，上述代码会先去读fd[0]、fd[1]，直到读取到数据才返回，然后才会去读fd[2]的数据。</p>
+<p>有些人用多线程或者多进程的方式来解决这个问题，一种简单的方式是用多线程来处理多个不同的连接，每个线程有自己的处理流程，即使是阻塞的函数调用也不会阻塞其它的连接。</p>
+<p>下面是一个简单的服务器示例程序，监听40713端口来接收tcp的连接，每次读取一行数据，然后把数据传入rot13函数。下面的程序使用了unix的<code>fork()</code>函数调用来为每一个到来的连接创建一个新的进程。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#008000">/* For sockaddr_in */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;netinet/in.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For socket functions */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;sys/socket.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;unistd.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;string.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdio.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdlib.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#define MAX_LINE 16384
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">char</span>
+rot13_char(<span style="color:#2b91af">char</span> c)
+{
+    <span style="color:#008000">/* We don&#39;t want to use isalpha here; setting the locale would change
+</span><span style="color:#008000">     * which characters are considered alphabetical. */</span>
+    <span style="color:#00f">if</span> ((c &gt;= <span style="color:#a31515">&#39;a&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;m&#39;</span>) || (c &gt;= <span style="color:#a31515">&#39;A&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;M&#39;</span>))
+        <span style="color:#00f">return</span> c + 13;
+    <span style="color:#00f">else</span> <span style="color:#00f">if</span> ((c &gt;= <span style="color:#a31515">&#39;n&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;z&#39;</span>) || (c &gt;= <span style="color:#a31515">&#39;N&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;Z&#39;</span>))
+        <span style="color:#00f">return</span> c - 13;
+    <span style="color:#00f">else</span>
+        <span style="color:#00f">return</span> c;
+}
+
+<span style="color:#2b91af">void</span>
+child(<span style="color:#2b91af">int</span> fd)
+{
+    <span style="color:#2b91af">char</span> outbuf[MAX_LINE+1];
+    size_t outbuf_used = 0;
+    ssize_t result;
+
+    <span style="color:#00f">while</span> (1) {
+        <span style="color:#2b91af">char</span> ch;
+        result = recv(fd, &amp;ch, 1, 0);
+        <span style="color:#00f">if</span> (result == 0) {
+            <span style="color:#00f">break</span>;
+        } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (result == -1) {
+            perror(<span style="color:#a31515">&#34;read&#34;</span>);
+            <span style="color:#00f">break</span>;
+        }
+
+        <span style="color:#008000">/* We do this test to keep the user from overflowing the buffer. */</span>
+        <span style="color:#00f">if</span> (outbuf_used &lt; <span style="color:#00f">sizeof</span>(outbuf)) {
+            outbuf[outbuf_used++] = rot13_char(ch);
+        }
+
+        <span style="color:#00f">if</span> (ch == <span style="color:#a31515">&#39;\n&#39;</span>) {
+            send(fd, outbuf, outbuf_used, 0);
+            outbuf_used = 0;
+            <span style="color:#00f">continue</span>;
+        }
+    }
+}
+
+<span style="color:#2b91af">void</span>
+run(<span style="color:#2b91af">void</span>)
+{
+    <span style="color:#2b91af">int</span> listener;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_in</span> sin;
+
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = 0;
+    sin.sin_port = htons(40713);
+
+    listener = socket(AF_INET, SOCK_STREAM, 0);
+
+<span style="color:#00f">#ifndef WIN32
+</span><span style="color:#00f"></span>    {
+        <span style="color:#2b91af">int</span> one = 1;
+        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &amp;one, <span style="color:#00f">sizeof</span>(one));
+    }
+<span style="color:#00f">#endif
+</span><span style="color:#00f"></span>
+    <span style="color:#00f">if</span> (bind(listener, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*)&amp;sin, <span style="color:#00f">sizeof</span>(sin)) &lt; 0) {
+        perror(<span style="color:#a31515">&#34;bind&#34;</span>);
+        <span style="color:#00f">return</span>;
+    }
+
+    <span style="color:#00f">if</span> (listen(listener, 16)&lt;0) {
+        perror(<span style="color:#a31515">&#34;listen&#34;</span>);
+        <span style="color:#00f">return</span>;
+    }
+
+
+
+    <span style="color:#00f">while</span> (1) {
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_storage</span> ss;
+        socklen_t slen = <span style="color:#00f">sizeof</span>(ss);
+        <span style="color:#2b91af">int</span> fd = accept(listener, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*)&amp;ss, &amp;slen);
+        <span style="color:#00f">if</span> (fd &lt; 0) {
+            perror(<span style="color:#a31515">&#34;accept&#34;</span>);
+        } <span style="color:#00f">else</span> {
+            <span style="color:#00f">if</span> (fork() == 0) {
+                child(fd);
+                exit(0);
+            }
+        }
+    }
+}
+
+<span style="color:#2b91af">int</span>
+main(<span style="color:#2b91af">int</span> c, <span style="color:#2b91af">char</span> **v)
+{
+    run();
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><p>那么，我们现在解决了多个socket连接的问题了吗？我可以停止写这本书，然后去做其它事情了吗？并不行，首先创建进程这一操作对某些平台来说是很消耗资源的。在实际使用场景中，你可能会用线程池来代替创建进程，但是从根本上来说，线程创建并不是你想创建多少就能创建多少，假设你的进程需要同时处理成千上万的连接，处理数以万计的线程不会像每个 CPU 只有几个线程那样有效。</p>
+<p>如果创建线程不是解决多个连接的方法的话，那什么是呢？在unix范式中，可以设置socket为非阻塞模式，函数调用如下：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++">fcntl(fd, F_SETFL, O_NONBLOCK);
+</code></pre></div><p>其中的fd参数为文件描述符，文件描述符为当你打开一个socket的时候内核分配给你的，你可以使用这个fd来引用socket。</p>
+<p>一旦你设置fd为非阻塞的，当你调用网络相关的函数的时候，要么调用完成，然后立即返回；要么当前调用不能立即完成，然后返回一个错误码，以代表下次再尝试，所以我们的两个socket的示例可以天真的修改成下面的样子：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#008000">/* This will work, but the performance will be unforgivably bad. */</span>
+<span style="color:#2b91af">int</span> i, n;
+<span style="color:#2b91af">char</span> buf[1024];
+<span style="color:#00f">for</span> (i=0; i &lt; n_sockets; ++i)
+    fcntl(fd[i], F_SETFL, O_NONBLOCK);
+
+<span style="color:#00f">while</span> (i_still_want_to_read()) {
+    <span style="color:#00f">for</span> (i=0; i &lt; n_sockets; ++i) {
+        n = recv(fd[i], buf, <span style="color:#00f">sizeof</span>(buf), 0);
+        <span style="color:#00f">if</span> (n == 0) {
+            handle_close(fd[i]);
+        } <span style="color:#00f">else</span> if (n &lt; 0) {
+            <span style="color:#00f">if</span> (errno == EAGAIN)
+                 ; <span style="color:#008000">/* The kernel didn&#39;t have any data for us to read. */</span>
+            <span style="color:#00f">else</span>
+                 handle_error(fd[i], errno);
+         } <span style="color:#00f">else</span> {
+            handle_input(fd[i], buf, n);
+         }
+    }
+}
+</code></pre></div><p>我们使用的是非阻塞的socket，上面的代码可以很勉强的工作，但是性能很糟糕，有如下两点原因，第一，当所有的socket都没有数据的时候，循环会一直处于自旋的状态，一直消耗CPU；第二，当你用这种方式来处理多个连接的时候，你会对每个连接进行一次函数调用，无论是否有数据。所以我们需要的是告诉内核，一直等待，直到有socket变为可读，并且告诉我哪些socket可读。</p>
+<p>早期的解决方法为使用select()函数，传入3个fd的集合(内部实现为bit arrays)：一个用来读，一个用来写，另一个代表“异常”，该函数一直等待，直到3个集合中的任意一个socket准备好，并且该函数修改集合，使其只包含准备好可以使用的socket。</p>
+<p>下面是一个使用select的例子</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#008000">/* If you only have a couple dozen fds, this version won&#39;t be awful */</span>
+fd_set readset;
+<span style="color:#2b91af">int</span> i, n;
+<span style="color:#2b91af">char</span> buf[1024];
+
+<span style="color:#00f">while</span> (i_still_want_to_read()) {
+    <span style="color:#2b91af">int</span> maxfd = -1;
+    FD_ZERO(&amp;readset);
+
+    <span style="color:#008000">/* Add all of the interesting fds to readset */</span>
+    <span style="color:#00f">for</span> (i=0; i &lt; n_sockets; ++i) {
+         <span style="color:#00f">if</span> (fd[i]&gt;maxfd) maxfd = fd[i];
+         FD_SET(fd[i], &amp;readset);
+    }
+
+    <span style="color:#008000">/* Wait until one or more fds are ready to read */</span>
+    select(maxfd+1, &amp;readset, NULL, NULL, NULL);
+
+    <span style="color:#008000">/* Process all of the fds that are still set in readset */</span>
+    <span style="color:#00f">for</span> (i=0; i &lt; n_sockets; ++i) {
+        <span style="color:#00f">if</span> (FD_ISSET(fd[i], &amp;readset)) {
+            n = recv(fd[i], buf, <span style="color:#00f">sizeof</span>(buf), 0);
+            <span style="color:#00f">if</span> (n == 0) {
+                handle_close(fd[i]);
+            } <span style="color:#00f">else</span> if (n &lt; 0) {
+                <span style="color:#00f">if</span> (errno == EAGAIN)
+                     ; <span style="color:#008000">/* The kernel didn&#39;t have any data for us to read. */</span>
+                <span style="color:#00f">else</span>
+                     handle_error(fd[i], errno);
+             } <span style="color:#00f">else</span> {
+                handle_input(fd[i], buf, n);
+             }
+        }
+    }
+}
+</code></pre></div><p>下面是ROT13服务端的另一个版本的实现，这次使用的是<code>select()</code>。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#008000">/* For sockaddr_in */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;netinet/in.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For socket functions */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;sys/socket.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For fcntl */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;fcntl.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* for select */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;sys/select.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;assert.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;unistd.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;string.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdlib.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdio.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;errno.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#define MAX_LINE 16384
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">char</span>
+rot13_char(<span style="color:#2b91af">char</span> c)
+{
+    <span style="color:#008000">/* We don&#39;t want to use isalpha here; setting the locale would change
+</span><span style="color:#008000">     * which characters are considered alphabetical. */</span>
+    <span style="color:#00f">if</span> ((c &gt;= <span style="color:#a31515">&#39;a&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;m&#39;</span>) || (c &gt;= <span style="color:#a31515">&#39;A&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;M&#39;</span>))
+        <span style="color:#00f">return</span> c + 13;
+    <span style="color:#00f">else</span> <span style="color:#00f">if</span> ((c &gt;= <span style="color:#a31515">&#39;n&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;z&#39;</span>) || (c &gt;= <span style="color:#a31515">&#39;N&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;Z&#39;</span>))
+        <span style="color:#00f">return</span> c - 13;
+    <span style="color:#00f">else</span>
+        <span style="color:#00f">return</span> c;
+}
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> {
+    <span style="color:#2b91af">char</span> buffer[MAX_LINE];
+    size_t buffer_used;
+
+    <span style="color:#2b91af">int</span> writing;
+    size_t n_written;
+    size_t write_upto;
+};
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *
+alloc_fd_state(<span style="color:#2b91af">void</span>)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state = malloc(<span style="color:#00f">sizeof</span>(<span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span>));
+    <span style="color:#00f">if</span> (!state)
+        <span style="color:#00f">return</span> NULL;
+    state-&gt;buffer_used = state-&gt;n_written = state-&gt;writing =
+        state-&gt;write_upto = 0;
+    <span style="color:#00f">return</span> state;
+}
+
+<span style="color:#2b91af">void</span>
+free_fd_state(<span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state)
+{
+    free(state);
+}
+
+<span style="color:#2b91af">void</span>
+make_nonblocking(<span style="color:#2b91af">int</span> fd)
+{
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+}
+
+<span style="color:#2b91af">int</span>
+do_read(<span style="color:#2b91af">int</span> fd, <span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state)
+{
+    <span style="color:#2b91af">char</span> buf[1024];
+    <span style="color:#2b91af">int</span> i;
+    ssize_t result;
+    <span style="color:#00f">while</span> (1) {
+        result = recv(fd, buf, <span style="color:#00f">sizeof</span>(buf), 0);
+        <span style="color:#00f">if</span> (result &lt;= 0)
+            <span style="color:#00f">break</span>;
+
+        <span style="color:#00f">for</span> (i=0; i &lt; result; ++i)  {
+            <span style="color:#00f">if</span> (state-&gt;buffer_used &lt; <span style="color:#00f">sizeof</span>(state-&gt;buffer))
+                state-&gt;buffer[state-&gt;buffer_used++] = rot13_char(buf[i]);
+            <span style="color:#00f">if</span> (buf[i] == <span style="color:#a31515">&#39;\n&#39;</span>) {
+                state-&gt;writing = 1;
+                state-&gt;write_upto = state-&gt;buffer_used;
+            }
+        }
+    }
+
+    <span style="color:#00f">if</span> (result == 0) {
+        <span style="color:#00f">return</span> 1;
+    } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (result &lt; 0) {
+        <span style="color:#00f">if</span> (errno == EAGAIN)
+            <span style="color:#00f">return</span> 0;
+        <span style="color:#00f">return</span> -1;
+    }
+
+    <span style="color:#00f">return</span> 0;
+}
+
+<span style="color:#2b91af">int</span>
+do_write(<span style="color:#2b91af">int</span> fd, <span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state)
+{
+    <span style="color:#00f">while</span> (state-&gt;n_written &lt; state-&gt;write_upto) {
+        ssize_t result = send(fd, state-&gt;buffer + state-&gt;n_written,
+                              state-&gt;write_upto - state-&gt;n_written, 0);
+        <span style="color:#00f">if</span> (result &lt; 0) {
+            <span style="color:#00f">if</span> (errno == EAGAIN)
+                <span style="color:#00f">return</span> 0;
+            <span style="color:#00f">return</span> -1;
+        }
+        assert(result != 0);
+
+        state-&gt;n_written += result;
+    }
+
+    <span style="color:#00f">if</span> (state-&gt;n_written == state-&gt;buffer_used)
+        state-&gt;n_written = state-&gt;write_upto = state-&gt;buffer_used = 0;
+
+    state-&gt;writing = 0;
+
+    <span style="color:#00f">return</span> 0;
+}
+
+<span style="color:#2b91af">void</span>
+run(<span style="color:#2b91af">void</span>)
+{
+    <span style="color:#2b91af">int</span> listener;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state[FD_SETSIZE];
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_in</span> sin;
+    <span style="color:#2b91af">int</span> i, maxfd;
+    fd_set readset, writeset, exset;
+
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = 0;
+    sin.sin_port = htons(40713);
+
+    <span style="color:#00f">for</span> (i = 0; i &lt; FD_SETSIZE; ++i)
+        state[i] = NULL;
+
+    listener = socket(AF_INET, SOCK_STREAM, 0);
+    make_nonblocking(listener);
+
+<span style="color:#00f">#ifndef WIN32
+</span><span style="color:#00f"></span>    {
+        <span style="color:#2b91af">int</span> one = 1;
+        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &amp;one, <span style="color:#00f">sizeof</span>(one));
+    }
+<span style="color:#00f">#endif
+</span><span style="color:#00f"></span>
+    <span style="color:#00f">if</span> (bind(listener, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*)&amp;sin, <span style="color:#00f">sizeof</span>(sin)) &lt; 0) {
+        perror(<span style="color:#a31515">&#34;bind&#34;</span>);
+        <span style="color:#00f">return</span>;
+    }
+
+    <span style="color:#00f">if</span> (listen(listener, 16)&lt;0) {
+        perror(<span style="color:#a31515">&#34;listen&#34;</span>);
+        <span style="color:#00f">return</span>;
+    }
+
+    FD_ZERO(&amp;readset);
+    FD_ZERO(&amp;writeset);
+    FD_ZERO(&amp;exset);
+
+    <span style="color:#00f">while</span> (1) {
+        maxfd = listener;
+
+        FD_ZERO(&amp;readset);
+        FD_ZERO(&amp;writeset);
+        FD_ZERO(&amp;exset);
+
+        FD_SET(listener, &amp;readset);
+
+        <span style="color:#00f">for</span> (i=0; i &lt; FD_SETSIZE; ++i) {
+            <span style="color:#00f">if</span> (state[i]) {
+                <span style="color:#00f">if</span> (i &gt; maxfd)
+                    maxfd = i;
+                FD_SET(i, &amp;readset);
+                <span style="color:#00f">if</span> (state[i]-&gt;writing) {
+                    FD_SET(i, &amp;writeset);
+                }
+            }
+        }
+
+        <span style="color:#00f">if</span> (select(maxfd+1, &amp;readset, &amp;writeset, &amp;exset, NULL) &lt; 0) {
+            perror(<span style="color:#a31515">&#34;select&#34;</span>);
+            <span style="color:#00f">return</span>;
+        }
+
+        <span style="color:#00f">if</span> (FD_ISSET(listener, &amp;readset)) {
+            <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_storage</span> ss;
+            socklen_t slen = <span style="color:#00f">sizeof</span>(ss);
+            <span style="color:#2b91af">int</span> fd = accept(listener, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*)&amp;ss, &amp;slen);
+            <span style="color:#00f">if</span> (fd &lt; 0) {
+                perror(<span style="color:#a31515">&#34;accept&#34;</span>);
+            } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (fd &gt; FD_SETSIZE) {
+                close(fd);
+            } <span style="color:#00f">else</span> {
+                make_nonblocking(fd);
+                state[fd] = alloc_fd_state();
+                assert(state[fd]);<span style="color:#008000">/*XXX*/</span>
+            }
+        }
+
+        <span style="color:#00f">for</span> (i=0; i &lt; maxfd+1; ++i) {
+            <span style="color:#2b91af">int</span> r = 0;
+            <span style="color:#00f">if</span> (i == listener)
+                <span style="color:#00f">continue</span>;
+
+            <span style="color:#00f">if</span> (FD_ISSET(i, &amp;readset)) {
+                r = do_read(i, state[i]);
+            }
+            <span style="color:#00f">if</span> (r == 0 &amp;&amp; FD_ISSET(i, &amp;writeset)) {
+                r = do_write(i, state[i]);
+            }
+            <span style="color:#00f">if</span> (r) {
+                free_fd_state(state[i]);
+                state[i] = NULL;
+                close(i);
+            }
+        }
+    }
+}
+
+<span style="color:#2b91af">int</span>
+main(<span style="color:#2b91af">int</span> c, <span style="color:#2b91af">char</span> **v)
+{
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    run();
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><p>但我们还没有结束。因为生成和读取<code>select()</code>位数组所花费的时间与为<code>select()</code>提供的最大fd成正比，所以当套接字数量很高时，<code>select()</code>调用的性能会变得糟糕。</p>
+<p>[在用户态，可以使生成和读取位数组花费的时间与您为<code>select()</code>提供的 fd 的数量成正比。但是在内核方面，读取位数组所花费的时间与位数组中最大的 fd 成正比，这往往是整个程序中使用的 fd 总数左右，无论有多少 fd 添加到集合中。]</p>
+<p>不同的操作系统已经为<code>select()</code>提供了不同的替代函数，比如<code>poll()</code>、<code>epoll()</code>、<code>kqueue()</code>、<code>evports</code>和<code>/dev/poll</code>，所有的这些都比<code>select()</code>的性能要好，除了<code>poll()</code>函数外，所有的函数为增加一个socket，移除一个socket，通知一个socket准备好提供了O(1)的性能。</p>
+<p>不幸的是，没有任何一个高效的接口是标准，Linux上有<code>epoll()</code>，BSD（包括Darwin）有<code>kqueue()</code>，Solaris有<code>evports</code>、<code>/dev/poll</code>等等。所以如果你想写一个可移植的高性能的异步程序，你需要抽象一下，包括所有的这些接口，并且提供最高效的那一个。</p>
+<p>这就是最低级别的libevent编程接口为您所做的事情。在所运行的电脑上提供了统一的<code>select()</code>替代接口。</p>
+<p>下面是ROT13服务端的另一个版本，这次使用的是libevent2来代替<code>select()</code>函数，注意那些fd_sets都不见了，取而代之的是用events关联event_base，内部可能的实现为<code>select()</code>、<code>poll()</code>、<code>epoll()</code>、<code>kqueue()</code>等等。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#008000">/* For sockaddr_in */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;netinet/in.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For socket functions */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;sys/socket.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For fcntl */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;fcntl.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;assert.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;unistd.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;string.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdlib.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdio.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;errno.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#define MAX_LINE 16384
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span> do_read(evutil_socket_t fd, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *arg);
+<span style="color:#2b91af">void</span> do_write(evutil_socket_t fd, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *arg);
+
+<span style="color:#2b91af">char</span>
+rot13_char(<span style="color:#2b91af">char</span> c)
+{
+    <span style="color:#008000">/* We don&#39;t want to use isalpha here; setting the locale would change
+</span><span style="color:#008000">     * which characters are considered alphabetical. */</span>
+    <span style="color:#00f">if</span> ((c &gt;= <span style="color:#a31515">&#39;a&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;m&#39;</span>) || (c &gt;= <span style="color:#a31515">&#39;A&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;M&#39;</span>))
+        <span style="color:#00f">return</span> c + 13;
+    <span style="color:#00f">else</span> <span style="color:#00f">if</span> ((c &gt;= <span style="color:#a31515">&#39;n&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;z&#39;</span>) || (c &gt;= <span style="color:#a31515">&#39;N&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;Z&#39;</span>))
+        <span style="color:#00f">return</span> c - 13;
+    <span style="color:#00f">else</span>
+        <span style="color:#00f">return</span> c;
+}
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> {
+    <span style="color:#2b91af">char</span> buffer[MAX_LINE];
+    size_t buffer_used;
+
+    size_t n_written;
+    size_t write_upto;
+
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *read_event;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *write_event;
+};
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *
+alloc_fd_state(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, evutil_socket_t fd)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state = malloc(<span style="color:#00f">sizeof</span>(<span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span>));
+    <span style="color:#00f">if</span> (!state)
+        <span style="color:#00f">return</span> NULL;
+    state-&gt;read_event = event_new(base, fd, EV_READ|EV_PERSIST, do_read, state);
+    <span style="color:#00f">if</span> (!state-&gt;read_event) {
+        free(state);
+        <span style="color:#00f">return</span> NULL;
+    }
+    state-&gt;write_event =
+        event_new(base, fd, EV_WRITE|EV_PERSIST, do_write, state);
+
+    <span style="color:#00f">if</span> (!state-&gt;write_event) {
+        event_free(state-&gt;read_event);
+        free(state);
+        <span style="color:#00f">return</span> NULL;
+    }
+
+    state-&gt;buffer_used = state-&gt;n_written = state-&gt;write_upto = 0;
+
+    assert(state-&gt;write_event);
+    <span style="color:#00f">return</span> state;
+}
+
+<span style="color:#2b91af">void</span>
+free_fd_state(<span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state)
+{
+    event_free(state-&gt;read_event);
+    event_free(state-&gt;write_event);
+    free(state);
+}
+
+<span style="color:#2b91af">void</span>
+do_read(evutil_socket_t fd, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *arg)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state = arg;
+    <span style="color:#2b91af">char</span> buf[1024];
+    <span style="color:#2b91af">int</span> i;
+    ssize_t result;
+    <span style="color:#00f">while</span> (1) {
+        assert(state-&gt;write_event);
+        result = recv(fd, buf, <span style="color:#00f">sizeof</span>(buf), 0);
+        <span style="color:#00f">if</span> (result &lt;= 0)
+            <span style="color:#00f">break</span>;
+
+        <span style="color:#00f">for</span> (i=0; i &lt; result; ++i)  {
+            <span style="color:#00f">if</span> (state-&gt;buffer_used &lt; <span style="color:#00f">sizeof</span>(state-&gt;buffer))
+                state-&gt;buffer[state-&gt;buffer_used++] = rot13_char(buf[i]);
+            <span style="color:#00f">if</span> (buf[i] == <span style="color:#a31515">&#39;\n&#39;</span>) {
+                assert(state-&gt;write_event);
+                event_add(state-&gt;write_event, NULL);
+                state-&gt;write_upto = state-&gt;buffer_used;
+            }
+        }
+    }
+
+    <span style="color:#00f">if</span> (result == 0) {
+        free_fd_state(state);
+    } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (result &lt; 0) {
+        <span style="color:#00f">if</span> (errno == EAGAIN) <span style="color:#008000">// XXXX use evutil macro
+</span><span style="color:#008000"></span>            <span style="color:#00f">return</span>;
+        perror(<span style="color:#a31515">&#34;recv&#34;</span>);
+        free_fd_state(state);
+    }
+}
+
+<span style="color:#2b91af">void</span>
+do_write(evutil_socket_t fd, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *arg)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state = arg;
+
+    <span style="color:#00f">while</span> (state-&gt;n_written &lt; state-&gt;write_upto) {
+        ssize_t result = send(fd, state-&gt;buffer + state-&gt;n_written,
+                              state-&gt;write_upto - state-&gt;n_written, 0);
+        <span style="color:#00f">if</span> (result &lt; 0) {
+            <span style="color:#00f">if</span> (errno == EAGAIN) <span style="color:#008000">// XXX use evutil macro
+</span><span style="color:#008000"></span>                <span style="color:#00f">return</span>;
+            free_fd_state(state);
+            <span style="color:#00f">return</span>;
+        }
+        assert(result != 0);
+
+        state-&gt;n_written += result;
+    }
+
+    <span style="color:#00f">if</span> (state-&gt;n_written == state-&gt;buffer_used)
+        state-&gt;n_written = state-&gt;write_upto = state-&gt;buffer_used = 1;
+
+    event_del(state-&gt;write_event);
+}
+
+<span style="color:#2b91af">void</span>
+do_accept(evutil_socket_t listener, <span style="color:#2b91af">short</span> event, <span style="color:#2b91af">void</span> *arg)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = arg;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_storage</span> ss;
+    socklen_t slen = <span style="color:#00f">sizeof</span>(ss);
+    <span style="color:#2b91af">int</span> fd = accept(listener, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*)&amp;ss, &amp;slen);
+    <span style="color:#00f">if</span> (fd &lt; 0) { <span style="color:#008000">// XXXX eagain??
+</span><span style="color:#008000"></span>        perror(<span style="color:#a31515">&#34;accept&#34;</span>);
+    } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (fd &gt; FD_SETSIZE) {
+        close(fd); <span style="color:#008000">// XXX replace all closes with EVUTIL_CLOSESOCKET */
+</span><span style="color:#008000"></span>    } <span style="color:#00f">else</span> {
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">fd_state</span> *state;
+        evutil_make_socket_nonblocking(fd);
+        state = alloc_fd_state(base, fd);
+        assert(state); <span style="color:#008000">/*XXX err*/</span>
+        assert(state-&gt;write_event);
+        event_add(state-&gt;read_event, NULL);
+    }
+}
+
+<span style="color:#2b91af">void</span>
+run(<span style="color:#2b91af">void</span>)
+{
+    evutil_socket_t listener;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_in</span> sin;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *listener_event;
+
+    base = event_base_new();
+    <span style="color:#00f">if</span> (!base)
+        <span style="color:#00f">return</span>; <span style="color:#008000">/*XXXerr*/</span>
+
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = 0;
+    sin.sin_port = htons(40713);
+
+    listener = socket(AF_INET, SOCK_STREAM, 0);
+    evutil_make_socket_nonblocking(listener);
+
+<span style="color:#00f">#ifndef WIN32
+</span><span style="color:#00f"></span>    {
+        <span style="color:#2b91af">int</span> one = 1;
+        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &amp;one, <span style="color:#00f">sizeof</span>(one));
+    }
+<span style="color:#00f">#endif
+</span><span style="color:#00f"></span>
+    <span style="color:#00f">if</span> (bind(listener, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*)&amp;sin, <span style="color:#00f">sizeof</span>(sin)) &lt; 0) {
+        perror(<span style="color:#a31515">&#34;bind&#34;</span>);
+        <span style="color:#00f">return</span>;
+    }
+
+    <span style="color:#00f">if</span> (listen(listener, 16)&lt;0) {
+        perror(<span style="color:#a31515">&#34;listen&#34;</span>);
+        <span style="color:#00f">return</span>;
+    }
+
+    listener_event = event_new(base, listener, EV_READ|EV_PERSIST, do_accept, (<span style="color:#2b91af">void</span>*)base);
+    <span style="color:#008000">/*XXX check it */</span>
+    event_add(listener_event, NULL);
+
+    event_base_dispatch(base);
+}
+
+<span style="color:#2b91af">int</span>
+main(<span style="color:#2b91af">int</span> c, <span style="color:#2b91af">char</span> **v)
+{
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    run();
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><p>注意：我们使用了<code>evutil_socket_t</code>代替<code>int</code>来表示一个<code>socket</code>，用<code>evutil_socket_nonblocking</code>来代替<code>fcntl(O_NONBLOCK)</code>来设置一个socket为非阻塞，这些函数使得我们的程序兼容不同的平台。</p>
+<h3 id="便利性怎么样windows呢">便利性怎么样？（Windows呢？）</h3>
+<p>你可能已经注意到，我们的代码变得更高效了，但是也变得更复杂了，回到fork的场景，我们不必为每一个连接管理一个buffer，每一个进程都有独立的栈空间，我们不需要显式的跟踪每个socket的读或者写。我们也不必需要一个结构体来跟踪每一个操作是否完成，我们只需要使用循环和栈变量。</p>
+<p>而且，如果你有Windows上网络开发经验，你会发现上述的libevent代码并没有达到最佳性能。在Windows上，你可以使用<code>IOCP</code>（IO完成端口）来代替<code>select()</code>函数来完成异步IO，与其他的API不同，<code>IOCP</code>并不是在socket准备好的时候通知你的程序，取而代之的是，程序告诉Windows系统网络相关操作的堆栈，等IOCP操作完成时，Windows会通知你的程序。</p>
+<p>幸运的是，<code>libevent2</code>的<code>bufferevents</code>编程接口解决了这个问题，它使得程序更容易编写，并且为Windows和Linux提供了同等高效的接口。</p>
+<p>下面是我们的ROT13服务端的的最后一个示例，使用了bufferevents的API。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#008000">/* For sockaddr_in */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;netinet/in.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For socket functions */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;sys/socket.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* For fcntl */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;fcntl.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/buffer.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/bufferevent.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;assert.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;unistd.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;string.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdlib.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdio.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;errno.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#define MAX_LINE 16384
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span> do_read(evutil_socket_t fd, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *arg);
+<span style="color:#2b91af">void</span> do_write(evutil_socket_t fd, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *arg);
+
+<span style="color:#2b91af">char</span>
+rot13_char(<span style="color:#2b91af">char</span> c)
+{
+    <span style="color:#008000">/* We don&#39;t want to use isalpha here; setting the locale would change
+</span><span style="color:#008000">     * which characters are considered alphabetical. */</span>
+    <span style="color:#00f">if</span> ((c &gt;= <span style="color:#a31515">&#39;a&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;m&#39;</span>) || (c &gt;= <span style="color:#a31515">&#39;A&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;M&#39;</span>))
+        <span style="color:#00f">return</span> c + 13;
+    <span style="color:#00f">else</span> <span style="color:#00f">if</span> ((c &gt;= <span style="color:#a31515">&#39;n&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;z&#39;</span>) || (c &gt;= <span style="color:#a31515">&#39;N&#39;</span> &amp;&amp; c &lt;= <span style="color:#a31515">&#39;Z&#39;</span>))
+        <span style="color:#00f">return</span> c - 13;
+    <span style="color:#00f">else</span>
+        <span style="color:#00f">return</span> c;
+}
+
+<span style="color:#2b91af">void</span>
+readcb(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">void</span> *ctx)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *input, *output;
+    <span style="color:#2b91af">char</span> *line;
+    size_t n;
+    <span style="color:#2b91af">int</span> i;
+    input = bufferevent_get_input(bev);
+    output = bufferevent_get_output(bev);
+
+    <span style="color:#00f">while</span> ((line = evbuffer_readln(input, &amp;n, EVBUFFER_EOL_LF))) {
+        <span style="color:#00f">for</span> (i = 0; i &lt; n; ++i)
+            line[i] = rot13_char(line[i]);
+        evbuffer_add(output, line, n);
+        evbuffer_add(output, <span style="color:#a31515">&#34;</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>, 1);
+        free(line);
+    }
+
+    <span style="color:#00f">if</span> (evbuffer_get_length(input) &gt;= MAX_LINE) {
+        <span style="color:#008000">/* Too long; just process what there is and go on so that the buffer
+</span><span style="color:#008000">         * doesn&#39;t grow infinitely long. */</span>
+        <span style="color:#2b91af">char</span> buf[1024];
+        <span style="color:#00f">while</span> (evbuffer_get_length(input)) {
+            <span style="color:#2b91af">int</span> n = evbuffer_remove(input, buf, <span style="color:#00f">sizeof</span>(buf));
+            <span style="color:#00f">for</span> (i = 0; i &lt; n; ++i)
+                buf[i] = rot13_char(buf[i]);
+            evbuffer_add(output, buf, n);
+        }
+        evbuffer_add(output, <span style="color:#a31515">&#34;</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>, 1);
+    }
+}
+
+<span style="color:#2b91af">void</span>
+errorcb(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">short</span> error, <span style="color:#2b91af">void</span> *ctx)
+{
+    <span style="color:#00f">if</span> (error &amp; BEV_EVENT_EOF) {
+        <span style="color:#008000">/* connection has been closed, do any clean up here */</span>
+        <span style="color:#008000">/* ... */</span>
+    } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (error &amp; BEV_EVENT_ERROR) {
+        <span style="color:#008000">/* check errno to see what error occurred */</span>
+        <span style="color:#008000">/* ... */</span>
+    } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (error &amp; BEV_EVENT_TIMEOUT) {
+        <span style="color:#008000">/* must be a timeout event handle, handle it */</span>
+        <span style="color:#008000">/* ... */</span>
+    }
+    bufferevent_free(bev);
+}
+
+<span style="color:#2b91af">void</span>
+do_accept(evutil_socket_t listener, <span style="color:#2b91af">short</span> event, <span style="color:#2b91af">void</span> *arg)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = arg;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_storage</span> ss;
+    socklen_t slen = <span style="color:#00f">sizeof</span>(ss);
+    <span style="color:#2b91af">int</span> fd = accept(listener, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*)&amp;ss, &amp;slen);
+    <span style="color:#00f">if</span> (fd &lt; 0) {
+        perror(<span style="color:#a31515">&#34;accept&#34;</span>);
+    } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (fd &gt; FD_SETSIZE) {
+        close(fd);
+    } <span style="color:#00f">else</span> {
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev;
+        evutil_make_socket_nonblocking(fd);
+        bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+        bufferevent_setcb(bev, readcb, NULL, errorcb, NULL);
+        bufferevent_setwatermark(bev, EV_READ, 0, MAX_LINE);
+        bufferevent_enable(bev, EV_READ|EV_WRITE);
+    }
+}
+
+<span style="color:#2b91af">void</span>
+run(<span style="color:#2b91af">void</span>)
+{
+    evutil_socket_t listener;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_in</span> sin;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *listener_event;
+
+    base = event_base_new();
+    <span style="color:#00f">if</span> (!base)
+        <span style="color:#00f">return</span>; <span style="color:#008000">/*XXXerr*/</span>
+
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = 0;
+    sin.sin_port = htons(40713);
+
+    listener = socket(AF_INET, SOCK_STREAM, 0);
+    evutil_make_socket_nonblocking(listener);
+
+<span style="color:#00f">#ifndef WIN32
+</span><span style="color:#00f"></span>    {
+        <span style="color:#2b91af">int</span> one = 1;
+        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &amp;one, <span style="color:#00f">sizeof</span>(one));
+    }
+<span style="color:#00f">#endif
+</span><span style="color:#00f"></span>
+    <span style="color:#00f">if</span> (bind(listener, (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span>*)&amp;sin, <span style="color:#00f">sizeof</span>(sin)) &lt; 0) {
+        perror(<span style="color:#a31515">&#34;bind&#34;</span>);
+        <span style="color:#00f">return</span>;
+    }
+
+    <span style="color:#00f">if</span> (listen(listener, 16)&lt;0) {
+        perror(<span style="color:#a31515">&#34;listen&#34;</span>);
+        <span style="color:#00f">return</span>;
+    }
+
+    listener_event = event_new(base, listener, EV_READ|EV_PERSIST, do_accept, (<span style="color:#2b91af">void</span>*)base);
+    <span style="color:#008000">/*XXX check it */</span>
+    event_add(listener_event, NULL);
+
+    event_base_dispatch(base);
+}
+
+<span style="color:#2b91af">int</span>
+main(<span style="color:#2b91af">int</span> c, <span style="color:#2b91af">char</span> **v)
+{
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    run();
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div>
+
+
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<section id="comments">
+    <div class="py-3 content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-sm-12 col-lg-8">
+                    <div class="comments">
+                        <script src="https://utteranc.es/client.js" repo=""
+                            issue-term="pathname" label="comment" theme="github-light" crossorigin="anonymous" async>
+                            </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+    
+
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/r.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/python.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/stan.min.js" defer></script>
+        
+        <script>
+            window.addEventListener('load', function() {
+                hljs.initHighlighting();
+            }, true);
+        </script>
+    
+
+    
+
+    
+    
+        
+<script src="https://guangxuanliu.github.io/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+</body>
+
+</html>
