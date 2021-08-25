@@ -6,7 +6,47 @@
     <description>Recent content in Blog on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 25 Aug 2021 20:29:26 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 25 Aug 2021 20:45:11 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>前言</title>
+      <link>https://guangxuanliu.github.io/blog/%E5%89%8D%E8%A8%80/</link>
+      <pubDate>Wed, 25 Aug 2021 20:45:11 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/%E5%89%8D%E8%A8%80/</guid>
+      <description>从一万英尺外看libevent libevent是一个可以写快速、可移植、非阻塞的网络IO库，设计目标为：
+  可移植性
+一个用libevent写的程序可以跨所有libevent支持的平台，即使是没有高效的方式实现非阻塞IO，libevent也支持普通的方式，以便你的程序在受限的环境中运行。
+  速度
+libevent尝试在每个平台上用最快的非阻塞IO实现，而且并不会为此带来额外的开销。
+  便利
+只要有可能，使用libevent编写的程序自然是稳定的，可移植的。
+  libevent划分为以下组件：
+  evutil
+为跨平台抽象出来的通用工具函数。
+  event和event_base
+这是Libevent的核心。它为各种特定于平台的、基于事件的非阻塞 IO 后端提供抽象 API。它可以让您知道socket何时准备好读取或写入、执行基本超时功能以及检测操作系统信号。
+  bufferevent
+这些函数为libevent基于事件的核心提供了更便利的封装接口，它让应用程序对缓冲区进行读取和写入，而不是通知您socket可以读取，让你知道IO何时实际发生。
+  evbuffer
+该模块为bufferevents的底层缓冲实现，提供了高效便利的访问。
+  evhttp
+一个简单的HTTP客户端/服务端实现
+  evdns
+一个简单的dns客户端/服务端实现
+  evrpc
+一个简单的RPC实现
+  库 当编译libevent的时候，默认安装以下库：
+  libevent_core
+所有核心事件、缓冲区功能。这个库包含了event_base、evbuffer、bufferevent和工具函数。
+  libevent_extra
+一些你可能需要，也可能不需要的基于特定协议的功能，包括HTTP、DNS和RPC。
+  libevent
+因为历史原因而存在，包含了libevent_core和libevent_extra，你不应该再使用这个库，在未来可能会取消这个库。
+  libevent_pthreads
+基于pthreads的线程、锁的可移植实现。它独立于libevent_core，如果你不需要以多线程的方式使用libevent的话，就不需要链接此库。
+  libevent_openssl</description>
+    </item>
+    
     <item>
       <title>异步IO简介</title>
       <link>https://guangxuanliu.github.io/blog/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/</link>
