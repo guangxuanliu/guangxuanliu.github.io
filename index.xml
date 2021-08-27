@@ -6,7 +6,19 @@
     <description>Recent content on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 25 Aug 2021 20:45:11 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 25 Aug 2021 21:41:15 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>设置libevent</title>
+      <link>https://guangxuanliu.github.io/blog/%E8%AE%BE%E7%BD%AElibevent/</link>
+      <pubDate>Wed, 25 Aug 2021 21:41:15 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/%E8%AE%BE%E7%BD%AElibevent/</guid>
+      <description>设置libevent libevent有一些全局的设置会影响整个libevent库。你必须在调用库的任何函数之前进行设置，否则会导致libevent处于不一致的状态。
+记录日志 libevent可以记录内部的错误和警告，如果编译时支持日志记录，它还会记录调试信息。默认情况下，这些信息被写入stderr，你可以提供自己的日志函数来覆盖这些行为。
+#define EVENT_LOG_DEBUG 0 #define EVENT_LOG_MSG 1 #define EVENT_LOG_WARN 2 #define EVENT_LOG_ERR 3  /* Deprecated; see note at the end of this section */ #define _EVENT_LOG_DEBUG EVENT_LOG_DEBUG #define _EVENT_LOG_MSG EVENT_LOG_MSG #define _EVENT_LOG_WARN EVENT_LOG_WARN #define _EVENT_LOG_ERR EVENT_LOG_ERR  typedef void (*event_log_cb)(int severity, const char *msg); void event_set_log_callback(event_log_cb cb); 你可以写一个符合event_log_cb签名的函数，然后传递给event_set_log_callback来重写libevent默认的日志行为。当libevent需要写日志的时候，它会传递给你提供的函数。你可以调用event_set_log_callback，并且传递NULL参数来恢复libevent默认的日志行为。
+#include &amp;lt;event2/event.h&amp;gt;#include &amp;lt;stdio.h&amp;gt; static void discard_cb(int severity, const char *msg) { /* This callback does nothing. */ } static FILE *logfile = NULL; static void write_to_file_cb(int severity, const char *msg) { const char *s; if (!</description>
+    </item>
+    
     <item>
       <title>前言</title>
       <link>https://guangxuanliu.github.io/blog/%E5%89%8D%E8%A8%80/</link>
