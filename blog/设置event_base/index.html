@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title> 设置event_base - 刘光轩的个人博客 </title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="" />
+    <meta property="og:site_name" content="刘光轩的个人博客" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://guangxuanliu.github.io/blog/%E8%AE%BE%E7%BD%AEevent_base/" />
+    <meta property="og:title" content="设置event_base" />
+    <meta property="og:image" content="https://guangxuanliu.github.io/" />
+    <meta property="og:description" content="" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <meta name="twitter:title" content="设置event_base" />
+    <meta name="twitter:description" content="" />
+    <meta name="twitter:image" content="https://guangxuanliu.github.io/" />
+
+    <link rel="canonical" href="https://guangxuanliu.github.io/blog/%E8%AE%BE%E7%BD%AEevent_base/">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="https://guangxuanliu.github.io/css/custom.css" />
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/github-gist.min.css" integrity="sha512-od7JLoOTxM8w/HSKGzP9Kexc20K9p/M2zxSWsd7H1e4Ctf+8SQFtCWEZnW5u6ul5ehSECa5QmOk9ju2nQMmlVA==" crossorigin="anonymous" />
+    
+
+    
+
+    <link rel="shortcut icon"
+        href="https://guangxuanliu.github.io/images/favicon.png">
+
+    
+    <link href="https://guangxuanliu.github.io/index.xml" rel="alternate" type="application/rss+xml" title="刘光轩的个人博客" />
+    
+</head>
+
+<body>
+    
+<div class="mt-xl header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="https://guangxuanliu.github.io/">
+                    <h1 class="name">刘光轩的个人博客</h1>
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <ul class="nav nav-primary">
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/">
+                        
+                        主页
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/about/">
+                        
+                        关于
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-12 col-lg-8">
+                <h1 class="mx-0 mx-md-4 blog-post-title">设置event_base</h1>
+
+                <div class="mb-md-4 meta">
+                    
+                    
+                    
+
+                    <span class="date middot" title='Fri Aug 27 2021 22:34:48 CST'>
+                        2021-08-27
+                    </span>
+
+                    <span class="reading-time middot">
+                        3 min read
+                    </span>
+
+                    <div class="d-none d-md-inline tags">
+                        <ul class="list-unstyled d-inline">
+                            
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="markdown blog-post-content">
+                    
+    <h2 id="创建event_base">创建event_base</h2>
+<p>在你使用libevent的函数之前，你应该先创建一个或多个event_base结构，每一个event_base拥有event集合，并且轮询它们看哪个处于active状态。</p>
+<p>如果event_base设置为使用锁，那么在多线程中使用是安全的，但是只能在一个线程中循环，如果你想在多个线程中轮询IO，你需要为每个线程分配一个event_base。</p>
+<p>以后的libevent版本可能会支持event_base在多个线程中轮询。</p>
+<p>每个event_base都有一个后端方法，来决定哪个event已经准备好了，方法如下：</p>
+<ul>
+<li>select</li>
+<li>poll</li>
+<li>epoll</li>
+<li>kqueue</li>
+<li>devpoll</li>
+<li>evport</li>
+<li>win32</li>
+</ul>
+<p>使用者可以使用环境变量来禁用指定的方法，如果你想禁用<code>kqueue</code>方法，你可以设置<code>EVENT_NOKQUEUE </code>环境变量。如果你想在你的程序中关闭某个方法，请参考下面的<code>event_config_avoid_method</code>方法。</p>
+<h3 id="默认的event_base">默认的event_base</h3>
+<p><code>event_base_new</code>函数检测环境变量，以默认的参数设置创建并返回了event_base的指针，返回NULL代表出错。</p>
+<p>他总是在系统中选择一个最快的方法。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *event_base_new(<span style="color:#2b91af">void</span>);
+</code></pre></div><p>对大多数程序而言，这已经足够了。</p>
+<p><code>event_base_new()</code>函数在<code>&lt;event2/event.h&gt;</code>中声明。它首次出现在<code>Libevent 1.4.3</code>中。</p>
+<h3 id="设置更复杂的event_base">设置更复杂的event_base</h3>
+<p>如果你想对event_base做更多的控制，你可以使用event_config，event_config是一个对用户不透明的结构，里面保存着你的偏好信息，当你创建event_base的时候，你可以使用<code>event_base_new_with_config</code>函数传入一个event_config参数。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *event_config_new(<span style="color:#2b91af">void</span>);
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *event_base_new_with_config(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg);
+<span style="color:#2b91af">void</span> event_config_free(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg);
+</code></pre></div><p>当你需要一个event_base的时候，首先调用event_config_new来创建一个event_config，然后调用其它的函数来设置event_config，最后调用event_base_new_with_config函数来得到一个event_base，当你完成所有操作后，调用event_config_free来释放event_config。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_config_avoid_method(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg, <span style="color:#00f">const</span> <span style="color:#2b91af">char</span> *method);
+
+<span style="color:#00f">enum</span> <span style="color:#2b91af">event_method_feature</span> {
+    EV_FEATURE_ET = 0x01,
+    EV_FEATURE_O1 = 0x02,
+    EV_FEATURE_FDS = 0x04,
+};
+<span style="color:#2b91af">int</span> event_config_require_features(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg,
+                                  <span style="color:#00f">enum</span> <span style="color:#2b91af">event_method_feature</span> feature);
+
+<span style="color:#00f">enum</span> <span style="color:#2b91af">event_base_config_flag</span> {
+    EVENT_BASE_FLAG_NOLOCK = 0x01,
+    EVENT_BASE_FLAG_IGNORE_ENV = 0x02,
+    EVENT_BASE_FLAG_STARTUP_IOCP = 0x04,
+    EVENT_BASE_FLAG_NO_CACHE_TIME = 0x08,
+    EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST = 0x10,
+    EVENT_BASE_FLAG_PRECISE_TIMER = 0x20
+};
+<span style="color:#2b91af">int</span> event_config_set_flag(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg,
+    <span style="color:#00f">enum</span> <span style="color:#2b91af">event_base_config_flag</span> flag);
+</code></pre></div><p>调用<code>event_config_avoid_method </code>方法告诉libevent不要使用后端的某个方法，<code>event_config_require_feature</code>告诉libevent不要选用不支持某些特性的方法，<code>event_config_set_flag</code>方法告诉libevent在构造event_base的时候设置某些标志位。</p>
+<p><code>event_config_require_features </code>支持的特性如下：</p>
+<ul>
+<li>
+<p>EV_FEATURE_ET</p>
+<p>支持边缘触发</p>
+</li>
+<li>
+<p>EV_FEATURE_O1</p>
+<p>添加或删除单个事件，或使单个事件变为活动状态，是一个 O(1) 操作。</p>
+</li>
+<li>
+<p>EV_FEATURE_FDS</p>
+<p>支持任意的文件描述符，不仅仅是socket</p>
+</li>
+</ul>
+<p><code>event_config_set_flag</code>支持的选项如下：</p>
+<ul>
+<li>
+<p>EVENT_BASE_FLAG_NOLOCK</p>
+<p>不要为event_base分配锁，设置这个方法可能会在给<code>event_base</code>上锁和解锁的操作上节省一点时间，但是这样会造成在多线程之间访问不安全。</p>
+</li>
+<li>
+<p>EVENT_BASE_FLAG_IGNORE_ENV</p>
+<p>在决定使用后端哪个方法的时候，不再检查以<code>EVENT_</code>开头的环境变量，在使用此选项之前请认真想好，因为这会让使用者难以调试你的程序。</p>
+</li>
+<li>
+<p>EVENT_BASE_FLAG_STARTUP_IOCP</p>
+<p>仅在 Windows 上，此标志使 Libevent 在启动时启用任何必要的 IOCP 调度逻辑，而不是按需启用。</p>
+</li>
+<li>
+<p>EVENT_BASE_FLAG_NO_CACHE_TIME</p>
+<p>不是每次事件循环准备运行超时回调时检查当前时间，而是在每次超时回调后检查它。这可能会使用比您预期更多的 CPU，所以要小心！</p>
+</li>
+<li>
+<p>EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST</p>
+<p>告诉 Libevent，如果它决定使用 epoll 后端，使用更快的基于“changelist”的后端是安全的。 epoll-changelist 后端可以避免在同一个 fd 在调用后端的 dispatch 函数之间多次修改其状态的情况下不必要的系统调用，但它也会触发内核错误，如果你给 Libevent 克隆的任何 fd 会导致错误的结果dup() 或其变体。如果您使用 epoll 以外的后端，则此标志无效。您还可以通过设置 EVENT_EPOLL_USE_CHANGELIST 环境变量来打开 epoll-changelist 选项。</p>
+</li>
+<li>
+<p>EVENT_BASE_FLAG_PRECISE_TIMER</p>
+<p>默认情况下，libevent使用操作系统提供的最快的计时机制，如果有一个较慢的计时机制可以提供更细粒度的控制，这个标志位告诉libevent使用该计时机制来代替，如果操作系统没有提供较慢但是更精确的计时机制，那么这个标志位将会被忽略。</p>
+</li>
+</ul>
+<p>上述操作event_config的函数在成功时返回0，失败时返回-1.</p>
+<p>注意：</p>
+<blockquote>
+<p>设置您的操作系统未提供的后端的event_config很容易。例如，从 Libevent 2.0.1-alpha 开始，Windows 没有 O(1) 后端，Linux 上也没有提供 EV_FEATURE_FDS 和 EV_FEATURE_O1 的后端。如果你做了一个 Libevent 不能满足的配置，event_base_new_with_config() 将返回 NULL。</p>
+</blockquote>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_config_set_num_cpus_hint(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg, <span style="color:#2b91af">int</span> cpus)
+</code></pre></div><p>这个函数目前仅仅对在Windows上使用IOCP时有效，可能以后会在其它平台上也起作用。调用它会告诉 <code>event_config</code>它生成的<code>event_base</code>应该在多线程处理时尝试充分利用给定数量的 CPU。请注意，这只是一个建议：事件库最终可能会使用比您选择的更多或更少的 CPU。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_config_set_max_dispatch_interval(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg,
+    <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *max_interval, <span style="color:#2b91af">int</span> max_callbacks,
+    <span style="color:#2b91af">int</span> min_priority);
+</code></pre></div><p>此函数通过在检查更多高优先级事件之前限制可以调用的低优先级事件回调的数量来防止优先级倒置。如果 max_interval 为非空，则事件循环会在每次回调后检查时间，如果 max_interval 已过，则重新扫描高优先级事件。如果 max_callbacks 为非负，则事件循环还会在调用 max_callbacks 回调后检查更多事件。这些规则适用于 min_priority 或更高的任何事件。</p>
+<p><strong>例子：首选支持边缘触发的后端方法</strong></p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg;
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+<span style="color:#2b91af">int</span> i;
+
+<span style="color:#008000">/* My program wants to use edge-triggered events if at all possible.  So
+</span><span style="color:#008000">   I&#39;ll try to get a base twice: Once insisting on edge-triggered IO, and
+</span><span style="color:#008000">   once not. */</span>
+<span style="color:#00f">for</span> (i=0; i&lt;2; ++i) {
+    cfg = event_config_new();
+
+    <span style="color:#008000">/* I don&#39;t like select. */</span>
+    event_config_avoid_method(cfg, <span style="color:#a31515">&#34;select&#34;</span>);
+
+    <span style="color:#00f">if</span> (i == 0)
+        event_config_require_features(cfg, EV_FEATURE_ET);
+
+    base = event_base_new_with_config(cfg);
+    event_config_free(cfg);
+    <span style="color:#00f">if</span> (base)
+        <span style="color:#00f">break</span>;
+
+    <span style="color:#008000">/* If we get here, event_base_new_with_config() returned NULL.  If
+</span><span style="color:#008000">       this is the first time around the loop, we&#39;ll try again without
+</span><span style="color:#008000">       setting EV_FEATURE_ET.  If this is the second time around the
+</span><span style="color:#008000">       loop, we&#39;ll give up. */</span>
+}
+</code></pre></div><p><strong>例子：避免优先权倒置</strong></p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg;
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+
+cfg = event_config_new();
+<span style="color:#00f">if</span> (!cfg)
+   <span style="color:#008000">/* Handle error */</span>;
+
+<span style="color:#008000">/* I&#39;m going to have events running at two priorities.  I expect that
+</span><span style="color:#008000">   some of my priority-1 events are going to have pretty slow callbacks,
+</span><span style="color:#008000">   so I don&#39;t want more than 100 msec to elapse (or 5 callbacks) before
+</span><span style="color:#008000">   checking for priority-0 events. */</span>
+<span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> msec_100 = { 0, 100*1000 };
+event_config_set_max_dispatch_interval(cfg, &amp;msec_100, 5, 1);
+
+base = event_base_new_with_config(cfg);
+<span style="color:#00f">if</span> (!base)
+   <span style="color:#008000">/* Handle error */</span>;
+
+event_base_priority_init(base, 2);
+</code></pre></div><p>这些函数和类型在<code>&lt;event2/event.h&gt;</code>中声明。</p>
+<h3 id="检查event_base的后端方法">检查event_base的后端方法</h3>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">const</span> <span style="color:#2b91af">char</span> **event_get_supported_methods(<span style="color:#2b91af">void</span>);
+</code></pre></div><p><code>event_get_supported_methods</code>方法返回一个数组的指针，该数组保存着libevent所支持的方法的名字，最后一个元素为NULL。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> i;
+<span style="color:#00f">const</span> <span style="color:#2b91af">char</span> **methods = event_get_supported_methods();
+printf(<span style="color:#a31515">&#34;Starting Libevent %s.  Available methods are:</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>,
+    event_get_version());
+<span style="color:#00f">for</span> (i=0; methods[i] != NULL; ++i) {
+    printf(<span style="color:#a31515">&#34;    %s</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>, methods[i]);
+}
+</code></pre></div><p><strong>注意：</strong></p>
+<blockquote>
+<p>这个函数返回libevent所支持的方法列表，但是你的操作系统可能并不支持，比如，因为OSX上的kqueue方法有太多的bug，所以你不应该使用此方法。</p>
+</blockquote>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">const</span> <span style="color:#2b91af">char</span> *event_base_get_method(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+<span style="color:#00f">enum</span> <span style="color:#2b91af">event_method_feature</span> event_base_get_features(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p><code>event_base_get_method</code>方法返回<code>event_base</code>使用的方法，<code>event_base_get_features</code>方法返回一个位掩码代表该方法支持的特性。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+<span style="color:#00f">enum</span> <span style="color:#2b91af">event_method_feature</span> f;
+
+base = event_base_new();
+<span style="color:#00f">if</span> (!base) {
+    puts(<span style="color:#a31515">&#34;Couldn&#39;t get an event_base!&#34;</span>);
+} <span style="color:#00f">else</span> {
+    printf(<span style="color:#a31515">&#34;Using Libevent with backend method %s.&#34;</span>,
+        event_base_get_method(base));
+    f = event_base_get_features(base);
+    <span style="color:#00f">if</span> ((f &amp; EV_FEATURE_ET))
+        printf(<span style="color:#a31515">&#34;  Edge-triggered events are supported.&#34;</span>);
+    <span style="color:#00f">if</span> ((f &amp; EV_FEATURE_O1))
+        printf(<span style="color:#a31515">&#34;  O(1) event notification is supported.&#34;</span>);
+    <span style="color:#00f">if</span> ((f &amp; EV_FEATURE_FDS))
+        printf(<span style="color:#a31515">&#34;  All FD types are supported.&#34;</span>);
+    puts(<span style="color:#a31515">&#34;&#34;</span>);
+}
+</code></pre></div><p>这些函数在<code>&lt;event2/event.h&gt;</code>中定义。</p>
+<h3 id="释放event_base">释放event_base</h3>
+<p>当你结束使用<code>event_base</code>的时候，你可以调用<code>event_base_free</code>来释放此结构。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> event_base_free(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p>此函数并不释放与此<code>event_base</code>关联的任何event，也不关闭sockets，也不释放任何指针。</p>
+<h4 id="设置event_base的优先级">设置event_base的优先级</h4>
+<p>Libevent 支持在一个事件上设置多个优先级。但是，默认情况下，<code>event_base</code>仅支持单个优先级。您可以通过调用<code>event_base_priority_init()</code>来设置<code>event_base</code>的优先级数量。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_base_priority_init(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, <span style="color:#2b91af">int</span> n_priorities);
+</code></pre></div><p>该函数在成功时返回0，失败时返回-1.</p>
+<ul>
+<li>base参数为需要修改的<code>event_base</code></li>
+<li>n_priorities参数是优先级数字，最小为1，新的event的优先级的取值为0（最高）~n_priorities（最低）</li>
+</ul>
+<p>注意，你必须在任何时间变为active之前调用此方法，最好在创建event_base之后立马调用。</p>
+<p>要获得当前<code>event_base</code>支持的优先级数量，可以调用如下方法：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_base_get_npriorities(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p>返回值为<code>event_base</code>所支持的优先级数量，如果该函数返回3，那么所允许的数字为0、1和2.</p>
+<p>默认情况下，所有与<code>event_base</code>关联的新的event，默认优先级为<code>n_priorities / 2</code>。</p>
+<p><code>event_base_priority_init</code>函数在<code>&lt;event2/event.h&gt;</code>中定义。</p>
+<h4 id="在fork之后重新初始化event_base">在fork之后重新初始化event_base</h4>
+<p>并不是所有的后端方法在调用了<code>fork()</code>函数之后仍然有效，所以你需要在调用了<code>fork()</code>或者相关的系统调用之后重新初始化。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_reinit(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p>成功时返回0，失败时返回-1.</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = event_base_new();
+
+<span style="color:#008000">/* ... add some events to the event_base ... */</span>
+
+<span style="color:#00f">if</span> (fork()) {
+    <span style="color:#008000">/* In parent */</span>
+    continue_running_parent(base); <span style="color:#008000">/*...*/</span>
+} <span style="color:#00f">else</span> {
+    <span style="color:#008000">/* In child */</span>
+    event_reinit(base);
+    continue_running_child(base); <span style="color:#008000">/*...*/</span>
+}
+</code></pre></div><p><code>event_reinit()</code>函数在<code>&lt;event2/event.h&gt;</code>中定义。</p>
+
+
+
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<section id="comments">
+    <div class="py-3 content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-sm-12 col-lg-8">
+                    <div class="comments">
+                        <script src="https://utteranc.es/client.js" repo=""
+                            issue-term="pathname" label="comment" theme="github-light" crossorigin="anonymous" async>
+                            </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+    
+
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/r.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/python.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/stan.min.js" defer></script>
+        
+        <script>
+            window.addEventListener('load', function() {
+                hljs.initHighlighting();
+            }, true);
+        </script>
+    
+
+    
+
+    
+    
+        
+<script src="https://guangxuanliu.github.io/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+</body>
+
+</html>
