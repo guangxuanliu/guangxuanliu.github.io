@@ -6,7 +6,22 @@
     <description>Recent content on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 27 Aug 2021 22:34:48 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 04 Sep 2021 17:36:09 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>运行event_loop</title>
+      <link>https://guangxuanliu.github.io/blog/%E8%BF%90%E8%A1%8Cevent_loop/</link>
+      <pubDate>Sat, 04 Sep 2021 17:36:09 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/%E8%BF%90%E8%A1%8Cevent_loop/</guid>
+      <description>运行事件循环 一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待events并且通知你。
+#define EVLOOP_ONCE 0x01 #define EVLOOP_NONBLOCK 0x02 #define EVLOOP_NO_EXIT_ON_EMPTY 0x04  int event_base_loop(struct event_base *base, int flags); 默认的，event_base_loop()函数运行event_base直到没有events在上面注册。当开始运行循环时，它不断的检测是否有events已经触发（例如，读取事件的文件描述符准备好读取，超时事件的超时到期），如果一旦发生，它把events标记为active，并且运行他们。
+你可以给event_base_loop传递flags参数来改变默认的行为，如果设置了EVLOOP_ONCE，循环会等待直到有events变为active，然后运行它们，然后退出。如果设置了EVLOOP_NONBLOCK，循环不会等待events触发，它只会立即检测events是否准备好触发，如果是，则运行它们的回调。
+一般地，如果没有pending或者active的events，循环会尽快退出。你可以设置EVLOOP_NO_EXIT_ON_EMPTY标志位来改变这一行为，比如，你准备在其它线程添加events，如果你设置了此标志位，循环会一直运行，直到event_base_loopbreak()、event_base_loopexit()被调用，或者遇到了错误。
+当结束时，event_base_loop()返回0代表正常退出，返回-1代表后端有未处理的错误，返回1代表没有更多pending或者active的events。
+为了帮助理解，下面是一段event_base_loop()的伪代码
+while (any events are registered with the loop, or EVLOOP_NO_EXIT_ON_EMPTY was set) { if (EVLOOP_NONBLOCK was set, or any events are already active) If any registered events have triggered, mark them active. else Wait until at least one event has triggered, and mark it active. for (p = 0; p &amp;lt; n_priorities; ++p) { if (any event with priority of p is active) { Run all active events with priority of p.</description>
+    </item>
+    
     <item>
       <title>设置event_base</title>
       <link>https://guangxuanliu.github.io/blog/%E8%AE%BE%E7%BD%AEevent_base/</link>

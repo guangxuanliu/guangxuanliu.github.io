@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title> 运行event_loop - 刘光轩的个人博客 </title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="" />
+    <meta property="og:site_name" content="刘光轩的个人博客" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://guangxuanliu.github.io/blog/%E8%BF%90%E8%A1%8Cevent_loop/" />
+    <meta property="og:title" content="运行event_loop" />
+    <meta property="og:image" content="https://guangxuanliu.github.io/" />
+    <meta property="og:description" content="" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <meta name="twitter:title" content="运行event_loop" />
+    <meta name="twitter:description" content="" />
+    <meta name="twitter:image" content="https://guangxuanliu.github.io/" />
+
+    <link rel="canonical" href="https://guangxuanliu.github.io/blog/%E8%BF%90%E8%A1%8Cevent_loop/">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="https://guangxuanliu.github.io/css/custom.css" />
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/github-gist.min.css" integrity="sha512-od7JLoOTxM8w/HSKGzP9Kexc20K9p/M2zxSWsd7H1e4Ctf+8SQFtCWEZnW5u6ul5ehSECa5QmOk9ju2nQMmlVA==" crossorigin="anonymous" />
+    
+
+    
+
+    <link rel="shortcut icon"
+        href="https://guangxuanliu.github.io/images/favicon.png">
+
+    
+    <link href="https://guangxuanliu.github.io/index.xml" rel="alternate" type="application/rss+xml" title="刘光轩的个人博客" />
+    
+</head>
+
+<body>
+    
+<div class="mt-xl header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="https://guangxuanliu.github.io/">
+                    <h1 class="name">刘光轩的个人博客</h1>
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <ul class="nav nav-primary">
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/">
+                        
+                        主页
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/about/">
+                        
+                        关于
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-12 col-lg-8">
+                <h1 class="mx-0 mx-md-4 blog-post-title">运行event_loop</h1>
+
+                <div class="mb-md-4 meta">
+                    
+                    
+                    
+
+                    <span class="date middot" title='Sat Sep 4 2021 17:36:09 CST'>
+                        2021-09-04
+                    </span>
+
+                    <span class="reading-time middot">
+                        2 min read
+                    </span>
+
+                    <div class="d-none d-md-inline tags">
+                        <ul class="list-unstyled d-inline">
+                            
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="markdown blog-post-content">
+                    
+    <h3 id="运行事件循环">运行事件循环</h3>
+<p>一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待events并且通知你。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#define EVLOOP_ONCE             0x01
+</span><span style="color:#00f">#define EVLOOP_NONBLOCK         0x02
+</span><span style="color:#00f">#define EVLOOP_NO_EXIT_ON_EMPTY 0x04
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">int</span> event_base_loop(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, <span style="color:#2b91af">int</span> flags);
+</code></pre></div><p>默认的，<code>event_base_loop()</code>函数运行event_base直到没有events在上面注册。当开始运行循环时，它不断的检测是否有events已经触发（例如，读取事件的文件描述符准备好读取，超时事件的超时到期），如果一旦发生，它把events标记为active，并且运行他们。</p>
+<p>你可以给<code>event_base_loop</code>传递flags参数来改变默认的行为，如果设置了EVLOOP_ONCE，循环会等待直到有events变为active，然后运行它们，然后退出。如果设置了EVLOOP_NONBLOCK，循环不会等待events触发，它只会立即检测events是否准备好触发，如果是，则运行它们的回调。</p>
+<p>一般地，如果没有pending或者active的events，循环会尽快退出。你可以设置EVLOOP_NO_EXIT_ON_EMPTY标志位来改变这一行为，比如，你准备在其它线程添加events，如果你设置了此标志位，循环会一直运行，直到<code>event_base_loopbreak()</code>、<code>event_base_loopexit()</code>被调用，或者遇到了错误。</p>
+<p>当结束时，<code>event_base_loop()</code>返回0代表正常退出，返回-1代表后端有未处理的错误，返回1代表没有更多pending或者active的events。</p>
+<p>为了帮助理解，下面是一段<code>event_base_loop()</code>的伪代码</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">while</span> (any events are registered with the loop,
+        or EVLOOP_NO_EXIT_ON_EMPTY was set) {
+
+    <span style="color:#00f">if</span> (EVLOOP_NONBLOCK was set, or any events are already active)
+        If any registered events have triggered, mark them active.
+    <span style="color:#00f">else</span>
+        Wait until at least one event has triggered, and mark it active.
+
+    <span style="color:#00f">for</span> (p = 0; p &lt; n_priorities; ++p) {
+       <span style="color:#00f">if</span> (any event with priority of p is active) {
+          Run all active events with priority of p.
+          <span style="color:#00f">break</span>; <span style="color:#008000">/* Do not run any events of a less important priority */</span>
+       }
+    }
+
+    <span style="color:#00f">if</span> (EVLOOP_ONCE was set or EVLOOP_NONBLOCK was set)
+       <span style="color:#00f">break</span>;
+}
+</code></pre></div><p>为了方便起见，你也可以调用：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_base_dispatch(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p>该函数等同于没有flags参数的<code>event_base_loop()</code>，因此，循环会一直运行直到没有注册的events或者<code>event_base_loopbreak()</code>、<code>event_base_loopexit()</code>被调用。</p>
+<p>这些函数在<code>&lt;event2/event.h&gt;</code>中定义。它们从 Libevent 1.0 开始就存在了。</p>
+<h3 id="停止事件循环">停止事件循环</h3>
+<p>如果你想在所有的events被移除之前停止事件循环，可以调用如下两个方法：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#2b91af">int</span> event_base_loopexit(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *tv);
+<span style="color:#2b91af">int</span> event_base_loopbreak(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p><code>event_base_loopexit()</code>函数告诉event_base在指定的时间tv后停止循环。如果tv参数为空的话，event_base立即停止循环，如果event_base当前正在运行active events的回调，则直到运行完之后才会停止。</p>
+<p><code>event_base_loopbreak()</code>函数告诉event_base立即退出循环，区别于<code>event_base_loopexit(base, NULL)</code>，<code>event_base_loopbreak()</code>会在处理完当前active events之后立马退出。</p>
+<p>还要注意<code>event_base_loopexit(base,NULL)</code>和<code>event_base_loopbreak(base)</code>在没有事件循环运行时的行为不同：<code>loopexit</code>安排事件循环的下一个实例在下一轮回调运行后立即停止（就像它已经被调用一样与 <code>EVLOOP_ONCE</code>) 而<code>loopbreak</code>只停止当前正在运行的循环，如果事件循环没有运行，则无效。</p>
+<p>两个函数均在成功时返回0，失败时返回-1.</p>
+<p>下面是立马停止的例子：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#008000">/* Here&#39;s a callback function that calls loopbreak */</span>
+<span style="color:#2b91af">void</span> cb(<span style="color:#2b91af">int</span> sock, <span style="color:#2b91af">short</span> what, <span style="color:#2b91af">void</span> *arg)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = arg;
+    event_base_loopbreak(base);
+}
+
+<span style="color:#2b91af">void</span> main_loop(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, evutil_socket_t watchdog_fd)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *watchdog_event;
+
+    <span style="color:#008000">/* Construct a new event to trigger whenever there are any bytes to
+</span><span style="color:#008000">       read from a watchdog socket.  When that happens, we&#39;ll call the
+</span><span style="color:#008000">       cb function, which will make the loop exit immediately without
+</span><span style="color:#008000">       running any other active events at all.
+</span><span style="color:#008000">     */</span>
+    watchdog_event = event_new(base, watchdog_fd, EV_READ, cb, base);
+
+    event_add(watchdog_event, NULL);
+
+    event_base_dispatch(base);
+}
+</code></pre></div><p>下面是10秒钟后停止的例子：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span> run_base_with_ticks(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base)
+{
+  <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> ten_sec;
+
+  ten_sec.tv_sec = 10;
+  ten_sec.tv_usec = 0;
+
+  <span style="color:#008000">/* Now we run the event_base for a series of 10-second intervals, printing
+</span><span style="color:#008000">     &#34;Tick&#34; after each.  For a much better way to implement a 10-second
+</span><span style="color:#008000">     timer, see the section below about persistent timer events. */</span>
+  <span style="color:#00f">while</span> (1) {
+     <span style="color:#008000">/* This schedules an exit ten seconds from now. */</span>
+     event_base_loopexit(base, &amp;ten_sec);
+
+     event_base_dispatch(base);
+     puts(<span style="color:#a31515">&#34;Tick&#34;</span>);
+  }
+}
+</code></pre></div><p>有时你想知道调用<code>event_base_dispatch()</code>或者<code>event_base_loop()</code>退出是否正常，或者想知道是调用哪种方式退出的，你可以使用如下函数：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_base_got_exit(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+<span style="color:#2b91af">int</span> event_base_got_break(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p>如果循环分别用<code>event_base_loopexit()</code>或<code>event_base_break()</code>停止，这两个函数将返回 true，否则返回 false。它们的值将在您下次启动事件循环时重置。</p>
+<h3 id="重新检查events">重新检查events</h3>
+<p>通常，Libevent 检查事件，然后运行具有最高优先级的所有活动事件，然后再次检查事件，依此类推。但有时您可能希望在当前回调运行后立即停止 Libevent，并告诉它再次扫描。与<code>event_base_loopbreak()</code>类似，您可以使用函数<code>event_base_loopcontinue()</code>执行此操作。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#2b91af">int</span> event_base_loopcontinue(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *);
+</code></pre></div><p>如果我们当前没有运行事件回调，则调用<code>event_base_loopcontinue()</code>无效。</p>
+<h3 id="检查内部时间缓存">检查内部时间缓存</h3>
+<p>有时，你希望在事件回调中获得当前时间，但是你不想调用<code>gettimeofday()</code>，因为此函数为系统调用，你正在避免使用系统调用。</p>
+<p>在回调中，您可以向 Libevent 询问它开始执行这一轮回调时的当前时间：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_base_gettimeofday_cached(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base,
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *tv_out);
+</code></pre></div><p>该函数如果正在执行回调，则将tv_out参数设置为缓存的时间，否则调用<code>evutil_gettimeofday()</code>函数返回真是的时间。该函数在成功时返回0，失败是返回负值。</p>
+<p>注意，该时间为Libevent执行回调时的缓存的时间，所以可能不准确，如果你的回调执行了很长时间，他可能非常不准确，你可以强制刷新此缓存时间：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_base_update_cache_time(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p>该函数在成功时返回0，在失败时返回-1，如果在没有运行事件循环时调用此函数，则没有作用。</p>
+<h3 id="转储event_base状态">转储event_base状态</h3>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> event_base_dump_events(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, FILE *f);
+</code></pre></div><p>为了协助调试你的程序（或者调试libevent），你有时想要所有events的完整列表以及它们的状态，调用<code>event_base_dump_events()</code>函数会将此列表写入你提供的文件中去。</p>
+<p>这个列表可供阅读的，它的格式在未来的libevent中会改变。</p>
+<h3 id="在-event_base-中的每个事件上运行一个函数">在 event_base 中的每个事件上运行一个函数</h3>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">typedef</span> int (*event_base_foreach_event_cb)(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *,
+    <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *, <span style="color:#2b91af">void</span> *);
+
+<span style="color:#2b91af">int</span> event_base_foreach_event(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base,
+                             event_base_foreach_event_cb fn,
+                             <span style="color:#2b91af">void</span> *arg);
+</code></pre></div><p>您可以使用 <code>event_base_foreach_event()</code> 迭代与 <code>event_base()</code> 关联的每个active或pending的事件。提供的回调将在每个事件中以未指定的顺序被调用一次。 <code>event_base_foreach_event()</code>的第三个参数将作为第三个参数传递给回调的每次调用。</p>
+<p>回调函数必须返回 0 才能继续迭代，或者返回某个其他整数才能停止迭代。回调函数最终返回的任何值都将由 <code>event_base_foreach_function()</code> 返回。</p>
+<p>您的回调函数不得修改它接收到的任何事件，或向event_base添加或删除任何事件，或以其他方式修改与event_base关联的任何事件，否则可能发生未定义的行为，直至或包括崩溃和堆粉碎。</p>
+<p><code>event_base</code>锁将在调用<code>event_base_foreach_event()</code>的持续时间内保持不变— 这将阻止其他线程对 event_base 执行任何有用的操作，因此请确保您的回调不会花费很长时间。</p>
+
+
+
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<section id="comments">
+    <div class="py-3 content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-sm-12 col-lg-8">
+                    <div class="comments">
+                        <script src="https://utteranc.es/client.js" repo=""
+                            issue-term="pathname" label="comment" theme="github-light" crossorigin="anonymous" async>
+                            </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+    
+
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/r.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/python.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/stan.min.js" defer></script>
+        
+        <script>
+            window.addEventListener('load', function() {
+                hljs.initHighlighting();
+            }, true);
+        </script>
+    
+
+    
+
+    
+    
+        
+
+    
+</body>
+
+</html>
