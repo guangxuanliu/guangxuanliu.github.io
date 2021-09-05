@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title> Event - 刘光轩的个人博客 </title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="" />
+    <meta property="og:site_name" content="刘光轩的个人博客" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://guangxuanliu.github.io/blog/event/" />
+    <meta property="og:title" content="Event" />
+    <meta property="og:image" content="https://guangxuanliu.github.io/" />
+    <meta property="og:description" content="" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <meta name="twitter:title" content="Event" />
+    <meta name="twitter:description" content="" />
+    <meta name="twitter:image" content="https://guangxuanliu.github.io/" />
+
+    <link rel="canonical" href="https://guangxuanliu.github.io/blog/event/">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="https://guangxuanliu.github.io/css/custom.css" />
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/github-gist.min.css" integrity="sha512-od7JLoOTxM8w/HSKGzP9Kexc20K9p/M2zxSWsd7H1e4Ctf+8SQFtCWEZnW5u6ul5ehSECa5QmOk9ju2nQMmlVA==" crossorigin="anonymous" />
+    
+
+    
+
+    <link rel="shortcut icon"
+        href="https://guangxuanliu.github.io/images/favicon.png">
+
+    
+    <link href="https://guangxuanliu.github.io/index.xml" rel="alternate" type="application/rss+xml" title="刘光轩的个人博客" />
+    
+</head>
+
+<body>
+    
+<div class="mt-xl header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="https://guangxuanliu.github.io/">
+                    <h1 class="name">刘光轩的个人博客</h1>
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <ul class="nav nav-primary">
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/">
+                        
+                        主页
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/about/">
+                        
+                        关于
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-12 col-lg-8">
+                <h1 class="mx-0 mx-md-4 blog-post-title">Event</h1>
+
+                <div class="mb-md-4 meta">
+                    
+                    
+                    
+
+                    <span class="date middot" title='Sat Sep 4 2021 20:17:14 CST'>
+                        2021-09-04
+                    </span>
+
+                    <span class="reading-time middot">
+                        8 min read
+                    </span>
+
+                    <div class="d-none d-md-inline tags">
+                        <ul class="list-unstyled d-inline">
+                            
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="markdown blog-post-content">
+                    
+    <h2 id="事件">事件</h2>
+<p>event是libevent的基本操作单元，每一个event代表一系列条件的集合，包括：</p>
+<ul>
+<li>一个文件描述符准备好了读、写</li>
+<li>一个文件描述符准备好了读、写（仅限于边缘触发）</li>
+<li>超时到期</li>
+<li>发生了信号</li>
+<li>用户触发的事件</li>
+</ul>
+<p>events拥有类似的生命周期。当你调用libevent的函数设置了一个event，并且将它关联到一个event_base，它的状态是<strong>initialized</strong>，在此时，你可以将它add进event_base，此时它的状态变为<strong>pending</strong>，当触发条件的事件发生时（比如，文件描述符状态改变或者超时到期），它的状态会变为<strong>active</strong>，此时用户提供的回调函数将会被调用，如果event被设置为<strong>persistent</strong>，它仍然保持pending状态，如果不是persistent的，当回调函数结束后，将不再是pending状态，你可以将pending 的event删除，使其变为non-pending状态，你可以将non-pending状态的event调用add使其变为pending状态。</p>
+<h3 id="构造event对象">构造event对象</h3>
+<p>调用<code>event_new()</code>创建一个新的event。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#define EV_TIMEOUT      0x01
+</span><span style="color:#00f">#define EV_READ         0x02
+</span><span style="color:#00f">#define EV_WRITE        0x04
+</span><span style="color:#00f">#define EV_SIGNAL       0x08
+</span><span style="color:#00f">#define EV_PERSIST      0x10
+</span><span style="color:#00f">#define EV_ET           0x20
+</span><span style="color:#00f"></span>
+<span style="color:#00f">typedef</span> void (*event_callback_fn)(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *);
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *event_new(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, evutil_socket_t fd,
+    <span style="color:#2b91af">short</span> what, event_callback_fn cb,
+    <span style="color:#2b91af">void</span> *arg);
+
+<span style="color:#2b91af">void</span> event_free(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *event);
+</code></pre></div><p><code>event_new()</code>使用指定的event_base分配并构造一个新的event，<code>what</code>参数是上面列举的一些标志位（具体语义将在下面描述），如果<code>fd</code>非负，我们将监控此fd的读写事件，当event变为active，libevent会调用<code>cb</code>回调函数，并传递参数：</p>
+<ul>
+<li>fd，文件描述符</li>
+<li>bitfield，代表触发的事件的位集合</li>
+<li>args，构造事件时指定的参数</li>
+</ul>
+<p>当发生内部错误或参数无效时，返回NULL。</p>
+<p>所有新创建的事件均为<code>initialized</code>，并且是<code>non-pending</code>状态，可以调用<code>event_add()</code>函数使其变为<code>pending</code>状态。</p>
+<p>可以调用<code>event_free()</code>函数来释放一个event，当event处于<code>pengding</code>或者active状态时调用该函数是安全的。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span> cb_func(evutil_socket_t fd, <span style="color:#2b91af">short</span> what, <span style="color:#2b91af">void</span> *arg)
+{
+        <span style="color:#00f">const</span> <span style="color:#2b91af">char</span> *data = arg;
+        printf(<span style="color:#a31515">&#34;Got an event on socket %d:%s%s%s%s [%s]&#34;</span>,
+            (<span style="color:#2b91af">int</span>) fd,
+            (what&amp;EV_TIMEOUT) ? <span style="color:#a31515">&#34; timeout&#34;</span> : <span style="color:#a31515">&#34;&#34;</span>,
+            (what&amp;EV_READ)    ? <span style="color:#a31515">&#34; read&#34;</span> : <span style="color:#a31515">&#34;&#34;</span>,
+            (what&amp;EV_WRITE)   ? <span style="color:#a31515">&#34; write&#34;</span> : <span style="color:#a31515">&#34;&#34;</span>,
+            (what&amp;EV_SIGNAL)  ? <span style="color:#a31515">&#34; signal&#34;</span> : <span style="color:#a31515">&#34;&#34;</span>,
+            data);
+}
+
+<span style="color:#2b91af">void</span> main_loop(evutil_socket_t fd1, evutil_socket_t fd2)
+{
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev1, *ev2;
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> five_seconds = {5,0};
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = event_base_new();
+
+        <span style="color:#008000">/* The caller has already set up fd1, fd2 somehow, and make them
+</span><span style="color:#008000">           nonblocking. */</span>
+
+        ev1 = event_new(base, fd1, EV_TIMEOUT|EV_READ|EV_PERSIST, cb_func,
+           (<span style="color:#2b91af">char</span>*)<span style="color:#a31515">&#34;Reading event&#34;</span>);
+        ev2 = event_new(base, fd2, EV_WRITE|EV_PERSIST, cb_func,
+           (<span style="color:#2b91af">char</span>*)<span style="color:#a31515">&#34;Writing event&#34;</span>);
+
+        event_add(ev1, &amp;five_seconds);
+        event_add(ev2, NULL);
+        event_base_dispatch(base);
+}
+</code></pre></div><h4 id="event-flags">event flags</h4>
+<ul>
+<li>
+<p>EV_TIMEOUT</p>
+<p>在指定的时间过去之后，event将变为active。</p>
+</li>
+<li>
+<p>EV_READ</p>
+<p>标志着文件描述符变为可读。</p>
+</li>
+<li>
+<p>EV_WRITE</p>
+<p>标志着文件描述符变为可写。</p>
+</li>
+<li>
+<p>EV_SIGNAL</p>
+<p>用来实现信号检测，参考“构造信号事件”小节</p>
+</li>
+<li>
+<p>EV_PERSIST</p>
+<p>标志着event为<code>persistent</code>状态，参考“关于事件持久性”小节</p>
+</li>
+<li>
+<p>EV_ET</p>
+<p>指示事件应该是边缘触发的，如果底层 <code>event_base </code>后端支持边缘触发的事件。这会影响 <code>EV_READ</code> 和 <code>EV_WRITE</code> 的语义。</p>
+</li>
+</ul>
+<p>从 Libevent 2.0.1-alpha 开始，任何数量的事件都可能同时在相同条件下等待处理。例如，如果给定的 fd 准备好读取，您可能有两个事件将变为活动状态。它们的回调运行的顺序是未定义的。</p>
+<h4 id="关于事件持久性">关于事件持久性</h4>
+<p>默认情况下，当一个<code>pending</code>的事件变为active（因为fd变为可读、可写或者超时），当回调被执行前，它变为<code>non-pending</code>状态，因此，如果你想让事件继续变为<code>pending</code>状态，你可以在回调函数里面调用<code>event_add()</code>函数。</p>
+<p>如果设置了<code>EV_PERSIST</code>标志位，事件则是持久的，当回调被调用后，事件仍然保持<code>pending</code>状态。你可以在回调函数中调用<code>event_del()</code>函数来使事件变为<code>non-pending</code>状态。</p>
+<p>每当事件的回调运行时，持久性事件的超时就会重置。因此，如果一个event有如下标志位：EV_READ|EV_PERSIST和5秒的超时，事件会在以下情况下变为active：</p>
+<ul>
+<li>当socket变为可读时</li>
+<li>当距离上次事件变为active状态已经过去了5秒</li>
+</ul>
+<h4 id="创建一个将自己作为回调参数的事件">创建一个将自己作为回调参数的事件</h4>
+<p>你可能经常会需要创建一个将自己作为回调参数的事件，你不可以将该事件的指针作为参数传递到<code>event_new()</code>中，因为它还不存在，为了解决此问题，你可以使用<code>event_self_cbarg()</code></p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> *event_self_cbarg();
+</code></pre></div><p><code>event_self_cbarg()</code>函数返回一个“魔术”指针，当作为事件回调参数传递时，它告诉 event_new() 创建一个接收自身作为其回调参数的事件。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">static</span> <span style="color:#2b91af">int</span> n_calls = 0;
+
+<span style="color:#2b91af">void</span> cb_func(evutil_socket_t fd, <span style="color:#2b91af">short</span> what, <span style="color:#2b91af">void</span> *arg)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *me = arg;
+
+    printf(<span style="color:#a31515">&#34;cb_func called %d times so far.</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>, ++n_calls);
+
+    <span style="color:#00f">if</span> (n_calls &gt; 100)
+       event_del(me);
+}
+
+<span style="color:#2b91af">void</span> run(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> one_sec = { 1, 0 };
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev;
+    <span style="color:#008000">/* We&#39;re going to set up a repeating timer to get called called 100
+</span><span style="color:#008000">       times. */</span>
+    ev = event_new(base, -1, EV_PERSIST, cb_func, event_self_cbarg());
+    event_add(ev, &amp;one_sec);
+    event_base_dispatch(base);
+}
+</code></pre></div><p>此函数还可与 <code>event_new()</code>、<code>evtimer_new()</code>、<code>evsignal_new()</code>、<code>event_assign()</code>、<code>evtimer_assign()</code> 和 <code>evsignal_assign()</code> 一起使用。但是，它不能用作非事件的回调参数。</p>
+<h4 id="仅超时事件">仅超时事件</h4>
+<p>为方便起见，您可以使用一组以 evtimer_ 开头的宏来代替 event_* 调用来分配和操作纯超时事件。除了提高代码的清晰度之外，使用这些宏没有任何好处。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#define evtimer_new(base, callback, arg) \
+</span><span style="color:#00f">    event_new((base), -1, 0, (callback), (arg))
+</span><span style="color:#00f">#define evtimer_add(ev, tv) \
+</span><span style="color:#00f">    event_add((ev),(tv))
+</span><span style="color:#00f">#define evtimer_del(ev) \
+</span><span style="color:#00f">    event_del(ev)
+</span><span style="color:#00f">#define evtimer_pending(ev, tv_out) \
+</span><span style="color:#00f">    event_pending((ev), EV_TIMEOUT, (tv_out))
+</span></code></pre></div><p>译者注：</p>
+<p>从宏定义可以看出，<code>evtimer_new</code>被定义为flag为0的<code>event_new</code>别名，所以<code>evtimer_new</code>创建的定时器不是<code>persistent</code>的，如果想让定时器间隔一段时间就被执行一次，还需要手动的在回调函数里面再次执行<code>event_pending</code>函数，所以使用此方式创建定时器仅仅是可读性高一些。</p>
+<h4 id="构造信号事件">构造信号事件</h4>
+<p>libevent可以监视POSIX风格的信号，可以调用如下函数：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#define evsignal_new(base, signum, cb, arg) \
+</span><span style="color:#00f">    event_new(base, signum, EV_SIGNAL|EV_PERSIST, cb, arg)
+</span></code></pre></div><p>除了用信号来代替文件描述符外，其余参数和event_new一样。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *hup_event;
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = event_base_new();
+
+<span style="color:#008000">/* call sighup_function on a HUP signal */</span>
+hup_event = evsignal_new(base, SIGHUP, sighup_function, NULL);
+</code></pre></div><p>请注意，信号回调在信号发生后在事件循环中运行，因此它们可以安全地调用您不应该从常规 POSIX 信号处理程序调用的函数。</p>
+<p>警告：不要给信号事件设定超时，它可能并不被支持。</p>
+<p>译者注：</p>
+<p>经译者测试，如果给一个信号事件添加了超时之后，该事件经过指定时间之后会被触发，不过事件为非persistent，即仅仅触发一次。</p>
+<p>在处理信号事件时，您还可以使用一组方便的宏。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#define evsignal_add(ev, tv) \
+</span><span style="color:#00f">    event_add((ev),(tv))
+</span><span style="color:#00f">#define evsignal_del(ev) \
+</span><span style="color:#00f">    event_del(ev)
+</span><span style="color:#00f">#define evsignal_pending(ev, what, tv_out) \
+</span><span style="color:#00f">    event_pending((ev), (what), (tv_out))
+</span></code></pre></div><p><strong>注意事项</strong></p>
+<p>使用当前版本的 Libevent，对于大多数后端，每个进程一次只有一个 <code>event_base</code> 可以监听信号。如果您一次将信号事件添加到两个 <code>event_base</code> 即使信号不同！只有一个 <code>event_base</code> 会接收信号。</p>
+<p><code>kqueue</code> 后端没有这个限制。</p>
+<h4 id="在没有堆分配的情况下设置事件">在没有堆分配的情况下设置事件</h4>
+<p>出于性能和其他原因，有些人喜欢将事件作为更大结构的一部分进行分配。对于事件的每次使用，这会为他们节省：</p>
+<ul>
+<li>用于在堆上分配小对象的内存分配器开销。</li>
+<li>取消引用结构事件指针的时间开销。</li>
+<li>如果事件不在缓存中，则可能的额外缓存未命中的时间开销。</li>
+</ul>
+<p>使用这种方法可能会破坏与其他版本的 Libevent 的二进制兼容性，这些版本的事件结构可能具有不同的大小。</p>
+<p>这些开销对大多数应用程序来说影响微乎其微，你应该坚持使用<code>event_new()</code>，除非你明确知道在堆上分配内存导致巨大的性能开销。如果未来版本的 Libevent 使用比您正在构建的事件结构更大的事件结构，则使用 <code>event_assign()</code>可能会导致难以诊断的错误。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_assign(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *event, <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base,
+    evutil_socket_t fd, <span style="color:#2b91af">short</span> what,
+    <span style="color:#2b91af">void</span> (*callback)(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *), <span style="color:#2b91af">void</span> *arg);
+</code></pre></div><p><code>event_assign()</code> 的所有参数都与 <code>event_new()</code> 相同，但 event 参数必须指向未初始化的事件。它在成功时返回 0，在内部错误或错误参数时返回 -1。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span><span style="color:#008000">/* Watch out!  Including event_struct.h means that your code will not
+</span><span style="color:#008000"> * be binary-compatible with future versions of Libevent. */</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event_struct.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdlib.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_pair</span> {
+         evutil_socket_t fd;
+         <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> read_event;
+         <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> write_event;
+};
+<span style="color:#2b91af">void</span> readcb(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *);
+<span style="color:#2b91af">void</span> writecb(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *);
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_pair</span> *event_pair_new(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, evutil_socket_t fd)
+{
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">event_pair</span> *p = malloc(<span style="color:#00f">sizeof</span>(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_pair</span>));
+        <span style="color:#00f">if</span> (!p) <span style="color:#00f">return</span> NULL;
+        p-&gt;fd = fd;
+        event_assign(&amp;p-&gt;read_event, base, fd, EV_READ|EV_PERSIST, readcb, p);
+        event_assign(&amp;p-&gt;write_event, base, fd, EV_WRITE|EV_PERSIST, writecb, p);
+        <span style="color:#00f">return</span> p;
+}
+</code></pre></div><p>您还可以使用 <code>event_assign()</code> 来初始化栈分配或静态分配的event。</p>
+<p><strong>警告</strong></p>
+<p>不要对一个<code>pending</code>到<code>event_base</code>的event调用<code>event_assign()</code>，这样做会导致极度难以调试的bug，如果event已经<code>initialized</code>并且处于<code>pending</code>状态，在调用<code>event_assign()</code>之前应该先调用<code>event_del()</code>。</p>
+<p>有一些方便的宏可以用于<code>event_assign()</code>仅超时或信号事件：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#define evtimer_assign(event, base, callback, arg) \
+</span><span style="color:#00f">    event_assign(event, base, -1, 0, callback, arg)
+</span><span style="color:#00f">#define evsignal_assign(event, base, signum, callback, arg) \
+</span><span style="color:#00f">    event_assign(event, base, signum, EV_SIGNAL|EV_PERSIST, callback, arg)
+</span></code></pre></div><p>如果您需要使用 <code>event_assign() </code>并保持与 Libevent 未来版本的二进制兼容性，您可以要求 Libevent 库在运行时告诉您结构事件应该有多大：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++">size_t event_get_struct_event_size(<span style="color:#2b91af">void</span>);
+</code></pre></div><p>此函数返回您需要为event留出的字节数。和以前一样，只有当您知道堆分配是您程序中的一个重要问题时，才应该使用此函数，因为它会使您的代码更难以阅读和编写。</p>
+<p>请注意， <code>event_get_struct_event_size()</code>将来可能会给您一个小于<code>sizeof(struct event)</code>的值。如果发生这种情况，则意味着 struct 事件末尾的任何额外字节只是为未来版本的 Libevent 保留的填充字节。</p>
+<p>这是与上面相同的示例，但我们不依赖于 <code>event_struct.h</code> 中 <code>struct event</code> 的大小，而是使用 <code>event_get_struct_size()</code> 在运行时使用正确的大小。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdlib.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#008000">/* When we allocate an event_pair in memory, we&#39;ll actually allocate
+</span><span style="color:#008000"> * more space at the end of the structure.  We define some macros
+</span><span style="color:#008000"> * to make accessing those events less error-prone. */</span>
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_pair</span> {
+         evutil_socket_t fd;
+};
+
+<span style="color:#008000">/* Macro: yield the struct event &#39;offset&#39; bytes from the start of &#39;p&#39; */</span>
+<span style="color:#00f">#define EVENT_AT_OFFSET(p, offset) \
+</span><span style="color:#00f">            ((struct event*) ( ((char*)(p)) + (offset) ))
+</span><span style="color:#00f"></span><span style="color:#008000">/* Macro: yield the read event of an event_pair */</span>
+<span style="color:#00f">#define READEV_PTR(pair) \
+</span><span style="color:#00f">            EVENT_AT_OFFSET((pair), sizeof(struct event_pair))
+</span><span style="color:#00f"></span><span style="color:#008000">/* Macro: yield the write event of an event_pair */</span>
+<span style="color:#00f">#define WRITEEV_PTR(pair) \
+</span><span style="color:#00f">            EVENT_AT_OFFSET((pair), \
+</span><span style="color:#00f">                sizeof(struct event_pair)+event_get_struct_event_size())
+</span><span style="color:#00f"></span>
+<span style="color:#008000">/* Macro: yield the actual size to allocate for an event_pair */</span>
+<span style="color:#00f">#define EVENT_PAIR_SIZE() \
+</span><span style="color:#00f">            (sizeof(struct event_pair)+2*event_get_struct_event_size())
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span> readcb(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *);
+<span style="color:#2b91af">void</span> writecb(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *);
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_pair</span> *event_pair_new(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, evutil_socket_t fd)
+{
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">event_pair</span> *p = malloc(EVENT_PAIR_SIZE());
+        <span style="color:#00f">if</span> (!p) <span style="color:#00f">return</span> NULL;
+        p-&gt;fd = fd;
+        event_assign(READEV_PTR(p), base, fd, EV_READ|EV_PERSIST, readcb, p);
+        event_assign(WRITEEV_PTR(p), base, fd, EV_WRITE|EV_PERSIST, writecb, p);
+        <span style="color:#00f">return</span> p;
+}
+</code></pre></div><h4 id="事件的pending-和-non-pending">事件的pending 和 non-pending</h4>
+<p>一旦你构造了一个事件，直到你将它变为pending状态之前，他都没有其它任何用处，你可以调用如下函数将其变为pending状态：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_add(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev, <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *tv);
+</code></pre></div><p>在处于non-pending状态的event上调用此函数，会将其在event_base上变为pending状态，此函数在成功时返回0，失败是返回-1，如果tv参数为NULL，则event没有超时，否则，tv参数指定其超时的秒数和微秒数。</p>
+<p>如果您对已经pending的事件调用 event_add()，它将使变为pending，并使用提供的超时重新安排它。如果事件已经处于pending状态，并且您使用超时 NULL 重新添加它，则 event_add() 将无效。</p>
+<p><strong>注意：</strong> tv为相对事件，并非绝对时间，如果你想将超时设置在10秒后，请将<code>tv-&gt;tv_sec</code>赋值为10，而不是<code>time(NULL)+10</code>。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_del(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+</code></pre></div><p>在<code>initialized</code>事件上调用 <code>event_del</code> 使其变为<code>non-pending</code>和<code>non-active</code>状态。如果事件处于<code>non-pending</code>或<code>non-active</code>状态，则没有任何影响。成功时返回值为 0，失败时返回 -1。</p>
+<p>如果在事件变为活动状态后但在其回调有机会执行之前删除事件，则不会执行回调。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_remove_timer(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+</code></pre></div><p>最后，您可以在不删除其 IO 或信号组件的情况下完全删除挂起事件的超时。如果事件没有超时挂起，则 <code>event_remove_timer() </code>无效。如果事件只有超时但没有 IO 或信号组件，则<code>event_remove_timer() </code>与 <code>event_del() </code>具有相同的效果。成功时返回值为 0，失败时返回 -1。</p>
+<h4 id="具有优先级的事件">具有优先级的事件</h4>
+<p>当多个事件同时触发时，libevent并没有规定执行回调的顺序。你可以使用priorities，来定义一些事件比另一些事件重要。</p>
+<p>就像在以前的章节中讨论的一样，每一个event_base有一个或多个优先级与之关联。在初始化event之后，添加到event_base之前，你可以设置优先级</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_priority_set(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *event, <span style="color:#2b91af">int</span> priority);
+</code></pre></div><p>priority参数取值范围为0至event_base的priorities-1，该函数在成功时返回0，失败时返回-1.</p>
+<p>当多个具有不同优先级的事件同时变为active时，低优先级的事件不会运行，libevent会优先运行高优先级的事件，然后再次检查事件。只有当所有高优先级的事件没有处于active状态的时候才会运行低优先级的事件。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span> read_cb(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *);
+<span style="color:#2b91af">void</span> write_cb(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *);
+
+<span style="color:#2b91af">void</span> main_loop(evutil_socket_t fd)
+{
+  <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *important, *unimportant;
+  <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+
+  base = event_base_new();
+  event_base_priority_init(base, 2);
+  <span style="color:#008000">/* Now base has priority 0, and priority 1 */</span>
+  important = event_new(base, fd, EV_WRITE|EV_PERSIST, write_cb, NULL);
+  unimportant = event_new(base, fd, EV_READ|EV_PERSIST, read_cb, NULL);
+  event_priority_set(important, 0);
+  event_priority_set(unimportant, 1);
+
+  <span style="color:#008000">/* Now, whenever the fd is ready for writing, the write callback will
+</span><span style="color:#008000">     happen before the read callback.  The read callback won&#39;t happen at
+</span><span style="color:#008000">     all until the write callback is no longer active. */</span>
+}
+</code></pre></div><p>当你没有设置event的优先级时，默认值为队列的长度除以2。</p>
+<p>译者注：</p>
+<p>经过实际测试发现，当没有设置event的优先级时，默认值为event_base的优先级除以2。测试代码如下所示</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> signal_cb(evutil_socket_t fd, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *args)
+{
+    event *me = (event*)args;
+    <span style="color:#2b91af">int</span> priority = event_get_priority(me);
+    cout &lt;&lt; <span style="color:#a31515">&#34;</span><span style="color:#a31515">\t</span><span style="color:#a31515">priority:&#34;</span> &lt;&lt; priority &lt;&lt; endl;
+}
+
+<span style="color:#2b91af">int</span> main()
+{
+    event_base *base = event_base_new();
+    event_base_priority_init(base, 21);
+    event *hup_event = evsignal_new(base, SIGINT, signal_cb, event_self_cbarg());
+    evsignal_add(hup_event, NULL);
+    event_base_dispatch(base);
+    evsignal_del(hup_event);
+
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><h4 id="检测事件状态">检测事件状态</h4>
+<p>有时你想判断是否添加了一个事件。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_pending(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev, <span style="color:#2b91af">short</span> what, <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *tv_out);
+
+<span style="color:#00f">#define event_get_signal(ev) </span><span style="color:#008000">/* ... */</span><span style="color:#00f">
+</span><span style="color:#00f"></span>evutil_socket_t event_get_fd(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *event_get_base(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+<span style="color:#2b91af">short</span> event_get_events(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+event_callback_fn event_get_callback(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+<span style="color:#2b91af">void</span> *event_get_callback_arg(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+<span style="color:#2b91af">int</span> event_get_priority(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+
+<span style="color:#2b91af">void</span> event_get_assignment(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *event,
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> **base_out,
+        evutil_socket_t *fd_out,
+        <span style="color:#2b91af">short</span> *events_out,
+        event_callback_fn *callback_out,
+        <span style="color:#2b91af">void</span> **arg_out);
+</code></pre></div><p><code>event_pending</code>函数确定给定的事件是pending或者active的。如果是，并且在 what 参数中设置了任何标志 EV_READ、EV_WRITE、EV_SIGNAL 和 EV_TIMEOUT，则该函数返回事件当前pending或active的所有标志。如果提供了 tv_out，并且 EV_TIMEOUT 设置在 what 中，并且事件当前处于挂起状态或超时处于活动状态，则 tv_out 设置为保持事件超时到期的时间。</p>
+<p><code>event_get_fd()</code> 和 <code>event_get_signal()</code> 函数返回为事件配置的文件描述符或信号编号。 <code>event_get_base() </code>函数返回其配置的 <code>event_base</code>。 <code>event_get_events()</code> 函数返回事件的事件标志（EV_READ、EV_WRITE 等）。 <code>event_get_callback()</code> 和 <code>event_get_callback_arg()</code> 函数返回回调函数和参数指针。 <code>event_get_priority()</code> 函数返回事件当前分配的优先级。</p>
+<p><code>event_get_assignment()</code> 函数将事件的所有分配字段复制到提供的指针中。如果任何指针为 NULL，则将其忽略。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdio.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#008000">/* Change the callback and callback_arg of &#39;ev&#39;, which must not be
+</span><span style="color:#008000"> * pending. */</span>
+<span style="color:#2b91af">int</span> replace_callback(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev, event_callback_fn new_callback,
+    <span style="color:#2b91af">void</span> *new_callback_arg)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+    evutil_socket_t fd;
+    <span style="color:#2b91af">short</span> events;
+
+    <span style="color:#2b91af">int</span> pending;
+
+    pending = event_pending(ev, EV_READ|EV_WRITE|EV_SIGNAL|EV_TIMEOUT,
+                            NULL);
+    <span style="color:#00f">if</span> (pending) {
+        <span style="color:#008000">/* We want to catch this here so that we do not re-assign a
+</span><span style="color:#008000">         * pending event.  That would be very very bad. */</span>
+        fprintf(stderr,
+                <span style="color:#a31515">&#34;Error! replace_callback called on a pending event!</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>);
+        <span style="color:#00f">return</span> -1;
+    }
+
+    event_get_assignment(ev, &amp;base, &amp;fd, &amp;events,
+                         NULL <span style="color:#008000">/* ignore old callback */</span> ,
+                         NULL <span style="color:#008000">/* ignore old callback argument */</span>);
+
+    event_assign(ev, base, fd, events, new_callback, new_callback_arg);
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><h4 id="查找当前正在运行的事件">查找当前正在运行的事件</h4>
+<p>出于调试或其他目的，您可以获得指向当前正在运行的事件的指针。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *event_base_get_running_event(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base);
+</code></pre></div><p>请注意，此函数的行为仅在从提供的 event_base 循环中调用时才定义。不支持从另一个线程调用它，并且可能导致未定义的行为。</p>
+<h4 id="配置一次性事件">配置一次性事件</h4>
+<p>如果你不需要多次添加一个事件，或者一旦添加就删除它，并且它不必是持久的，你可以使用 <code>event_base_once()</code>。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> event_base_once(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *, evutil_socket_t, <span style="color:#2b91af">short</span>,
+  <span style="color:#2b91af">void</span> (*)(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *), <span style="color:#2b91af">void</span> *, <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *);
+</code></pre></div><p>该函数的接口与<code>event_new()</code>相同，只是它不支持 EV_SIGNAL 或 EV_PERSIST。计划事件以默认优先级插入和运行。当回调最终完成时，Libevent 释放内部事件结构本身。成功时返回值为 0，失败时返回 -1。</p>
+<p>使用 <code>event_base_once </code>插入的事件无法删除或手动激活：如果您希望能够取消事件，请使用常规的 <code>event_new()</code> 或 <code>event_assign() </code>接口创建它。</p>
+<h4 id="手动激活事件">手动激活事件</h4>
+<p>极少情况下，即使事件的条件尚未触发，您也可能希望使变为active状态。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> event_active(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev, <span style="color:#2b91af">int</span> what, <span style="color:#2b91af">short</span> ncalls);
+</code></pre></div><p>该函数以what的标志位（EV_READ, EV_WRITE, and EV_TIMEOUT的位与）来使一个event变为active状态。事件不需要之前处于pending状态，并且激活它不会使其处于pending状态。</p>
+<p>警告：对同一事件递归地调用<code>event_active()</code>函数可能会导致资源耗尽。下面的代码片段展示了这一情况。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev;
+
+<span style="color:#00f">static</span> <span style="color:#2b91af">void</span> cb(<span style="color:#2b91af">int</span> sock, <span style="color:#2b91af">short</span> which, <span style="color:#2b91af">void</span> *arg) {
+        <span style="color:#008000">/* Whoops: Calling event_active on the same event unconditionally
+</span><span style="color:#008000">           from within its callback means that no other events might not get
+</span><span style="color:#008000">           run! */</span>
+
+        event_active(ev, EV_WRITE, 0);
+}
+
+<span style="color:#2b91af">int</span> main(<span style="color:#2b91af">int</span> argc, <span style="color:#2b91af">char</span> **argv) {
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = event_base_new();
+
+        ev = event_new(base, -1, EV_PERSIST | EV_READ, cb, NULL);
+
+        event_add(ev, NULL);
+
+        event_active(ev, EV_WRITE, 0);
+
+        event_base_loop(base, 0);
+
+        <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><p>这会造成事件循环只执行一次并永远调用函数<code>cb</code>的情况。</p>
+<p>可用定时器解决上述问题：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev;
+<span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> tv;
+
+<span style="color:#00f">static</span> <span style="color:#2b91af">void</span> cb(<span style="color:#2b91af">int</span> sock, <span style="color:#2b91af">short</span> which, <span style="color:#2b91af">void</span> *arg) {
+   <span style="color:#00f">if</span> (!evtimer_pending(ev, NULL)) {
+       event_del(ev);
+       evtimer_add(ev, &amp;tv);
+   }
+}
+
+<span style="color:#2b91af">int</span> main(<span style="color:#2b91af">int</span> argc, <span style="color:#2b91af">char</span> **argv) {
+   <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = event_base_new();
+
+   tv.tv_sec = 0;
+   tv.tv_usec = 0;
+
+   ev = evtimer_new(base, cb, NULL);
+
+   evtimer_add(ev, &amp;tv);
+
+   event_base_loop(base, 0);
+
+   <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><p>也可使用<code>event_config_set_max_dispatch_interval()</code>解决上述问题：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev;
+
+<span style="color:#00f">static</span> <span style="color:#2b91af">void</span> cb(<span style="color:#2b91af">int</span> sock, <span style="color:#2b91af">short</span> which, <span style="color:#2b91af">void</span> *arg) {
+        event_active(ev, EV_WRITE, 0);
+}
+
+<span style="color:#2b91af">int</span> main(<span style="color:#2b91af">int</span> argc, <span style="color:#2b91af">char</span> **argv) {
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">event_config</span> *cfg = event_config_new();
+        <span style="color:#008000">/* Run at most 16 callbacks before checking for other events. */</span>
+        event_config_set_max_dispatch_interval(cfg, NULL, 16, 0);
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = event_base_new_with_config(cfg);
+        ev = event_new(base, -1, EV_PERSIST | EV_READ, cb, NULL);
+
+        event_add(ev, NULL);
+
+        event_active(ev, EV_WRITE, 0);
+
+        event_base_loop(base, 0);
+
+        <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><h4 id="优化common-timeouts">优化common timeouts</h4>
+<p>当前版本的 Libevent 使用二叉堆算法来跟踪挂起事件的超时。二叉堆为添加和删除每个事件超时提供了 <code>O(lg n) </code>的性能。如果您添加具有随机分布的超时值集的事件，这是最佳选择，但如果您有大量具有相同超时值的事件，则不是这样。</p>
+<p>例如，假设您有一万个事件，每个事件都应在添加5秒后触发其超时。在这种情况下，您可以通过使用双向链接队列实现为每次超时获得<code>O(1)</code>性能。</p>
+<p>自然，您不会希望为所有超时值使用队列，因为只有对于恒定超时值，队列才会更快。如果某些超时或多或少是随机分布的，那么将这些超时之一添加到队列将花费 <code>O(n)</code> 时间，这将比二叉堆要糟糕得多。</p>
+<p>Libevent 允许您通过将一些超时放在队列中，将其他超时放在二叉堆中来解决这个问题。为此，您需要向 Libevent 请求一个特殊的<code>common timeout</code>时间值，然后您可以使用它来添加具有该时间值的事件。如果您有大量具有单个公共超时的事件，则使用此优化应该可以提高超时性能。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *event_base_init_common_timeout(
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *duration);
+</code></pre></div><p>此函数将 <code>event_base</code> 和要初始化的公共超时的持续时间作为其参数。它返回一个指向特殊结构 <code>timeval</code> 的指针，您可以使用该指针指示应将事件添加到 <code>O(1)</code> 队列而不是 <code>O(lg n)</code> 堆。这个特殊的时间值可以在你的代码中自由复制或分配。它仅适用于您用来构建它的特定基础。不要依赖它的实际内容：Libevent 使用它们来告诉自己使用哪个队列。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;string.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#008000">/* We&#39;re going to create a very large number of events on a given base,
+</span><span style="color:#008000"> * nearly all of which have a ten-second timeout.  If initialize_timeout
+</span><span style="color:#008000"> * is called, we&#39;ll tell Libevent to add the ten-second ones to an O(1)
+</span><span style="color:#008000"> * queue. */</span>
+<span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> ten_seconds = { 10, 0 };
+
+<span style="color:#2b91af">void</span> initialize_timeout(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> tv_in = { 10, 0 };
+    <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *tv_out;
+    tv_out = event_base_init_common_timeout(base, &amp;tv_in);
+    memcpy(&amp;ten_seconds, tv_out, <span style="color:#00f">sizeof</span>(<span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span>));
+}
+
+<span style="color:#2b91af">int</span> my_event_add(<span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev, <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *tv)
+{
+    <span style="color:#008000">/* Note that ev must have the same event_base that we passed to
+</span><span style="color:#008000">       initialize_timeout */</span>
+    <span style="color:#00f">if</span> (tv &amp;&amp; tv-&gt;tv_sec == 10 &amp;&amp; tv-&gt;tv_usec == 0)
+        <span style="color:#00f">return</span> event_add(ev, &amp;ten_seconds);
+    <span style="color:#00f">else</span>
+        <span style="color:#00f">return</span> event_add(ev, tv);
+}
+</code></pre></div><p>与所有优化函数一样，您应该避免使用 <code>common_timeout</code> 功能，除非您非常确定它对您很重要。</p>
+<h4 id="区分正常的event">区分正常的event</h4>
+<p>Libevent 提供了一些函数，您可以使用这些函数将<code>initialized</code>的event与内存被复位的event区分开（例如，通过使用 <code>calloc() </code>分配它或使用<code>memset()</code>或 <code>bzero() </code>清除它）。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#2b91af">int</span> event_initialized(<span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev);
+
+<span style="color:#00f">#define evsignal_initialized(ev) event_initialized(ev)
+</span><span style="color:#00f">#define evtimer_initialized(ev) event_initialized(ev)
+</span></code></pre></div><p>警告：</p>
+<p>这些函数无法可靠地区分<code>initialized</code>的事件和<code>uninitialized</code>的内存。除非您知道有问题的内存已清除或为<code>initialized</code>事件，否则不应使用它们。</p>
+<p>一般来说，你不需要使用这些函数。 <code>event_new() </code>返回的事件总是被初始化。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdlib.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">struct</span> <span style="color:#2b91af">reader</span> {
+    evutil_socket_t fd;
+};
+
+<span style="color:#00f">#define READER_ACTUAL_SIZE() \
+</span><span style="color:#00f">    (sizeof(struct reader) + \
+</span><span style="color:#00f">     event_get_struct_event_size())
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#define READER_EVENT_PTR(r) \
+</span><span style="color:#00f">    ((struct event *) (((char*)(r))+sizeof(struct reader)))
+</span><span style="color:#00f"></span>
+<span style="color:#00f">struct</span> <span style="color:#2b91af">reader</span> *allocate_reader(evutil_socket_t fd)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">reader</span> *r = calloc(1, READER_ACTUAL_SIZE());
+    <span style="color:#00f">if</span> (r)
+        r-&gt;fd = fd;
+    <span style="color:#00f">return</span> r;
+}
+
+<span style="color:#2b91af">void</span> readcb(evutil_socket_t, <span style="color:#2b91af">short</span>, <span style="color:#2b91af">void</span> *);
+<span style="color:#2b91af">int</span> add_reader(<span style="color:#00f">struct</span> <span style="color:#2b91af">reader</span> *r, <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *b)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event</span> *ev = READER_EVENT_PTR(r);
+    <span style="color:#00f">if</span> (!event_initialized(ev))
+        event_assign(ev, b, r-&gt;fd, EV_READ, readcb, r);
+    <span style="color:#00f">return</span> event_add(ev, NULL);
+}
+</code></pre></div>
+
+
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<section id="comments">
+    <div class="py-3 content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-sm-12 col-lg-8">
+                    <div class="comments">
+                        <script src="https://utteranc.es/client.js" repo=""
+                            issue-term="pathname" label="comment" theme="github-light" crossorigin="anonymous" async>
+                            </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+    
+
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/r.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/python.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/stan.min.js" defer></script>
+        
+        <script>
+            window.addEventListener('load', function() {
+                hljs.initHighlighting();
+            }, true);
+        </script>
+    
+
+    
+
+    
+    
+        
+<script src="https://guangxuanliu.github.io/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+</body>
+
+</html>

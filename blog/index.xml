@@ -6,7 +6,23 @@
     <description>Recent content in Blog on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 04 Sep 2021 17:36:09 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 04 Sep 2021 20:17:14 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Event</title>
+      <link>https://guangxuanliu.github.io/blog/event/</link>
+      <pubDate>Sat, 04 Sep 2021 20:17:14 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/event/</guid>
+      <description>事件 event是libevent的基本操作单元，每一个event代表一系列条件的集合，包括：
+ 一个文件描述符准备好了读、写 一个文件描述符准备好了读、写（仅限于边缘触发） 超时到期 发生了信号 用户触发的事件  events拥有类似的生命周期。当你调用libevent的函数设置了一个event，并且将它关联到一个event_base，它的状态是initialized，在此时，你可以将它add进event_base，此时它的状态变为pending，当触发条件的事件发生时（比如，文件描述符状态改变或者超时到期），它的状态会变为active，此时用户提供的回调函数将会被调用，如果event被设置为persistent，它仍然保持pending状态，如果不是persistent的，当回调函数结束后，将不再是pending状态，你可以将pending 的event删除，使其变为non-pending状态，你可以将non-pending状态的event调用add使其变为pending状态。
+构造event对象 调用event_new()创建一个新的event。
+#define EV_TIMEOUT 0x01 #define EV_READ 0x02 #define EV_WRITE 0x04 #define EV_SIGNAL 0x08 #define EV_PERSIST 0x10 #define EV_ET 0x20  typedef void (*event_callback_fn)(evutil_socket_t, short, void *); struct event *event_new(struct event_base *base, evutil_socket_t fd, short what, event_callback_fn cb, void *arg); void event_free(struct event *event); event_new()使用指定的event_base分配并构造一个新的event，what参数是上面列举的一些标志位（具体语义将在下面描述），如果fd非负，我们将监控此fd的读写事件，当event变为active，libevent会调用cb回调函数，并传递参数：
+ fd，文件描述符 bitfield，代表触发的事件的位集合 args，构造事件时指定的参数  当发生内部错误或参数无效时，返回NULL。
+所有新创建的事件均为initialized，并且是non-pending状态，可以调用event_add()函数使其变为pending状态。
+可以调用event_free()函数来释放一个event，当event处于pengding或者active状态时调用该函数是安全的。
+#include &amp;lt;event2/event.h&amp;gt; void cb_func(evutil_socket_t fd, short what, void *arg) { const char *data = arg; printf(&amp;#34;Got an event on socket %d:%s%s%s%s [%s]&amp;#34;, (int) fd, (what&amp;amp;EV_TIMEOUT) ?</description>
+    </item>
+    
     <item>
       <title>运行event_loop</title>
       <link>https://guangxuanliu.github.io/blog/%E8%BF%90%E8%A1%8Cevent_loop/</link>
