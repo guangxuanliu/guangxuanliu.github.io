@@ -6,7 +6,21 @@
     <description>Recent content in Blog on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 04 Sep 2021 20:17:14 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 05 Sep 2021 18:30:48 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>可移植的工具函数</title>
+      <link>https://guangxuanliu.github.io/blog/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/</link>
+      <pubDate>Sun, 05 Sep 2021 18:30:48 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/</guid>
+      <description>Libevent 的辅助函数和类型 &amp;lt;event2/util.h&amp;gt;头文件定义了许多函数，您可能会发现这些函数对使用 Libevent 实现可移植应用程序很有帮助。 libevent 在内部使用这些类型和函数。
+基本类型 evutil_socket_t
+在除了Windows之外的大部分地方，socket是一个int值，操作系统按数字的顺序处理它们。但是在Windows上，socket的类型为SOCKET，这是一个类似指针的操作系统句柄，并且你接收到它们的顺序是未定义的。我们将 evutil_socket_t 类型定义为一个整数，它可以保存 socket() 或 accept() 的输出，而不会在 Windows 上指针截断的风险。
+#ifdef WIN32 #define evutil_socket_t intptr_t #else #define evutil_socket_t int #endif 标准整数类型
+在较古老的系统上，没有C99的stdint.h头文件，为了应对这种情况，libevent定义了自己版本的特定位宽的整数。
+   Type Width Signed Maximum Minimum     ev_uint64_t 64 No EV_UINT64_MAX 0   ev_int64_t 64 Yes EV_INT64_MAX EV_INT64_MIN   ev_uint32_t 32 No EV_UINT32_MAX 0   ev_int32_t 32 Yes EV_INT32_MAX EV_INT32_MIN   ev_uint16_t 16 No EV_UINT16_MAX 0   ev_int16_t 16 Yes EV_INT16_MAX EV_INT16_MIN   ev_uint8_t 8 No EV_UINT8_MAX 0   ev_int8_t 8 Yes EV_INT8_MAX EV_INT8_MIN    与 C99 标准一样，每种类型都具有指定的宽度（以位为单位）。</description>
+    </item>
+    
     <item>
       <title>Event</title>
       <link>https://guangxuanliu.github.io/blog/event/</link>
