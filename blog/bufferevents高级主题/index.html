@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title> Bufferevents：高级主题 - 刘光轩的个人博客 </title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="" />
+    <meta property="og:site_name" content="刘光轩的个人博客" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://guangxuanliu.github.io/blog/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/" />
+    <meta property="og:title" content="Bufferevents：高级主题" />
+    <meta property="og:image" content="https://guangxuanliu.github.io/" />
+    <meta property="og:description" content="" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <meta name="twitter:title" content="Bufferevents：高级主题" />
+    <meta name="twitter:description" content="" />
+    <meta name="twitter:image" content="https://guangxuanliu.github.io/" />
+
+    <link rel="canonical" href="https://guangxuanliu.github.io/blog/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="https://guangxuanliu.github.io/css/custom.css" />
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/github-gist.min.css" integrity="sha512-od7JLoOTxM8w/HSKGzP9Kexc20K9p/M2zxSWsd7H1e4Ctf+8SQFtCWEZnW5u6ul5ehSECa5QmOk9ju2nQMmlVA==" crossorigin="anonymous" />
+    
+
+    
+
+    <link rel="shortcut icon"
+        href="https://guangxuanliu.github.io/images/favicon.png">
+
+    
+    <link href="https://guangxuanliu.github.io/index.xml" rel="alternate" type="application/rss+xml" title="刘光轩的个人博客" />
+    
+</head>
+
+<body>
+    
+<div class="mt-xl header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="https://guangxuanliu.github.io/">
+                    <h1 class="name">刘光轩的个人博客</h1>
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <ul class="nav nav-primary">
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/">
+                        
+                        主页
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/about/">
+                        
+                        关于
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-12 col-lg-8">
+                <h1 class="mx-0 mx-md-4 blog-post-title">Bufferevents：高级主题</h1>
+
+                <div class="mb-md-4 meta">
+                    
+                    
+                    
+
+                    <span class="date middot" title='Sat Sep 11 2021 17:06:07 CST'>
+                        2021-09-11
+                    </span>
+
+                    <span class="reading-time middot">
+                        2 min read
+                    </span>
+
+                    <div class="d-none d-md-inline tags">
+                        <ul class="list-unstyled d-inline">
+                            
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="markdown blog-post-content">
+                    
+    <p>这一章节讲述一些bufferevent的高级特性，对初学者来说并不是必须的。如果你刚刚学习如何使用bufferevent，可以跳过本章节。</p>
+<h4 id="成对的bufferevent">成对的bufferevent</h4>
+<p>有时，你需要编写一个与自己通信的网络程序。例如，您可以编写一个程序来通过某个协议建立隧道用户连接，而该程序有时也希望通过该协议建立自己的连接隧道。当然，您可以通过打开与您自己的侦听端口的连接并让您的程序使用自己来实现这一点，但是，让您的程序通过网络堆栈与自己对话会浪费资源。</p>
+<p>相反，您可以创建一对成对的bufferevent，以便写入一个的所有字节都被另一个接收（反之亦然），但不使用socket。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> bufferevent_pair_new(<span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base, <span style="color:#2b91af">int</span> options,
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *pair[2]);
+</code></pre></div><p>调用<code>bufferevent_pair_new()</code>将<code>pair[0]</code>和<code>pair[1]</code>设置为一对bufferevent，每个都连接到另一个，除<code>BEV_OPT_CLOSE_ON_FREE</code>外，支持所有常用的选项，并且<code>BEV_OPT_DEFER_CALLBACKS</code>标志位始终打开。</p>
+<p>为什么 成对的bufferevent 需要在回调延迟的情况下运行？对一对元素中的一个元素的操作调用改变 bufferevent 的回调是很常见的，从而调用另一个 bufferevent 的回调，等等通过许多步骤。当回调没有延迟时，这个调用链会经常溢出堆栈，使其他连接饿死，并要求所有回调都是可重入的。</p>
+<p>成对的缓冲事件支持刷新；将 mode 参数设置为 <code>BEV_NORMAL</code> 或 <code>BEV_FLUSH</code> 强制所有相关数据从一对缓冲区事件传输到另一个缓冲区事件，忽略否则会限制它的水印。将 mode 设置为 <code>BEV_FINISHED</code> 还会在相反的 bufferevent 上生成一个 <code>EOF</code> 事件。</p>
+<p>释放对中的任何一个成员不会自动释放另一个或生成 <code>EOF</code> 事件；它只会使配对中的另一个成员解除链接。一旦 bufferevent 被取消链接，它将不再成功读取或写入数据或生成任何事件。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufferevent_pair_get_partner(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev)
+</code></pre></div><p>有时你想通过成对的bufferevent中的一个来获取另一个，你可以调用<code>bufferevent_pair_get_partner()</code>函数来达到此目的。如果成对中的另一个不存在了，则返回NULL。</p>
+<h4 id="过滤的bufferevent">过滤的bufferevent</h4>
+<p>有时您想转换通过 bufferevent 对象的所有数据。您可以这样做以添加压缩层，或将协议包装在另一个协议中以进行传输。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">enum</span> <span style="color:#2b91af">bufferevent_filter_result</span> {
+        BEV_OK = 0,
+        BEV_NEED_MORE = 1,
+        BEV_ERROR = 2
+};
+<span style="color:#00f">typedef</span> <span style="color:#00f">enum</span> bufferevent_filter_result (*bufferevent_filter_cb)(
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *source, <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *destination, ev_ssize_t dst_limit,
+    <span style="color:#00f">enum</span> <span style="color:#2b91af">bufferevent_flush_mode</span> mode, <span style="color:#2b91af">void</span> *ctx);
+
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufferevent_filter_new(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *underlying,
+        bufferevent_filter_cb input_filter,
+        bufferevent_filter_cb output_filter,
+        <span style="color:#2b91af">int</span> options,
+        <span style="color:#2b91af">void</span> (*free_context)(<span style="color:#2b91af">void</span> *),
+        <span style="color:#2b91af">void</span> *ctx);
+</code></pre></div><p><code>bufferevent_filter_new()</code> 函数创建一个新的过滤的bufferevent，包裹着现有的“底层”bufferevent。通过底层的bufferevent接收的所有数据在到达过滤的bufferevent之前用“输入”过滤器进行转换，通过过滤的bufferevent发送的所有数据在发送到底层的bufferevent之前用“输出”过滤器进行转换。</p>
+<p>将过滤器添加到底层 bufferevent 会替换底层 bufferevent 上的回调。您仍然可以向底层 bufferevent 的 evbuffers 添加回调，但是如果您希望过滤器仍然工作，则不能在 bufferevent 本身上设置回调。</p>
+<p>input_filter 和 output_filter 函数如下所述。选项中支持所有常用选项。如果设置了 <code>BEV_OPT_CLOSE_ON_FREE</code>，那么释放过滤bufferevent也会释放底层bufferevent。 ctx 字段是传递给过滤器函数的任意指针；如果提供了 <code>free_context</code> 函数，它会在过滤缓冲区事件关闭之前在 ctx 上调用。</p>
+<p>只要底层输入缓冲区上有新的可读数据，就会调用输入过滤器函数。只要过滤器的输出缓冲区中有新的可写数据，就会调用输出过滤器函数。每个都有一对 evbuffer：一个用于读取数据的源 evbuffer 和一个用于写入数据的目标 evbuffer。 dst_limit 参数描述要添加到目标的字节上限。过滤器函数可以忽略这个值，但这样做可能会违反高水位线或速率限制。如果 dst_limit 为 -1，则没有限制。 mode 参数告诉过滤器在写作中的积极程度。如果是BEV_NORMAL，那么它应该尽可能多地写，可以方便地转换。 BEV_FLUSH 值意味着尽可能多地写入，而 BEV_FINISHED 意味着过滤函数应该在流的末尾额外进行任何必要的清理。最后，过滤器函数的 ctx 参数是一个空指针，提供给 bufferevent_filter_new() 构造函数。</p>
+<p>如果任何数据成功写入目标缓冲区，过滤器函数必须返回 BEV_OK，如果没有更多的数据可以写入目标缓冲区而没有更多的输入或使用不同的刷新模式，则返回 BEV_NEED_MORE，如果出现不可恢复的错误，则返回 BEV_ERROR。</p>
+<p>创建过滤器可以对底层bufferevent进行读取和写入。您不需要自己管理读/写：过滤器将在不想读取时为您暂停对底层 bufferevent 的读取。对于 2.0.8-rc 及更高版本，允许启用/禁用独立于过滤器的底层 bufferevent 的读取和写入。但是，如果您这样做，您可能会阻止过滤器成功获取它想要的数据。</p>
+<p>您不需要同时指定输入过滤器和输出过滤器：您省略的任何过滤器都将替换为不转换数据而直接传递数据的过滤器。</p>
+<h4 id="限制单次读写最大值">限制单次读、写最大值</h4>
+<p>默认情况下，bufferevents 不会在每次调用事件循环时读取或写入最大可能的字节数；这样做会导致奇怪的不公平行为和资源匮乏。另一方面，默认值可能不适用于所有情况。</p>
+<pre><code>int bufferevent_set_max_single_read(struct bufferevent *bev, size_t size);
+int bufferevent_set_max_single_write(struct bufferevent *bev, size_t size);
+
+ev_ssize_t bufferevent_get_max_single_read(struct bufferevent *bev);
+ev_ssize_t bufferevent_get_max_single_write(struct bufferevent *bev);
+</code></pre><p>这两个“set”函数分别替换了当前的读写最大值。如果大小值为 0 或高于 <code>EV_SSIZE_MAX</code>，则将最大值设置为默认值。这些函数在成功时返回 0，在失败时返回 -1。</p>
+<p>两个“get”函数分别返回当前每个循环的读取和写入最大值。</p>
+<h4 id="限速">限速</h4>
+<p>一些程序想要限制用于任何单个bufferevent或一组bufferevent的带宽量。 Libevent 2.0.4-alpha 和 Libevent 2.0.5-alpha 添加了一个基本工具来设置单个bufferevent的上限，或者将bufferevent分配给一个速率受限的组。</p>
+<p><strong>限速模式</strong></p>
+<p>Libevent 的速率限制使用令牌桶算法来决定一次读取或写入多少字节。每个受速率限制的对象在任何给定时间都有一个“读桶”和一个“写桶”，它们的大小决定了允许对象立即读取或写入的字节数。每个桶都有一个重新填充率、一个最大突发大小和一个计时单位或“滴答”。每当计时单位结束时，桶会根据重新填充率按比例重新填充——但如果它变得比其突发大小更满，则任何多余的字节都会丢失。</p>
+<p>因此，重新填充速率决定了对象发送或接收字节的最大平均速率，而突发大小决定了在单个突发中将发送或接收的最大字节数。计时单位决定了发送的顺畅程度。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#define EV_RATE_LIMIT_MAX EV_SSIZE_MAX
+</span><span style="color:#00f"></span><span style="color:#00f">struct</span> <span style="color:#2b91af">ev_token_bucket_cfg</span>;
+<span style="color:#00f">struct</span> <span style="color:#2b91af">ev_token_bucket_cfg</span> *ev_token_bucket_cfg_new(
+        size_t read_rate, size_t read_burst,
+        size_t write_rate, size_t write_burst,
+        <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *tick_len);
+<span style="color:#2b91af">void</span> ev_token_bucket_cfg_free(<span style="color:#00f">struct</span> <span style="color:#2b91af">ev_token_bucket_cfg</span> *cfg);
+<span style="color:#2b91af">int</span> bufferevent_set_rate_limit(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev,
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">ev_token_bucket_cfg</span> *cfg);
+</code></pre></div><p><code>ev_token_bucket_cfg</code> 结构表示一对令牌桶的配置值，用于限制对单个bufferevent或bufferevent组的读写。调用 <code>ev_token_bucket_cfg_new</code> 函数并提供最大平均读取速率、最大读取突发、最大写入速率、最大写入突发和滴答的长度。如果 <code>tick_len</code> 参数为 <code>NULL</code>，则刻度的长度默认为一秒。该函数可能会在出错时返回 <code>NULL</code>。</p>
+<p>请注意， <code>read_rate</code> 和 <code>write_rate</code> 参数以每个滴答的字节为单位进行缩放。也就是说，如果滴答是十分之一秒，而 <code>read_rate</code> 是 300，那么最大平均读取速率是每秒 3000 字节。不支持超过 <code>EV_RATE_LIMIT_MAX</code> 的速率和突发值。</p>
+<p>要限制bufferevent的传输速率，请使用 <code>ev_token_bucket_cfg</code> 对其调用 <code>bufferevent_set_rate_limit()</code>。该函数在成功时返回 0，在失败时返回 -1。您可以为任意数量的bufferevent提供相同的 <code>ev_token_bucket_cfg</code>。要删除 bufferevent 的速率限制，请调用 <code>bufferevent_set_rate_limit()</code>，为 cfg 参数传递 NULL。</p>
+<p>要释放 <code>ev_token_bucket_cfg</code>，请调用 <code>ev_token_bucket_cfg_free()</code>。请注意，在没有缓冲区事件使用 <code>ev_token_bucket_cfg</code> 之前，目前这样做是不安全的。</p>
+<h4 id="以下内容暂时用不到先不翻译">以下内容暂时用不到，先不翻译。</h4>
+
+
+
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<section id="comments">
+    <div class="py-3 content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-sm-12 col-lg-8">
+                    <div class="comments">
+                        <script src="https://utteranc.es/client.js" repo=""
+                            issue-term="pathname" label="comment" theme="github-light" crossorigin="anonymous" async>
+                            </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+    
+
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/r.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/python.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/stan.min.js" defer></script>
+        
+        <script>
+            window.addEventListener('load', function() {
+                hljs.initHighlighting();
+            }, true);
+        </script>
+    
+
+    
+
+    
+    
+        
+
+    
+</body>
+
+</html>

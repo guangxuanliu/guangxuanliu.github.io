@@ -6,7 +6,25 @@
     <description>Recent content in Blog on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 05 Sep 2021 19:23:14 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 11 Sep 2021 17:06:07 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Bufferevents：高级主题</title>
+      <link>https://guangxuanliu.github.io/blog/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/</link>
+      <pubDate>Sat, 11 Sep 2021 17:06:07 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/</guid>
+      <description>这一章节讲述一些bufferevent的高级特性，对初学者来说并不是必须的。如果你刚刚学习如何使用bufferevent，可以跳过本章节。
+成对的bufferevent 有时，你需要编写一个与自己通信的网络程序。例如，您可以编写一个程序来通过某个协议建立隧道用户连接，而该程序有时也希望通过该协议建立自己的连接隧道。当然，您可以通过打开与您自己的侦听端口的连接并让您的程序使用自己来实现这一点，但是，让您的程序通过网络堆栈与自己对话会浪费资源。
+相反，您可以创建一对成对的bufferevent，以便写入一个的所有字节都被另一个接收（反之亦然），但不使用socket。
+int bufferevent_pair_new(struct event_base *base, int options, struct bufferevent *pair[2]); 调用bufferevent_pair_new()将pair[0]和pair[1]设置为一对bufferevent，每个都连接到另一个，除BEV_OPT_CLOSE_ON_FREE外，支持所有常用的选项，并且BEV_OPT_DEFER_CALLBACKS标志位始终打开。
+为什么 成对的bufferevent 需要在回调延迟的情况下运行？对一对元素中的一个元素的操作调用改变 bufferevent 的回调是很常见的，从而调用另一个 bufferevent 的回调，等等通过许多步骤。当回调没有延迟时，这个调用链会经常溢出堆栈，使其他连接饿死，并要求所有回调都是可重入的。
+成对的缓冲事件支持刷新；将 mode 参数设置为 BEV_NORMAL 或 BEV_FLUSH 强制所有相关数据从一对缓冲区事件传输到另一个缓冲区事件，忽略否则会限制它的水印。将 mode 设置为 BEV_FINISHED 还会在相反的 bufferevent 上生成一个 EOF 事件。
+释放对中的任何一个成员不会自动释放另一个或生成 EOF 事件；它只会使配对中的另一个成员解除链接。一旦 bufferevent 被取消链接，它将不再成功读取或写入数据或生成任何事件。
+struct bufferevent *bufferevent_pair_get_partner(struct bufferevent *bev) 有时你想通过成对的bufferevent中的一个来获取另一个，你可以调用bufferevent_pair_get_partner()函数来达到此目的。如果成对中的另一个不存在了，则返回NULL。
+过滤的bufferevent 有时您想转换通过 bufferevent 对象的所有数据。您可以这样做以添加压缩层，或将协议包装在另一个协议中以进行传输。
+enum bufferevent_filter_result { BEV_OK = 0, BEV_NEED_MORE = 1, BEV_ERROR = 2 }; typedef enum bufferevent_filter_result (*bufferevent_filter_cb)( struct evbuffer *source, struct evbuffer *destination, ev_ssize_t dst_limit, enum bufferevent_flush_mode mode, void *ctx); struct bufferevent *bufferevent_filter_new(struct bufferevent *underlying, bufferevent_filter_cb input_filter, bufferevent_filter_cb output_filter, int options, void (*free_context)(void *), void *ctx); bufferevent_filter_new() 函数创建一个新的过滤的bufferevent，包裹着现有的“底层”bufferevent。通过底层的bufferevent接收的所有数据在到达过滤的bufferevent之前用“输入”过滤器进行转换，通过过滤的bufferevent发送的所有数据在发送到底层的bufferevent之前用“输出”过滤器进行转换。</description>
+    </item>
+    
     <item>
       <title>bufferevent：概念与基础</title>
       <link>https://guangxuanliu.github.io/blog/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/</link>
