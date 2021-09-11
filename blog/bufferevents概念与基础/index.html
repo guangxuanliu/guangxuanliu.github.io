@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title> bufferevent：概念与基础 - 刘光轩的个人博客 </title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="" />
+    <meta property="og:site_name" content="刘光轩的个人博客" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://guangxuanliu.github.io/blog/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/" />
+    <meta property="og:title" content="bufferevent：概念与基础" />
+    <meta property="og:image" content="https://guangxuanliu.github.io/" />
+    <meta property="og:description" content="" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <meta name="twitter:title" content="bufferevent：概念与基础" />
+    <meta name="twitter:description" content="" />
+    <meta name="twitter:image" content="https://guangxuanliu.github.io/" />
+
+    <link rel="canonical" href="https://guangxuanliu.github.io/blog/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous" />
+
+    <link rel="stylesheet" href="https://guangxuanliu.github.io/css/custom.css" />
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/github-gist.min.css" integrity="sha512-od7JLoOTxM8w/HSKGzP9Kexc20K9p/M2zxSWsd7H1e4Ctf+8SQFtCWEZnW5u6ul5ehSECa5QmOk9ju2nQMmlVA==" crossorigin="anonymous" />
+    
+
+    
+
+    <link rel="shortcut icon"
+        href="https://guangxuanliu.github.io/images/favicon.png">
+
+    
+    <link href="https://guangxuanliu.github.io/index.xml" rel="alternate" type="application/rss+xml" title="刘光轩的个人博客" />
+    
+</head>
+
+<body>
+    
+<div class="mt-xl header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="https://guangxuanliu.github.io/">
+                    <h1 class="name">刘光轩的个人博客</h1>
+                </a>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <ul class="nav nav-primary">
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/">
+                        
+                        主页
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="https://guangxuanliu.github.io/about/">
+                        
+                        关于
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-sm-12 col-lg-8">
+                <h1 class="mx-0 mx-md-4 blog-post-title">bufferevent：概念与基础</h1>
+
+                <div class="mb-md-4 meta">
+                    
+                    
+                    
+
+                    <span class="date middot" title='Sun Sep 5 2021 19:23:14 CST'>
+                        2021-09-05
+                    </span>
+
+                    <span class="reading-time middot">
+                        6 min read
+                    </span>
+
+                    <div class="d-none d-md-inline tags">
+                        <ul class="list-unstyled d-inline">
+                            
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="markdown blog-post-content">
+                    
+    <p>大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下：</p>
+<ul>
+<li>决定我们要向连接写入一些数据；将该数据放入缓冲区。</li>
+<li>等待连接变为可写</li>
+<li>尽可能多地写入数据</li>
+<li>记住我们写了多少，如果我们还有更多的数据要写，等待连接再次变为可写。</li>
+</ul>
+<p>这种缓冲 IO 模式很常见，以至于 Libevent 为其提供了通用机制。 <code>bufferevent</code>由底层传输（如套接字）、读取缓冲区和写入缓冲区组成。与在底层传输准备好读取或写入时提供回调的常规事件不同，<code>bufferevent</code> 在读取或写入足够的数据时调用其用户提供的回调。</p>
+<p>有多种类型的bufferevent，它们都共享一个公共接口。在撰写本文时，存在以下类型：</p>
+<ul>
+<li>
+<p>基于套接字的bufferevent</p>
+<p>它使用 <code>event_*</code> 接口作为后端方法，从底层流套接字发送和接收数据。</p>
+</li>
+<li>
+<p>异步IO的bufferevent</p>
+<p>使用 Windows IOCP 接口向底层流套接字发送和接收数据的bufferevent。（仅限 Windows，实验性的）</p>
+</li>
+<li>
+<p>过滤的bufferevent</p>
+<p>在将传入和传出数据传递给底层 bufferevent 对象之前处理传入和传出数据的bufferevent - 例如，压缩或转换数据。</p>
+</li>
+<li>
+<p>成对的bufferevent</p>
+<p>两个之间互相传输数据</p>
+</li>
+</ul>
+<p>注意：</p>
+<p>bufferevent目前只支持面向字节流的TCP协议，在未来可能会支持面向数据报的UDP协议。</p>
+<p>本节中的所有函数和类型都在 <code>event2/bufferevent.h</code> 中声明。与 <code>evbuffer</code> 相关的函数在 <code>event2/buffer.h</code> 中声明；有关这些的信息，请参阅下一章。</p>
+<h4 id="bufferevents-and-evbuffers">Bufferevents and evbuffers</h4>
+<p>每一个bufferevent有一个输入缓冲区和输出缓冲区，类型为<code>struct evbuffer</code>，当你对bufferevent执行写操作时，实际上是写到了输出缓冲区上，当bufferevent有数据需要你读时，你实际上是从输入缓冲区进行读取的。</p>
+<p>我们将在后面的章节讨论evbuffer。</p>
+<h4 id="回调和水位">回调和水位</h4>
+<p>每一个bufferevent有两个相关的回调：读回调、写回调。默认情况下，只要从底层传输读取任何数据，就会调用读取回调。每当输出缓冲区中的足够数据被清空到底层传输时，就会调用写入回调。您可以通过bufferevent的读写“水位”来覆盖这些函数的行为。</p>
+<p>每一个bufferevent有4个水位：</p>
+<ul>
+<li>
+<p>读低水位</p>
+<p>当发生读取数据时，输入缓冲区大于等于此数值，则会调用读取回调。默认是0，所以每次读取数据都会调用读取回调。</p>
+</li>
+<li>
+<p>读高水位</p>
+<p>如果 bufferevent 的输入缓冲区达到此级别，则 bufferevent 将停止读取，直到从输入缓冲区中排出足够的数据使我们再次低于它。默认为无限制，因此我们永远不会因为输入缓冲区的大小而停止读取。</p>
+</li>
+<li>
+<p>写低水位</p>
+<p>当发生写数据时，输出缓冲区小于等于此数值，我们都会调用写回调。默认为 0，因此除非清空输出缓冲区，否则不会调用写入回调。</p>
+</li>
+<li>
+<p>写高水位</p>
+<p>不直接由bufferevent使用，当bufferevent用作另一个bufferevent的底层传输时，此水位可能具有特殊含义。请参阅下面有关过滤bufferevent的说明。</p>
+</li>
+</ul>
+<p>bufferevent 也有一个“错误”或“事件”回调，它被调用以告诉应用程序有关非面向数据的事件，例如连接关闭或发生错误时。定义了以下事件标志：</p>
+<ul>
+<li>
+<p>BEV_EVENT_READING</p>
+<p>读事件</p>
+</li>
+<li>
+<p>BEV_EVENT_WRITING</p>
+<p>写事件</p>
+</li>
+<li>
+<p>BEV_EVENT_ERROR</p>
+<p>错误事件</p>
+</li>
+<li>
+<p>BEV_EVENT_TIMEOUT</p>
+<p>超时事件</p>
+</li>
+<li>
+<p>BEV_EVENT_EOF</p>
+<p>结束事件</p>
+</li>
+<li>
+<p>BEV_EVENT_CONNECTED</p>
+<p>连接成功事件</p>
+</li>
+</ul>
+<h4 id="延迟回调">延迟回调</h4>
+<p>默认情况下，当相应的条件发生时，会立即执行 <code>bufferevent</code> 回调。 （这也适用于 <code>evbuffer</code> 回调；我们稍后会谈到。）当依赖关系变得复杂时，这种立即调用可能会带来麻烦。例如，假设有一个回调在 evbuffer A 变空时将数据移动到 evbuffer A 中，而另一个回调在 evbuffer A 变满时将数据从 evbuffer A 中处理出来。由于这些调用都发生在堆栈上，如果依赖关系变得足够糟糕，您可能会面临堆栈溢出的风险。</p>
+<p>为了解决这个问题，你可以告诉一个 <code>bufferevent</code>（或一个 <code>evbuffer</code>）它的回调应该被推迟。当满足延迟回调的条件时，它不会立即调用它，而是作为 <code>event_loop()</code> 调用的一部分排队，并在常规事件的回调之后调用。</p>
+<h4 id="bufferevents-的可选标志位">bufferevents 的可选标志位</h4>
+<p>在创建bufferevents的时候，你可以传入标志位来改变其默认行为，标志位如下所示：</p>
+<ul>
+<li>
+<p>BEV_OPT_CLOSE_ON_FREE</p>
+<p>当bufferevent被释放的时候，关闭底层传输，这会关闭底层socket传输，释放底层的bufferevent等。</p>
+</li>
+<li>
+<p>BEV_OPT_THREADSAFE</p>
+<p>自动为bufferevent分配锁，可以在多线程中安全的使用</p>
+</li>
+<li>
+<p>BEV_OPT_DEFER_CALLBACKS</p>
+<p>如上所述，延迟回调</p>
+</li>
+<li>
+<p>BEV_OPT_UNLOCK_CALLBACKS</p>
+<p>默认情况下，当bufferevent设置为线程安全时，当调用用户的回调时，bufferevent会自动加锁，设置此选项告诉libevent在调用用户回调的时候不加锁。</p>
+</li>
+</ul>
+<h4 id="基于socket的bufferevents">基于socket的bufferevents</h4>
+<p>最简单的bufferevent类型是基于套接字的。基于套接字的 bufferevent 使用 Libevent 的底层事件机制来检测底层网络套接字何时准备好进行读取和/或写入操作，并使用底层网络调用（如 readv、writev、WSASend 或 WSARecv）来传输和接收数据。</p>
+<p><strong>创建基于套接字的bufferevent</strong></p>
+<p>可以使用<code>bufferevent_socket_new()</code>函数创建一个基于套接字的bufferevent：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufferevent_socket_new(
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base,
+    evutil_socket_t fd,
+    <span style="color:#00f">enum</span> <span style="color:#2b91af">bufferevent_options</span> options);
+</code></pre></div><ul>
+<li>base：event_base</li>
+<li>options：位掩码（BEV_OPT_CLOSE_ON_FREE等）</li>
+<li>fd：可选的文件描述符，可以设置为-1，代表想之后设置文件描述符。</li>
+</ul>
+<p><strong>提示：</strong></p>
+<p>确保传入此函数的socket为非阻塞模式，libevent提供了便利的方法来设置非阻塞<code>evutil_make_socket_nonblocking </code>。</p>
+<p>这个函数在成功时返回一个bufferevent，失败时返回NULL。</p>
+<p><strong>在基于套接字的bufferevent上启动连接</strong></p>
+<p>如果bufferevent的socket还未连接，你可以启动一个新连接</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> bufferevent_socket_connect(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev,
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span> *address, <span style="color:#2b91af">int</span> addrlen);
+</code></pre></div><p>其中参数address、addrlen和标准的connect函数的参数一样，如果bufferevent还没有设置socket，调用此函数会分配一个新的socket给它，并设置为非阻塞模式。</p>
+<p>如果 bufferevent 已经有一个套接字，调用 bufferevent_socket_connect() 会告诉 Libevent 套接字未连接，并且在连接操作成功之前不应在套接字上进行读取或写入。</p>
+<p>在连接没有成功建立之前往输出缓冲区写数据是允许的。</p>
+<p>此函数在成功时返回0，失败时返回-1。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/bufferevent.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;sys/socket.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;string.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span> eventcb(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *ptr)
+{
+    <span style="color:#00f">if</span> (events &amp; BEV_EVENT_CONNECTED) {
+         <span style="color:#008000">/* We&#39;re connected to 127.0.0.1:8080.   Ordinarily we&#39;d do
+</span><span style="color:#008000">            something here, like start reading or writing. */</span>
+    } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (events &amp; BEV_EVENT_ERROR) {
+         <span style="color:#008000">/* An error occured while connecting. */</span>
+    }
+}
+
+<span style="color:#2b91af">int</span> main_loop(<span style="color:#2b91af">void</span>)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr_in</span> sin;
+
+    base = event_base_new();
+
+    memset(&amp;sin, 0, <span style="color:#00f">sizeof</span>(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = htonl(0x7f000001); <span style="color:#008000">/* 127.0.0.1 */</span>
+    sin.sin_port = htons(8080); <span style="color:#008000">/* Port 8080 */</span>
+
+    bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
+
+    bufferevent_setcb(bev, NULL, NULL, eventcb, NULL);
+
+    <span style="color:#00f">if</span> (bufferevent_socket_connect(bev,
+        (<span style="color:#00f">struct</span> <span style="color:#2b91af">sockaddr</span> *)&amp;sin, <span style="color:#00f">sizeof</span>(sin)) &lt; 0) {
+        <span style="color:#008000">/* Error starting connection */</span>
+        bufferevent_free(bev);
+        <span style="color:#00f">return</span> -1;
+    }
+
+    event_base_dispatch(base);
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><p><del><code>bufferevent_base_connect()</code></del> 函数是在 Libevent-2.0.2-alpha 中引入的。在此之前，您必须自己在套接字上手动调用 <code>connect()</code>，当连接完成时，bufferevent 会将其报告为写入。</p>
+<p>译者注：</p>
+<p>此处原作者应该是笔误，函数的名字为<code>bufferevent_socket_connect</code>。</p>
+<p>请注意，如果您使用 bufferevent_socket_connect() 来建立socket连接，您只会收到 BEV_EVENT_CONNECTED 事件。如果您自己调用 connect()来建立连接，将报告写入事件。</p>
+<p>如果您想自己调用connect()，但在连接成功时仍然收到BEV_EVENT_CONNECTED 事件，请在connect() 返回-1 且errno 等于EAGAIN 或EINPROGRESS 后调用bufferevent_socket_connect(bev, NULL, 0)。</p>
+<p><strong>通过主机名启动连接</strong></p>
+<p>很多时候，您希望将解析主机名和连接到它的操作合并为一个操作。有一个接口：</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> bufferevent_socket_connect_hostname(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev,
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evdns_base</span> *dns_base, <span style="color:#2b91af">int</span> family, <span style="color:#00f">const</span> <span style="color:#2b91af">char</span> *hostname,
+    <span style="color:#2b91af">int</span> port);
+<span style="color:#2b91af">int</span> bufferevent_socket_get_dns_error(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev);
+</code></pre></div><p>此函数解析 DNS 名称hostname，查找family类型的address。（允许的family类型是 AF_INET、AF_INET6 和 AF_UNSPEC。）如果名称解析失败，它会调用带有错误事件的事件回调。如果成功，它会像 bufferevent_socket_connect 一样启动连接尝试。</p>
+<p>dns_base参数是可选的，如果是NULL的话，libevent会在等待名称查找完成之前阻塞，这通常不是你想要的。如果提供的话，则libevent使用它来异步查找主机名，有关DNS的更多信息，请参阅第九章。</p>
+<p>就像<code>bufferevent_socket_connect()</code>函数一样，这个函数告诉libevent，bufferevent上的任何现有套接字都是未连接的，并且在解析完成且连接操作成功之前不应在套接字上进行读取或者写入操作。</p>
+<p>如果发生错误，错误原因可能是DNS主机名查找错误，你可以调用<code>bufferevent_socket_get_dns_error()</code>函数来获取最近发生的错误。如果返回值为0，则代表没有错误发生。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#008000">/* Don&#39;t actually copy this code: it is a poor way to implement an
+</span><span style="color:#008000">   HTTP client.  Have a look at evhttp instead.
+</span><span style="color:#008000">*/</span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/dns.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/bufferevent.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/buffer.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/util.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdio.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span> readcb(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">void</span> *ptr)
+{
+    <span style="color:#2b91af">char</span> buf[1024];
+    <span style="color:#2b91af">int</span> n;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *input = bufferevent_get_input(bev);
+    <span style="color:#00f">while</span> ((n = evbuffer_remove(input, buf, <span style="color:#00f">sizeof</span>(buf))) &gt; 0) {
+        fwrite(buf, 1, n, stdout);
+    }
+}
+
+<span style="color:#2b91af">void</span> eventcb(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *ptr)
+{
+    <span style="color:#00f">if</span> (events &amp; BEV_EVENT_CONNECTED) {
+         printf(<span style="color:#a31515">&#34;Connect okay.</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>);
+    } <span style="color:#00f">else</span> <span style="color:#00f">if</span> (events &amp; (BEV_EVENT_ERROR|BEV_EVENT_EOF)) {
+         <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base = ptr;
+         <span style="color:#00f">if</span> (events &amp; BEV_EVENT_ERROR) {
+                 <span style="color:#2b91af">int</span> err = bufferevent_socket_get_dns_error(bev);
+                 <span style="color:#00f">if</span> (err)
+                         printf(<span style="color:#a31515">&#34;DNS error: %s</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>, evutil_gai_strerror(err));
+         }
+         printf(<span style="color:#a31515">&#34;Closing</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>);
+         bufferevent_free(bev);
+         event_base_loopexit(base, NULL);
+    }
+}
+
+<span style="color:#2b91af">int</span> main(<span style="color:#2b91af">int</span> argc, <span style="color:#2b91af">char</span> **argv)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *base;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evdns_base</span> *dns_base;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev;
+
+    <span style="color:#00f">if</span> (argc != 3) {
+        printf(<span style="color:#a31515">&#34;Trivial HTTP 0.x client</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>
+               <span style="color:#a31515">&#34;Syntax: %s [hostname] [resource]</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>
+               <span style="color:#a31515">&#34;Example: %s www.google.com /</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>,argv[0],argv[0]);
+        <span style="color:#00f">return</span> 1;
+    }
+
+    base = event_base_new();
+    dns_base = evdns_base_new(base, 1);
+
+    bev = bufferevent_socket_new(base, -1, BEV_OPT_CLOSE_ON_FREE);
+    bufferevent_setcb(bev, readcb, NULL, eventcb, base);
+    bufferevent_enable(bev, EV_READ|EV_WRITE);
+    evbuffer_add_printf(bufferevent_get_output(bev), <span style="color:#a31515">&#34;GET %s</span><span style="color:#a31515">\r\n</span><span style="color:#a31515">&#34;</span>, argv[2]);
+    bufferevent_socket_connect_hostname(
+        bev, dns_base, AF_UNSPEC, argv[1], 80);
+    event_base_dispatch(base);
+    <span style="color:#00f">return</span> 0;
+}
+</code></pre></div><h4 id="通用bufferevent操作">通用bufferevent操作</h4>
+<p><strong>释放bufferevent</strong></p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> bufferevent_free(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev);
+</code></pre></div><p>这个函数释放一个bufferevent，bufferevent是内部引用计数的，所以如果bufferevent在你释放它时有挂起的延迟回调，他在回调完成之前不会被删除。</p>
+<p>然后，<code>bufferevent_free()</code>函数会尽快释放bufferevent，如果在bufferevent上有待写入的数据，他可能不会在bufferevent释放之前被刷新。</p>
+<p>如果设置了<code>BEV_OPT_CLOSE_ON_FREE </code>标志位，并且此bufferevent有一个与之关联的socket或底层bufferevent作为其传输，则当您释放bufferevent时，该传输将关闭。</p>
+<p><strong>操纵回调、水位、启用操作</strong></p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">typedef</span> void (*bufferevent_data_cb)(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">void</span> *ctx);
+<span style="color:#00f">typedef</span> void (*bufferevent_event_cb)(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev,
+    <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *ctx);
+
+<span style="color:#2b91af">void</span> bufferevent_setcb(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev,
+    bufferevent_data_cb readcb, bufferevent_data_cb writecb,
+    bufferevent_event_cb eventcb, <span style="color:#2b91af">void</span> *cbarg);
+
+<span style="color:#2b91af">void</span> bufferevent_getcb(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev,
+    bufferevent_data_cb *readcb_ptr,
+    bufferevent_data_cb *writecb_ptr,
+    bufferevent_event_cb *eventcb_ptr,
+    <span style="color:#2b91af">void</span> **cbarg_ptr);
+</code></pre></div><p><code>bufferevent_setcb()</code>函数修改<code>bufferevent</code>的一个或多个回调。当足够的数据被读取时调用读回调，当足够的数据被写入时调用写回调，当有事件发生时调用事件回调。第一个参数时发生事件的<code>bufferevent</code>，最后一个参数是用户在<code>bufferevent_setcb()</code>中提供的<code>cbarg</code>，你可以使用此方法传递参数至自己的回调函数中去。事件回调中的<code>events</code>参数为事件标志位的位集合。参考上述“回调和水位”部分。</p>
+<p>你可以用<code>NULL</code>参数来代替回调函数，达到禁用回调的目的。注意所有的回调函数共享同一个<code>cbarg</code>参数，所以如果修改此参数会影响到所有的回调。</p>
+<p>可以给<code>bufferevent_getcb()</code>传递指针来获取当前的回调，会将<code>readcb_ptr</code>设置位读回调，<code>writecb_ptr</code>设置为写回调，<code>eventcb_ptr</code>设置位事件回调，<code>cbarg_ptr</code>指向当前回调参数字段。如果任一参数为NULL，则被忽略。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> bufferevent_enable(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev, <span style="color:#2b91af">short</span> events);
+<span style="color:#2b91af">void</span> bufferevent_disable(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev, <span style="color:#2b91af">short</span> events);
+
+<span style="color:#2b91af">short</span> bufferevent_get_enabled(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev);
+</code></pre></div><p>你可以在一个<code>bufferevent</code>上启动或禁用<code>EV_READ</code>、<code>EV_WRITE</code>、<code>EV_READ|EV_WRITE</code>。当读或者写没有启用的时候，bufferevent不会尝试进行数据的读写。</p>
+<p>输出缓冲区为空的时候没必要禁用写操作：bufferevent会自动停止写入，当有数据可写的时候会重新启动。</p>
+<p>类似的，当输入缓冲区到达高水位的时候，没必要禁用读操作：bufferevent会自动停止读取，当有足够的空间可读的时候会自动重启。</p>
+<p>默认的，一个新创建的<code>bufferevent</code>启用了写操作，但是没有启用读操作。</p>
+<p>你可以调用<code>bufferevent_get_enabled()</code>函数来确定在当前bufferevent上启用了哪些事件。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> bufferevent_setwatermark(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev, <span style="color:#2b91af">short</span> events,
+    size_t lowmark, size_t highmark);
+</code></pre></div><p><code>bufferevent_setwatermark()</code>函数调整整个缓冲区的读水位、写水位或者两者。（如果events参数设置为EV_READ，则会调整读水位，如果events参数设置为EV_WRITE，则会调整写水位）</p>
+<p>高水位的0代表无限制。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/event.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/bufferevent.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/buffer.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/util.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;stdlib.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;errno.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;string.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">struct</span> <span style="color:#2b91af">info</span> {
+    <span style="color:#00f">const</span> <span style="color:#2b91af">char</span> *name;
+    size_t total_drained;
+};
+
+<span style="color:#2b91af">void</span> read_callback(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">void</span> *ctx)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">info</span> *inf = ctx;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *input = bufferevent_get_input(bev);
+    size_t len = evbuffer_get_length(input);
+    <span style="color:#00f">if</span> (len) {
+        inf-&gt;total_drained += len;
+        evbuffer_drain(input, len);
+        printf(<span style="color:#a31515">&#34;Drained %lu bytes from %s</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>,
+             (<span style="color:#2b91af">unsigned</span> <span style="color:#2b91af">long</span>) len, inf-&gt;name);
+    }
+}
+
+<span style="color:#2b91af">void</span> event_callback(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">short</span> events, <span style="color:#2b91af">void</span> *ctx)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">info</span> *inf = ctx;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *input = bufferevent_get_input(bev);
+    <span style="color:#2b91af">int</span> finished = 0;
+
+    <span style="color:#00f">if</span> (events &amp; BEV_EVENT_EOF) {
+        size_t len = evbuffer_get_length(input);
+        printf(<span style="color:#a31515">&#34;Got a close from %s.  We drained %lu bytes from it, &#34;</span>
+            <span style="color:#a31515">&#34;and have %lu left.</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>, inf-&gt;name,
+            (<span style="color:#2b91af">unsigned</span> <span style="color:#2b91af">long</span>)inf-&gt;total_drained, (<span style="color:#2b91af">unsigned</span> <span style="color:#2b91af">long</span>)len);
+        finished = 1;
+    }
+    <span style="color:#00f">if</span> (events &amp; BEV_EVENT_ERROR) {
+        printf(<span style="color:#a31515">&#34;Got an error from %s: %s</span><span style="color:#a31515">\n</span><span style="color:#a31515">&#34;</span>,
+            inf-&gt;name, evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR()));
+        finished = 1;
+    }
+    <span style="color:#00f">if</span> (finished) {
+        free(ctx);
+        bufferevent_free(bev);
+    }
+}
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *setup_bufferevent(<span style="color:#2b91af">void</span>)
+{
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *b1 = NULL;
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">info</span> *info1;
+
+    info1 = malloc(<span style="color:#00f">sizeof</span>(<span style="color:#00f">struct</span> <span style="color:#2b91af">info</span>));
+    info1-&gt;name = <span style="color:#a31515">&#34;buffer 1&#34;</span>;
+    info1-&gt;total_drained = 0;
+
+    <span style="color:#008000">/* ... Here we should set up the bufferevent and make sure it gets
+</span><span style="color:#008000">       connected... */</span>
+
+    <span style="color:#008000">/* Trigger the read callback only whenever there is at least 128 bytes
+</span><span style="color:#008000">       of data in the buffer. */</span>
+    bufferevent_setwatermark(b1, EV_READ, 128, 0);
+
+    bufferevent_setcb(b1, read_callback, NULL, event_callback, info1);
+
+    bufferevent_enable(b1, EV_READ); <span style="color:#008000">/* Start reading. */</span>
+    <span style="color:#00f">return</span> b1;
+}
+</code></pre></div><p><strong>操纵bufferevent中的数据</strong></p>
+<p>如果不进行数据的读取和写入，那么进行数据的网络传输将变得毫无意义。bufferevent提供了如下的方法可以进行数据的读写。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *bufferevent_get_input(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev);
+<span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *bufferevent_get_output(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev);
+</code></pre></div><p>这是两个非常基础而且强大的函数：分别各自返回了输出和输出缓冲区。有关evbuffer的更多细节，请参考下一章节。</p>
+<p>注意：应用程序只能在输入缓冲区上移除数据（不是添加）。只能在输出缓冲区上添加数据（不是移除）。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> bufferevent_write(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev,
+    <span style="color:#00f">const</span> <span style="color:#2b91af">void</span> *data, size_t size);
+<span style="color:#2b91af">int</span> bufferevent_write_buffer(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev,
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *buf);
+</code></pre></div><p>这两个函数向bufferevent的输出缓冲区写数据。调用<code>bufferevent_write()</code>函数，将以data为起始位置，长度为size的数据添加到输出缓冲区的末尾。<code>bufferevent_write_buffer</code>函数将移除buf的全部内容，并添加到输出缓冲区的末尾。两个函数在成功时均返回0，在失败时返回-1.</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++">size_t bufferevent_read(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev, <span style="color:#2b91af">void</span> *data, size_t size);
+<span style="color:#2b91af">int</span> bufferevent_read_buffer(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev,
+    <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *buf);
+</code></pre></div><p>这两个函数从bufferevent的输入缓冲区中读数据。调用<code>bufferevent_read()</code>函数，将数据读取到data所在的内存中去，最多读取size字节，并返回实际读取的字节数。<code>bufferevent_read_buffer()</code>函数将读取输入缓冲区的全部内容，并将内容放置在buf的内存中，该函数在成功时返回0，失败时返回-1。</p>
+<p>注意：调用<code>bufferevent_read()</code>函数时，必须确保data有足够的空间容纳size字节的数据。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/bufferevent.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f">#include</span> <span style="color:#00f">&lt;event2/buffer.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#00f">#include</span> <span style="color:#00f">&lt;ctype.h&gt;</span><span style="color:#00f">
+</span><span style="color:#00f"></span>
+<span style="color:#2b91af">void</span>
+read_callback_uppercase(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">void</span> *ctx)
+{
+        <span style="color:#008000">/* This callback removes the data from bev&#39;s input buffer 128
+</span><span style="color:#008000">           bytes at a time, uppercases it, and starts sending it
+</span><span style="color:#008000">           back.
+</span><span style="color:#008000">
+</span><span style="color:#008000">           (Watch out!  In practice, you shouldn&#39;t use toupper to implement
+</span><span style="color:#008000">           a network protocol, unless you know for a fact that the current
+</span><span style="color:#008000">           locale is the one you want to be using.)
+</span><span style="color:#008000">         */</span>
+
+        <span style="color:#2b91af">char</span> tmp[128];
+        size_t n;
+        <span style="color:#2b91af">int</span> i;
+        <span style="color:#00f">while</span> (1) {
+                n = bufferevent_read(bev, tmp, <span style="color:#00f">sizeof</span>(tmp));
+                <span style="color:#00f">if</span> (n &lt;= 0)
+                        <span style="color:#00f">break</span>; <span style="color:#008000">/* No more data. */</span>
+                <span style="color:#00f">for</span> (i=0; i&lt;n; ++i)
+                        tmp[i] = toupper(tmp[i]);
+                bufferevent_write(bev, tmp, n);
+        }
+}
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">proxy_info</span> {
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *other_bev;
+};
+<span style="color:#2b91af">void</span>
+read_callback_proxy(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">void</span> *ctx)
+{
+        <span style="color:#008000">/* You might use a function like this if you&#39;re implementing
+</span><span style="color:#008000">           a simple proxy: it will take data from one connection (on
+</span><span style="color:#008000">           bev), and write it to another, copying as little as
+</span><span style="color:#008000">           possible. */</span>
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">proxy_info</span> *inf = ctx;
+
+        bufferevent_read_buffer(bev,
+            bufferevent_get_output(inf-&gt;other_bev));
+}
+
+<span style="color:#00f">struct</span> <span style="color:#2b91af">count</span> {
+        <span style="color:#2b91af">unsigned</span> <span style="color:#2b91af">long</span> last_fib[2];
+};
+
+<span style="color:#2b91af">void</span>
+write_callback_fibonacci(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev, <span style="color:#2b91af">void</span> *ctx)
+{
+        <span style="color:#008000">/* Here&#39;s a callback that adds some Fibonacci numbers to the
+</span><span style="color:#008000">           output buffer of bev.  It stops once we have added 1k of
+</span><span style="color:#008000">           data; once this data is drained, we&#39;ll add more. */</span>
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">count</span> *c = ctx;
+
+        <span style="color:#00f">struct</span> <span style="color:#2b91af">evbuffer</span> *tmp = evbuffer_new();
+        <span style="color:#00f">while</span> (evbuffer_get_length(tmp) &lt; 1024) {
+                 <span style="color:#2b91af">unsigned</span> <span style="color:#2b91af">long</span> next = c-&gt;last_fib[0] + c-&gt;last_fib[1];
+                 c-&gt;last_fib[0] = c-&gt;last_fib[1];
+                 c-&gt;last_fib[1] = next;
+
+                 evbuffer_add_printf(tmp, <span style="color:#a31515">&#34;%lu&#34;</span>, next);
+        }
+
+        <span style="color:#008000">/* Now we add the whole contents of tmp to bev. */</span>
+        bufferevent_write_buffer(bev, tmp);
+
+        <span style="color:#008000">/* We don&#39;t need tmp any longer. */</span>
+        evbuffer_free(tmp);
+}
+</code></pre></div><p><strong>读写超时</strong></p>
+<p>与其它事件一样，一定的时间过去之后，如果bufferevent没有任何数据成功写入或者读出，则可以调用超时。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> bufferevent_set_timeouts(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev,
+    <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *timeout_read, <span style="color:#00f">const</span> <span style="color:#00f">struct</span> <span style="color:#2b91af">timeval</span> *timeout_write);
+</code></pre></div><p>将超时设置为NULL，意味着将其删除。</p>
+<p>当bufferevent等待了<code>timeout_read</code>秒后仍然没有数据可以读取时，将触发读超时；当bufferevent等待了<code>timeout_write</code>秒后，仍然无法写入数据，则将触发写入超时。</p>
+<p>注意：超时仅仅在bufferevent可读、可写的时候才会计数。换句话说，当bufferevnet禁用读操作的时候或者输入缓冲区到达高水位的时候，读取超时将不会启用；类似地，写操作禁用的时候或者没有数据可写的时候，写超时不会启用。</p>
+<p>当发生读或写超时时，相应的读或写操作在<code>bufferevent</code>上被禁用。然后使用 <code>BEV_EVENT_TIMEOUT|BEV_EVENT_READING</code> 或 <code>BEV_EVENT_TIMEOUT|BEV_EVENT_WRITING</code> 调用事件回调。</p>
+<p><strong>刷新</strong></p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> bufferevent_flush(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev,
+    <span style="color:#2b91af">short</span> iotype, <span style="color:#00f">enum</span> <span style="color:#2b91af">bufferevent_flush_mode</span> state);
+</code></pre></div><p>刷新bufferevent，即告诉bufferevent强制尽可能多的从底层传输多读取或者多写入数据，忽略其它限制写入的因素。详细细节取决于type字段。</p>
+<p>iotype 参数应为 <code>EV_READ</code>、<code>EV_WRITE</code> 或 <code>EV_READ|EV_WRITE</code> 以指示是否应处理读取、写入或两者的字节。状态参数可以是 <code>BEV_NORMAL</code>、<code>BEV_FLUSH</code> 或 <code>BEV_FINISHED</code> 之一。 <code>BEV_FINISHED</code> 表示应该告诉对方不再发送数据； <code>BEV_NORMAL</code> 和 <code>BEV_FLUSH</code> 之间的区别取决于缓冲事件的类型。</p>
+<p>该函数在失败时返回-1，没有数据可以刷新时返回0，刷新了部分数据时返回1。</p>
+<h4 id="特定的bufferevent操作">特定的bufferevent操作</h4>
+<p>这些函数并不是在所有的bufferevent类型上均有效。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> bufferevent_priority_set(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev, <span style="color:#2b91af">int</span> pri);
+<span style="color:#2b91af">int</span> bufferevent_get_priority(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev);
+</code></pre></div><p>该函数将用于实现 <code>bufev</code> 的事件的优先级调整为 <code>pri</code>。有关优先级的更多信息，请参阅 <code>event_priority_set()</code>。</p>
+<p>该函数在成功时返回0，失败时返回-1，仅仅在基于套接字的bufferevent上有效。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">int</span> bufferevent_setfd(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev, evutil_socket_t fd);
+evutil_socket_t bufferevent_getfd(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev);
+</code></pre></div><p>这些函数设置或者获取基于fd事件的文件描述符，只有基于套接字的bufferevent支持<code>setfd()</code>。这两个函数在失败时返回-1，<code>bufferevent_setfd()</code>函数在成功时返回0。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">event_base</span> *bufferevent_get_base(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bev);
+</code></pre></div><p>返回bufferevent的event_base。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufferevent_get_underlying(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev);
+</code></pre></div><p>如果存在的话，此函数返回bufev的底层传输的bufferevent。</p>
+<h4 id="手动对bufferevent进行上锁和解锁">手动对bufferevent进行上锁和解锁</h4>
+<p>与evbuffer一样，有时你想确保对bufferevent的操作为原子的。libevent公开了以下两个接口，可用于手动上锁和解锁。</p>
+<div class="highlight"><pre style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#2b91af">void</span> bufferevent_lock(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev);
+<span style="color:#2b91af">void</span> bufferevent_unlock(<span style="color:#00f">struct</span> <span style="color:#2b91af">bufferevent</span> *bufev);
+</code></pre></div><p>注意：如果当创建bufferevent的时候没有指定<code>BEV_OPT_THREADSAFE</code>，或者libevent没有启用线程支持，那么上锁将没有任何作用。</p>
+<p>当调用此函数锁住bufferevent的时候，将同时锁住evbuffer。这些函数是递归的：对一个已经持有锁的bufferevent进行上锁是安全的，但是对应的要调用同等次数的解锁函数。</p>
+
+
+
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<section id="comments">
+    <div class="py-3 content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-sm-12 col-lg-8">
+                    <div class="comments">
+                        <script src="https://utteranc.es/client.js" repo=""
+                            issue-term="pathname" label="comment" theme="github-light" crossorigin="anonymous" async>
+                            </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+    
+
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/r.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/python.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/stan.min.js" defer></script>
+        
+        <script>
+            window.addEventListener('load', function() {
+                hljs.initHighlighting();
+            }, true);
+        </script>
+    
+
+    
+
+    
+    
+        
+<script src="https://guangxuanliu.github.io/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+</body>
+
+</html>

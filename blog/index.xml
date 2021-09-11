@@ -6,7 +6,37 @@
     <description>Recent content in Blog on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 05 Sep 2021 18:30:48 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 05 Sep 2021 19:23:14 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>bufferevent：概念与基础</title>
+      <link>https://guangxuanliu.github.io/blog/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/</link>
+      <pubDate>Sun, 05 Sep 2021 19:23:14 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/</guid>
+      <description>大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下：
+ 决定我们要向连接写入一些数据；将该数据放入缓冲区。 等待连接变为可写 尽可能多地写入数据 记住我们写了多少，如果我们还有更多的数据要写，等待连接再次变为可写。  这种缓冲 IO 模式很常见，以至于 Libevent 为其提供了通用机制。 bufferevent由底层传输（如套接字）、读取缓冲区和写入缓冲区组成。与在底层传输准备好读取或写入时提供回调的常规事件不同，bufferevent 在读取或写入足够的数据时调用其用户提供的回调。
+有多种类型的bufferevent，它们都共享一个公共接口。在撰写本文时，存在以下类型：
+  基于套接字的bufferevent
+它使用 event_* 接口作为后端方法，从底层流套接字发送和接收数据。
+  异步IO的bufferevent
+使用 Windows IOCP 接口向底层流套接字发送和接收数据的bufferevent。（仅限 Windows，实验性的）
+  过滤的bufferevent
+在将传入和传出数据传递给底层 bufferevent 对象之前处理传入和传出数据的bufferevent - 例如，压缩或转换数据。
+  成对的bufferevent
+两个之间互相传输数据
+  注意：
+bufferevent目前只支持面向字节流的TCP协议，在未来可能会支持面向数据报的UDP协议。
+本节中的所有函数和类型都在 event2/bufferevent.h 中声明。与 evbuffer 相关的函数在 event2/buffer.h 中声明；有关这些的信息，请参阅下一章。
+Bufferevents and evbuffers 每一个bufferevent有一个输入缓冲区和输出缓冲区，类型为struct evbuffer，当你对bufferevent执行写操作时，实际上是写到了输出缓冲区上，当bufferevent有数据需要你读时，你实际上是从输入缓冲区进行读取的。
+我们将在后面的章节讨论evbuffer。
+回调和水位 每一个bufferevent有两个相关的回调：读回调、写回调。默认情况下，只要从底层传输读取任何数据，就会调用读取回调。每当输出缓冲区中的足够数据被清空到底层传输时，就会调用写入回调。您可以通过bufferevent的读写“水位”来覆盖这些函数的行为。
+每一个bufferevent有4个水位：
+  读低水位
+当发生读取数据时，输入缓冲区大于等于此数值，则会调用读取回调。默认是0，所以每次读取数据都会调用读取回调。
+  读高水位
+如果 bufferevent 的输入缓冲区达到此级别，则 bufferevent 将停止读取，直到从输入缓冲区中排出足够的数据使我们再次低于它。默认为无限制，因此我们永远不会因为输入缓冲区的大小而停止读取。</description>
+    </item>
+    
     <item>
       <title>可移植的工具函数</title>
       <link>https://guangxuanliu.github.io/blog/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/</link>
