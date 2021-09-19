@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>设置libevent - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="刘光轩" /><meta name="description" content="设置libevent libevent有一些全局的设置会影响整个libevent库。你必须在调用库的任何函数之前进行设置，否则会导致libev" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AElibevent/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="设置libevent" />
+<meta property="og:description" content="设置libevent libevent有一些全局的设置会影响整个libevent库。你必须在调用库的任何函数之前进行设置，否则会导致libev" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AElibevent/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-08-25T21:41:15&#43;08:00" />
+<meta property="article:modified_time" content="2021-08-25T21:41:15&#43;08:00" />
+
+<meta itemprop="name" content="设置libevent">
+<meta itemprop="description" content="设置libevent libevent有一些全局的设置会影响整个libevent库。你必须在调用库的任何函数之前进行设置，否则会导致libev"><meta itemprop="datePublished" content="2021-08-25T21:41:15&#43;08:00" />
+<meta itemprop="dateModified" content="2021-08-25T21:41:15&#43;08:00" />
+<meta itemprop="wordCount" content="5517">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="设置libevent"/>
+<meta name="twitter:description" content="设置libevent libevent有一些全局的设置会影响整个libevent库。你必须在调用库的任何函数之前进行设置，否则会导致libev"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Blog</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于我</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Blog</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于我</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">设置libevent</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-08-25 </span>
+        
+          <span class="more-meta"> 约 5517 字 </span>
+          <span class="more-meta"> 预计阅读 12 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#设置libevent">设置libevent</a></li>
+            <li><a href="#处理致命错误">处理致命错误</a></li>
+            <li><a href="#内存管理">内存管理</a></li>
+            <li><a href="#锁与线程">锁与线程</a></li>
+            <li><a href="#调试event用法">调试event用法</a></li>
+            <li><a href="#检测libevent的版本">检测libevent的版本</a></li>
+            <li><a href="#释放全局的libevent结构体">释放全局的libevent结构体</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h3 id="设置libevent">设置libevent</h3>
+<p>libevent有一些全局的设置会影响整个libevent库。你必须在调用库的任何函数之前进行设置，否则会导致libevent处于不一致的状态。</p>
+<h4 id="记录日志">记录日志</h4>
+<p>libevent可以记录内部的错误和警告，如果编译时支持日志记录，它还会记录调试信息。默认情况下，这些信息被写入stderr，你可以提供自己的日志函数来覆盖这些行为。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define EVENT_LOG_DEBUG 0
+</span><span class="cp">#define EVENT_LOG_MSG   1
+</span><span class="cp">#define EVENT_LOG_WARN  2
+</span><span class="cp">#define EVENT_LOG_ERR   3
+</span><span class="cp"></span>
+<span class="cm">/* Deprecated; see note at the end of this section */</span>
+<span class="cp">#define _EVENT_LOG_DEBUG EVENT_LOG_DEBUG
+</span><span class="cp">#define _EVENT_LOG_MSG   EVENT_LOG_MSG
+</span><span class="cp">#define _EVENT_LOG_WARN  EVENT_LOG_WARN
+</span><span class="cp">#define _EVENT_LOG_ERR   EVENT_LOG_ERR
+</span><span class="cp"></span>
+<span class="k">typedef</span> <span class="nf">void</span> <span class="p">(</span><span class="o">*</span><span class="n">event_log_cb</span><span class="p">)(</span><span class="kt">int</span> <span class="n">severity</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">event_set_log_callback</span><span class="p">(</span><span class="n">event_log_cb</span> <span class="n">cb</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>你可以写一个符合<code>event_log_cb</code>签名的函数，然后传递给<code>event_set_log_callback</code>来重写libevent默认的日志行为。当libevent需要写日志的时候，它会传递给你提供的函数。你可以调用<code>event_set_log_callback</code>，并且传递NULL参数来恢复libevent默认的日志行为。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">discard_cb</span><span class="p">(</span><span class="kt">int</span> <span class="n">severity</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="cm">/* This callback does nothing. */</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">FILE</span> <span class="o">*</span><span class="n">logfile</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">write_to_file_cb</span><span class="p">(</span><span class="kt">int</span> <span class="n">severity</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">s</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">logfile</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">severity</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="nl">_EVENT_LOG_DEBUG</span><span class="p">:</span> <span class="n">s</span> <span class="o">=</span> <span class="s">&#34;debug&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="nl">_EVENT_LOG_MSG</span><span class="p">:</span>   <span class="n">s</span> <span class="o">=</span> <span class="s">&#34;msg&#34;</span><span class="p">;</span>   <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="nl">_EVENT_LOG_WARN</span><span class="p">:</span>  <span class="n">s</span> <span class="o">=</span> <span class="s">&#34;warn&#34;</span><span class="p">;</span>  <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="nl">_EVENT_LOG_ERR</span><span class="p">:</span>   <span class="n">s</span> <span class="o">=</span> <span class="s">&#34;error&#34;</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="k">default</span><span class="o">:</span>               <span class="n">s</span> <span class="o">=</span> <span class="s">&#34;?&#34;</span><span class="p">;</span>     <span class="k">break</span><span class="p">;</span> <span class="cm">/* never reached */</span>
+    <span class="p">}</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">logfile</span><span class="p">,</span> <span class="s">&#34;[%s] %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">msg</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cm">/* Turn off all logging from Libevent. */</span>
+<span class="kt">void</span> <span class="nf">suppress_logging</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">event_set_log_callback</span><span class="p">(</span><span class="n">discard_cb</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cm">/* Redirect all Libevent log messages to the C stdio file &#39;f&#39;. */</span>
+<span class="kt">void</span> <span class="nf">set_logfile</span><span class="p">(</span><span class="n">FILE</span> <span class="o">*</span><span class="n">f</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">logfile</span> <span class="o">=</span> <span class="n">f</span><span class="p">;</span>
+    <span class="n">event_set_log_callback</span><span class="p">(</span><span class="n">write_to_file_cb</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>注意：</strong></p>
+<p>在自己的日志函数里面，再次调用libevent的函数并不安全！举个例子，如果你想在日志回调里面用bufferevents把消息通过网络发送出去，你这样会进入奇怪的、难以调试的bug里面。这些限制可能会在未来版本的libevent中移除。</p>
+<p>一般的，调试日志没有开启，所以不会发送至日志回调，如果libevent在编译的时候支持的话，你可以手动开启。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define EVENT_DBG_NONE 0
+</span><span class="cp">#define EVENT_DBG_ALL 0xffffffffu
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">event_enable_debug_logging</span><span class="p">(</span><span class="n">ev_uint32_t</span> <span class="n">which</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>调试日志是冗长的，而且在多数场景下并没有用。给<code>event_enable_debug_logging</code>传递<code>EVENT_DBG_NONE</code>参数为默认的日志记录行为，传递<code>EVENT_DBG_ALL</code>会开启所有调试日志，未来可能会提供更细粒度的控制。</p>
+<p>这些函数声明在<code>&lt;event2/event.h&gt;</code>头文件中，他们首次出现在<code>1.0c</code>版本中，<code>event_enable_debug_logging</code>首次出现在<code>2.1.1-alpha</code>中。</p>
+<h3 id="处理致命错误">处理致命错误</h3>
+<p>当Libevent检测到不可恢复的内部错误（例如损坏的数据结构）时，其默认行为是调用<code>exit()</code>或<code>abort()</code>以退出当前正在运行的进程。这些错误几乎总是意味着某处存在bug：要么在您的代码中，要么在Libevent本身中。</p>
+<p>如果您希望应用程序更优雅地处理致命错误，您可以提供一个Libevent应该调用的函数来代替退出，覆盖 Libevent的默认行为。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">typedef</span> <span class="nf">void</span> <span class="p">(</span><span class="o">*</span><span class="n">event_fatal_cb</span><span class="p">)(</span><span class="kt">int</span> <span class="n">err</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">event_set_fatal_callback</span><span class="p">(</span><span class="n">event_fatal_cb</span> <span class="n">cb</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>首先你需要定义一个函数，来供libevent遇到致命错误的时候调用。然后将这个函数传递给<code>event_set_fatal_callback</code>。如果libevent遇到致命错误的时候，它会调用你提供的函数。</p>
+<p>你的函数不应该再返回至libevent，这样做的话会导致未定义的行为，libevent为避免崩溃会退出。如果你的函数一旦被调用，你不应该再调用其它的libevent的函数了。</p>
+<p>这些函数声明在<code>&lt;event2/event.h&gt;</code>头文件中，首次出现在<code>2.0.3-alpha</code>中。</p>
+<h3 id="内存管理">内存管理</h3>
+<p>默认情况下，Libevent使用C库的内存管理函数从堆中分配内存。您可以通过为malloc、realloc和free提供您自己的替代品，让Libevent使用另一个内存管理器。如果您希望Libevent使用更高效的分配器，或者您希望Libevent使用检测的分配器来查找内存泄漏，则您可能想要这样做。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">event_set_mem_functions</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">malloc_fn</span><span class="p">)(</span><span class="n">size_t</span> <span class="n">sz</span><span class="p">),</span>
+                             <span class="kt">void</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">realloc_fn</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">sz</span><span class="p">),</span>
+                             <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">free_fn</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">));</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>下面是一个简单的小例子，替换了libevent的分配函数，然后统计总共分配了多少字节内存，在实际使用中，你应该加锁来防止libevent在多线程中使用。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cm">/* This union&#39;s purpose is to be as big as the largest of all the
+</span><span class="cm"> * types it contains. */</span>
+<span class="k">union</span> <span class="nc">alignment</span> <span class="p">{</span>
+    <span class="n">size_t</span> <span class="n">sz</span><span class="p">;</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">;</span>
+    <span class="kt">double</span> <span class="n">dbl</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="cm">/* We need to make sure that everything we return is on the right
+</span><span class="cm">   alignment to hold anything, including a double. */</span>
+<span class="cp">#define ALIGNMENT sizeof(union alignment)
+</span><span class="cp"></span>
+<span class="cm">/* We need to do this cast-to-char* trick on our pointers to adjust
+</span><span class="cm">   them; doing arithmetic on a void* is not standard. */</span>
+<span class="cp">#define OUTPTR(ptr) (((char*)ptr)+ALIGNMENT)
+</span><span class="cp">#define INPTR(ptr) (((char*)ptr)-ALIGNMENT)
+</span><span class="cp"></span>
+<span class="k">static</span> <span class="n">size_t</span> <span class="n">total_allocated</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="o">*</span><span class="nf">replacement_malloc</span><span class="p">(</span><span class="n">size_t</span> <span class="n">sz</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">chunk</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">sz</span> <span class="o">+</span> <span class="n">ALIGNMENT</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">chunk</span><span class="p">)</span> <span class="k">return</span> <span class="n">chunk</span><span class="p">;</span>
+    <span class="n">total_allocated</span> <span class="o">+=</span> <span class="n">sz</span><span class="p">;</span>
+    <span class="o">*</span><span class="p">(</span><span class="n">size_t</span><span class="o">*</span><span class="p">)</span><span class="n">chunk</span> <span class="o">=</span> <span class="n">sz</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">OUTPTR</span><span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="o">*</span><span class="nf">replacement_realloc</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">sz</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">size_t</span> <span class="n">old_size</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ptr</span> <span class="o">=</span> <span class="n">INPTR</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
+        <span class="n">old_size</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">size_t</span><span class="o">*</span><span class="p">)</span><span class="n">ptr</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">ptr</span> <span class="o">=</span> <span class="n">realloc</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="n">sz</span> <span class="o">+</span> <span class="n">ALIGNMENT</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">ptr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="o">*</span><span class="p">(</span><span class="n">size_t</span><span class="o">*</span><span class="p">)</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">sz</span><span class="p">;</span>
+    <span class="n">total_allocated</span> <span class="o">=</span> <span class="n">total_allocated</span> <span class="o">-</span> <span class="n">old_size</span> <span class="o">+</span> <span class="n">sz</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">OUTPTR</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">replacement_free</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">ptr</span> <span class="o">=</span> <span class="n">INPTR</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
+    <span class="n">total_allocated</span> <span class="o">-=</span> <span class="o">*</span><span class="p">(</span><span class="n">size_t</span><span class="o">*</span><span class="p">)</span><span class="n">ptr</span><span class="p">;</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="nf">start_counting_bytes</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">event_set_mem_functions</span><span class="p">(</span><span class="n">replacement_malloc</span><span class="p">,</span>
+                            <span class="n">replacement_realloc</span><span class="p">,</span>
+                            <span class="n">replacement_free</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>注意</strong></p>
+<ul>
+<li>替代内存管理函数会影响libevent以后的所有内存相关函数调用，<code>allocate</code>、<code>resize</code>和<code>free</code>，所以你必须确保在调用任何libevent的函数之前替代这些函数。否则，libevent将使用你的版本的<code>free</code>来释放C版本的<code>malloc</code>返回的内存。</li>
+<li><code>malloc</code>和<code>realloc</code>函数需要返回与C库具有相同对齐方式的内存块。</li>
+<li>您的<code>realloc</code>函数需要正确处理<code>realloc(NULL, sz)</code> （即，将其视为<code>malloc(sz)</code>）。</li>
+<li>您的<code>realloc</code>函数需要正确处理<code>realloc(ptr, 0)</code>（即，将其视为<code>free(ptr)</code>）。</li>
+<li>您的<code>free</code>函数不需要处理<code>free(NULL)</code>。</li>
+<li>您的<code>malloc</code>函数不需要处理<code>malloc(0)</code>。</li>
+<li>如果您从多个线程使用Libevent，则替换的内存管理函数需要是线程安全的。</li>
+<li>Libevent 将使用这些函数来分配它返回给您的内存。因此，如果您想释放由 Libevent 函数分配和返回的内存，并且您已经替换了<code>malloc</code>和<code>realloc</code>函数，那么您可能必须使用替换的<code>free</code>函数来释放它。</li>
+</ul>
+<p><code>event_set_mem_functions</code>函数声明在<code>&lt;event2/event.h&gt;</code>中，首次出现在<code>2.0.1-alpha</code>中。</p>
+<p>Libevent 可以在禁用<code>event_set_mem_functions()</code>的情况下构建。如果是，则使用<code>event_set_mem_functions</code>的程序将不会编译或链接。在 Libevent 2.0.2-alpha 及更高版本中，您可以通过检查是否定义了<code>EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED</code>宏来检测<code>event_set_mem_functions()</code>的存在。</p>
+<h3 id="锁与线程">锁与线程</h3>
+<p>正如你所知道的那样，当你写多线程的程序的时候，多个线程同时访问一块数据并不总是安全的。</p>
+<p>libevent结构通常可以通过多线程以三种方式工作。</p>
+<ul>
+<li>某些结构是单线程的：从多线程并发访问总是不安全的。</li>
+<li>某些结构是可选加锁的：可以为每个对象告诉libevent是否需要同时从多个线程使用它。</li>
+<li>某些结构总是加锁的：如果libevent以支持锁的方式运行，在多线程访问总是安全的。</li>
+</ul>
+<p>想在libevent中使用锁，你必须要在libevent分配任何在多线程间共同使用的结构体之前，告诉libevent要使用哪个锁函数。</p>
+<p>如果您正在使用pthreads库或本机Windows线程代码，那么您很幸运。有一些预定义的函数可以将Libevent设置为使用正确的pthread或Windows函数。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#ifdef WIN32
+</span><span class="cp"></span><span class="kt">int</span> <span class="nf">evthread_use_windows_threads</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="cp">#define EVTHREAD_USE_WINDOWS_THREADS_IMPLEMENTED
+</span><span class="cp">#endif
+</span><span class="cp">#ifdef _EVENT_HAVE_PTHREADS
+</span><span class="cp"></span><span class="kt">int</span> <span class="nf">evthread_use_pthreads</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="cp">#define EVTHREAD_USE_PTHREADS_IMPLEMENTED
+</span><span class="cp">#endif
+</span></code></pre></td></tr></table>
+</div>
+</div><p>这两个函数成功时返回0，失败时返回-1.</p>
+<p>如果你使用一个不同的线程库，你有更多的工作需要做，需要使用你的库来定义如下函数</p>
+<ul>
+<li>Locks</li>
+<li>locking</li>
+<li>unlocking</li>
+<li>lock allocation</li>
+<li>lock destruction</li>
+<li>Conditions</li>
+<li>condition variable creation</li>
+<li>condition variable destruction</li>
+<li>waiting on a condition variable</li>
+<li>signaling/broadcasting to a condition variable</li>
+<li>Threads</li>
+<li>thread ID detection</li>
+</ul>
+<p>然后你需要使用<code>evthread_set_lock_callbacks</code>和<code>evthread_set_id_callback</code>告诉libevent这些函数。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="cp">#define EVTHREAD_WRITE  0x04
+</span><span class="cp">#define EVTHREAD_READ   0x08
+</span><span class="cp">#define EVTHREAD_TRY    0x10
+</span><span class="cp"></span>
+<span class="cp">#define EVTHREAD_LOCKTYPE_RECURSIVE 1
+</span><span class="cp">#define EVTHREAD_LOCKTYPE_READWRITE 2
+</span><span class="cp"></span>
+<span class="cp">#define EVTHREAD_LOCK_API_VERSION 1
+</span><span class="cp"></span>
+<span class="k">struct</span> <span class="nc">evthread_lock_callbacks</span> <span class="p">{</span>
+       <span class="kt">int</span> <span class="n">lock_api_version</span><span class="p">;</span>
+       <span class="kt">unsigned</span> <span class="n">supported_locktypes</span><span class="p">;</span>
+       <span class="kt">void</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">alloc</span><span class="p">)(</span><span class="kt">unsigned</span> <span class="n">locktype</span><span class="p">);</span>
+       <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">free</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">lock</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="n">locktype</span><span class="p">);</span>
+       <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">lock</span><span class="p">)(</span><span class="kt">unsigned</span> <span class="n">mode</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">lock</span><span class="p">);</span>
+       <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">unlock</span><span class="p">)(</span><span class="kt">unsigned</span> <span class="n">mode</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">lock</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">evthread_set_lock_callbacks</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">evthread_lock_callbacks</span> <span class="o">*</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">evthread_set_id_callback</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="p">(</span><span class="o">*</span><span class="n">id_fn</span><span class="p">)(</span><span class="kt">void</span><span class="p">));</span>
+
+<span class="k">struct</span> <span class="nc">evthread_condition_callbacks</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">condition_api_version</span><span class="p">;</span>
+        <span class="kt">void</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">alloc_condition</span><span class="p">)(</span><span class="kt">unsigned</span> <span class="n">condtype</span><span class="p">);</span>
+        <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">free_condition</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">cond</span><span class="p">);</span>
+        <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">signal_condition</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">cond</span><span class="p">,</span> <span class="kt">int</span> <span class="n">broadcast</span><span class="p">);</span>
+        <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">wait_condition</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">cond</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">lock</span><span class="p">,</span>
+            <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">timeout</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">evthread_set_condition_callbacks</span><span class="p">(</span>
+        <span class="k">const</span> <span class="k">struct</span> <span class="nc">evthread_condition_callbacks</span> <span class="o">*</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>evthread_lock_callbacks</code>结构描述了您的锁定回调及其功能。对于上述版本，<code>lock_api_version</code>字段必须设置为<code>EVTHREAD_LOCK_API_VERSION</code>。<code>supported_locktypes</code>字段必须设置为<code>EVTHREAD_LOCKTYPE_*</code>常量的位掩码，以描述您可以支持哪些锁类型。（从<code>2.0.4-alpha</code>开始，<code>EVTHREAD_LOCK_RECURSIVE</code>是强制性的，<code>EVTHREAD_LOCK_READWRITE</code>未使用。） <code>alloc</code>函数必须返回指定类型的新锁。<code>free</code>函数必须释放指定类型的锁持有的所有资源。<code>lock</code>函数必须尝试以指定的模式获取锁，成功时返回 0，失败时返回非零。<code>unlock</code>函数必须尝试解锁锁，成功时返回 0，失败时返回非零。</p>
+<p>锁类型如下：</p>
+<ul>
+<li>
+<p>0</p>
+<p>一个常规的，非递归的锁</p>
+</li>
+<li>
+<p>EVTHREAD_LOCKTYPE_RECURSIVE</p>
+<p>不会阻止已经持有它的线程再次需要它的锁。一旦持有它的线程解锁它的次数与它最初被锁定的次数一样多，其他线程就可以获得该锁。</p>
+</li>
+<li>
+<p>EVTHREAD_LOCKTYPE_READWRITE</p>
+<p>允许多个线程同时读，写的时候只允许一个线程。写排斥其它所有的读。</p>
+</li>
+</ul>
+<p>锁模式如下：</p>
+<ul>
+<li>
+<p>EVTHREAD_READ</p>
+<p>仅对读写锁有效，为了读而获取或释放锁。</p>
+</li>
+<li>
+<p>EVTHREAD_WRITE</p>
+<p>仅对读写锁有效，为了写而获取或释放锁。</p>
+</li>
+<li>
+<p>EVTHREAD_TRY</p>
+<p>尝试加锁，仅当立刻可以获取锁的时候才加锁。</p>
+</li>
+</ul>
+<p><code>id_fn</code>参数必须是一个函数，返回一个<code>unsigned long</code>标识哪个线程正在调用该函数。它必须始终为同一个线程返回相同的数字，并且如果两个不同的线程同时执行，则不能为它们返回相同的数字。</p>
+<h3 id="调试event用法">调试event用法</h3>
+<p>在使用<code>libevent</code>可以检测和报告的事件时，有一些常见的错误。它们包括：</p>
+<ul>
+<li>将未初始化的event结构视为已初始化。</li>
+<li>尝试重新初始化挂起的event结构。</li>
+</ul>
+<p>跟踪libevent初始化的事件结构需要额外的内存和cpu，所以不到万不得已，不要开始调试模式。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">event_enable_debug_mode</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数需要在<code>event_base</code>被创建之前调用。</p>
+<p>使用调试模式时，如果您的程序使用大量由<code>event_assign()</code>[而不是<code>event_new()</code>] 创建的事件，您可能会耗尽内存。发生这种情况是因为<code>Libevent</code>无法判断何时不再使用使用<code>event_assign()</code>创建的事件。（当您对其调用 <code>event_free()</code>时，它可以告诉您<code>event_new()</code>事件已变为无效。）如果您想避免在调试时耗尽内存，您可以明确告诉 Libevent 此类事件不再被视为分配：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">event_debug_unassign</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当调试模式没有启用的时候调用此函数没有任何影响。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/event_struct.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">cb</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">what</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="cm">/* We pass &#39;NULL&#39; as the callback pointer for the heap allocated
+</span><span class="cm">     * event, and we pass the event itself as the callback pointer
+</span><span class="cm">     * for the stack-allocated event. */</span>
+    <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span> <span class="o">=</span> <span class="n">ptr</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">ev</span><span class="p">)</span>
+        <span class="n">event_debug_unassign</span><span class="p">(</span><span class="n">ev</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cm">/* Here&#39;s a simple mainloop that waits until fd1 and fd2 are both
+</span><span class="cm"> * ready to read. */</span>
+<span class="kt">void</span> <span class="nf">mainloop</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">fd1</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">fd2</span><span class="p">,</span> <span class="kt">int</span> <span class="n">debug_mode</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">event</span> <span class="n">event_on_stack</span><span class="p">,</span> <span class="o">*</span><span class="n">event_on_heap</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">debug_mode</span><span class="p">)</span>
+       <span class="n">event_enable_debug_mode</span><span class="p">();</span>
+
+    <span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+
+    <span class="n">event_on_heap</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">fd1</span><span class="p">,</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="n">event_assign</span><span class="p">(</span><span class="o">&amp;</span><span class="n">event_on_stack</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">fd2</span><span class="p">,</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">event_on_stack</span><span class="p">);</span>
+
+    <span class="n">event_add</span><span class="p">(</span><span class="n">event_on_heap</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="n">event_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">event_on_stack</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+
+    <span class="n">event_free</span><span class="p">(</span><span class="n">event_on_heap</span><span class="p">);</span>
+    <span class="n">event_base_free</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>详细的事件调试功能只能在编译时使用<code>CFLAGS</code>环境变量<code>-DUSE_DEBUG</code>启用。启用此标志后，任何针对Libevent编译的程序都将输出一个非常详细的日志，详细说明后端的低级活动。这些日志包括但不限于以下内容：</p>
+<ul>
+<li>添加event</li>
+<li>删除event</li>
+<li>平台特定事件通知信息</li>
+</ul>
+<p>此功能无法通过 API 调用启用或禁用，因此只能在开发人员构建中使用。</p>
+<h3 id="检测libevent的版本">检测libevent的版本</h3>
+<p>新版本的libevent可能会添加新特性或者修复bug，所以你可能需要检测libevent的版本：</p>
+<ul>
+<li>检测已安装的 Libevent 版本是否足以构建您的程序。</li>
+<li>显示用于调试的 Libevent 版本。</li>
+<li>检测 Libevent 的版本，以便您可以警告用户有关错误或解决它们。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define LIBEVENT_VERSION_NUMBER 0x02000300
+</span><span class="cp">#define LIBEVENT_VERSION &#34;2.0.3-alpha&#34;
+</span><span class="cp"></span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">event_get_version</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="n">ev_uint32_t</span> <span class="nf">event_get_version_number</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>宏返回libevent编译时版本；函数返回运行时版本。注意，如果您已将程序动态链接到Libevent，这些版本可能会有所不同。</p>
+<p>您可以获得两种格式的 Libevent 版本：适合向用户显示的字符串，或适合数字比较的 4 字节整数。整数格式使用高字节表示主要版本，第二个字节表示次要版本，第三个字节表示补丁版本，低字节表示发布状态（0 表示发布，非0表示给定发布后的开发系列）。</p>
+<p>因此，已发布的 Libevent 2.0.1-alpha 的版本号为 [02 00 01 00] 或 0x02000100。 2.0.1-alpha 和 2.0.2-alpha 之间的开发版本可能具有 [02 00 01 08] 或 0x02000108 的版本号。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cp">#if !defined(LIBEVENT_VERSION_NUMBER) || LIBEVENT_VERSION_NUMBER &lt; 0x02000100
+</span><span class="cp">#error &#34;This version of Libevent is not supported; Get 2.0.1-alpha or later.&#34;
+</span><span class="cp">#endif
+</span><span class="cp"></span>
+<span class="kt">int</span>
+<span class="nf">make_sandwich</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="cm">/* Let&#39;s suppose that Libevent 6.0.5 introduces a make-me-a
+</span><span class="cm">           sandwich function. */</span>
+<span class="cp">#if LIBEVENT_VERSION_NUMBER &gt;= 0x06000500
+</span><span class="cp"></span>        <span class="n">evutil_make_me_a_sandwich</span><span class="p">();</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="cp">#else
+</span><span class="cp"></span>        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="cp">#endif
+</span><span class="cp"></span><span class="p">}</span>
+<span class="nl">Example</span><span class="p">:</span> <span class="n">Run</span><span class="o">-</span><span class="n">time</span> <span class="n">checks</span>
+<span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">int</span>
+<span class="n">check_for_old_version</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">v</span> <span class="o">=</span> <span class="n">event_get_version</span><span class="p">();</span>
+    <span class="cm">/* This is a dumb way to do it, but it is the only thing that works
+</span><span class="cm">       before Libevent 2.0. */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">strncmp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#34;0.&#34;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">||</span>
+        <span class="o">!</span><span class="n">strncmp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#34;1.1&#34;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="o">||</span>
+        <span class="o">!</span><span class="n">strncmp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#34;1.2&#34;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="o">||</span>
+        <span class="o">!</span><span class="n">strncmp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#34;1.3&#34;</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="p">{</span>
+
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Your version of Libevent is very old.  If you run into bugs,&#34;</span>
+               <span class="s">&#34; consider upgrading.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Running with Libevent version %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span>
+<span class="nf">check_version_match</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">ev_uint32_t</span> <span class="n">v_compile</span><span class="p">,</span> <span class="n">v_run</span><span class="p">;</span>
+    <span class="n">v_compile</span> <span class="o">=</span> <span class="n">LIBEVENT_VERSION_NUMBER</span><span class="p">;</span>
+    <span class="n">v_run</span> <span class="o">=</span> <span class="n">event_get_version_number</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">v_compile</span> <span class="o">&amp;</span> <span class="mh">0xffff0000</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">v_run</span> <span class="o">&amp;</span> <span class="mh">0xffff0000</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Running with a Libevent version (%s) very different from the &#34;</span>
+               <span class="s">&#34;one we were built with (%s).</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">event_get_version</span><span class="p">(),</span>
+               <span class="n">LIBEVENT_VERSION</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>本节中的宏和函数在<code>&lt;event2/event.h&gt;</code>中定义。<code>event_get_version()</code>函数最早出现在<code>Libevent 1.0c</code>中；其他的首先出现在<code>Libevent 2.0.1-alpha</code>中。</p>
+<h3 id="释放全局的libevent结构体">释放全局的libevent结构体</h3>
+<p>即使您已经释放了使用 Libevent 分配的所有对象，也会留下一些全局分配的结构。这通常不是问题：一旦进程退出，无论如何它们都会被清理。但是拥有这些结构可能会使一些调试工具混淆，认为 Libevent 正在泄漏资源。如果需要确保 Libevent 已经发布了所有内部库全局数据结构，可以调用：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">libevent_global_shutdown</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数不会释放 Libevent 函数返回给您的任何结构。如果您想在退出前释放所有内容，则需要自己释放所有<code>event</code>、<code>event_bases</code>、<code>bufferevents</code>等。</p>
+<p>调用<code>libevent_global_shutdown</code>函数会导致其它libevent函数出现未定义的行为，所以确保在最后再调用此函数。</p>
+<p>该函数在<code>&lt;event2/event.h&gt;</code>中声明。它是在<code>Libevent 2.1.1-alpha</code>中引入的。</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">刘光轩</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-08-25
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        <a class="prev" href="/post/%E8%AE%BE%E7%BD%AEevent_base/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">设置event_base</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="/post/%E5%89%8D%E8%A8%80/">
+            <span class="next-text nav-default">前言</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021<span class="heart"><i class="iconfont icon-heart"></i></span><span>刘光轩</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>运行event_loop - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="刘光轩" /><meta name="description" content="运行事件循环 一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待ev" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/%E8%BF%90%E8%A1%8Cevent_loop/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="运行event_loop" />
+<meta property="og:description" content="运行事件循环 一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待ev" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/%E8%BF%90%E8%A1%8Cevent_loop/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-09-04T17:36:09&#43;08:00" />
+<meta property="article:modified_time" content="2021-09-04T17:36:09&#43;08:00" />
+
+<meta itemprop="name" content="运行event_loop">
+<meta itemprop="description" content="运行事件循环 一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待ev"><meta itemprop="datePublished" content="2021-09-04T17:36:09&#43;08:00" />
+<meta itemprop="dateModified" content="2021-09-04T17:36:09&#43;08:00" />
+<meta itemprop="wordCount" content="2932">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="运行event_loop"/>
+<meta name="twitter:description" content="运行事件循环 一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待ev"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Blog</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于我</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Blog</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于我</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">运行event_loop</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-09-04 </span>
+        
+          <span class="more-meta"> 约 2932 字 </span>
+          <span class="more-meta"> 预计阅读 6 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#运行事件循环">运行事件循环</a></li>
+            <li><a href="#停止事件循环">停止事件循环</a></li>
+            <li><a href="#重新检查events">重新检查events</a></li>
+            <li><a href="#检查内部时间缓存">检查内部时间缓存</a></li>
+            <li><a href="#转储event_base状态">转储event_base状态</a></li>
+            <li><a href="#在-event_base-中的每个事件上运行一个函数">在 event_base 中的每个事件上运行一个函数</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h3 id="运行事件循环">运行事件循环</h3>
+<p>一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待events并且通知你。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define EVLOOP_ONCE             0x01
+</span><span class="cp">#define EVLOOP_NONBLOCK         0x02
+</span><span class="cp">#define EVLOOP_NO_EXIT_ON_EMPTY 0x04
+</span><span class="cp"></span>
+<span class="kt">int</span> <span class="nf">event_base_loop</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>默认的，<code>event_base_loop()</code>函数运行event_base直到没有events在上面注册。当开始运行循环时，它不断的检测是否有events已经触发（例如，读取事件的文件描述符准备好读取，超时事件的超时到期），如果一旦发生，它把events标记为active，并且运行他们。</p>
+<p>你可以给<code>event_base_loop</code>传递flags参数来改变默认的行为，如果设置了EVLOOP_ONCE，循环会等待直到有events变为active，然后运行它们，然后退出。如果设置了EVLOOP_NONBLOCK，循环不会等待events触发，它只会立即检测events是否准备好触发，如果是，则运行它们的回调。</p>
+<p>一般地，如果没有pending或者active的events，循环会尽快退出。你可以设置EVLOOP_NO_EXIT_ON_EMPTY标志位来改变这一行为，比如，你准备在其它线程添加events，如果你设置了此标志位，循环会一直运行，直到<code>event_base_loopbreak()</code>、<code>event_base_loopexit()</code>被调用，或者遇到了错误。</p>
+<p>当结束时，<code>event_base_loop()</code>返回0代表正常退出，返回-1代表后端有未处理的错误，返回1代表没有更多pending或者active的events。</p>
+<p>为了帮助理解，下面是一段<code>event_base_loop()</code>的伪代码</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">while</span> <span class="p">(</span><span class="n">any</span> <span class="n">events</span> <span class="n">are</span> <span class="n">registered</span> <span class="n">with</span> <span class="n">the</span> <span class="n">loop</span><span class="p">,</span>
+        <span class="n">or</span> <span class="n">EVLOOP_NO_EXIT_ON_EMPTY</span> <span class="n">was</span> <span class="n">set</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">EVLOOP_NONBLOCK</span> <span class="n">was</span> <span class="n">set</span><span class="p">,</span> <span class="n">or</span> <span class="n">any</span> <span class="n">events</span> <span class="n">are</span> <span class="n">already</span> <span class="n">active</span><span class="p">)</span>
+        <span class="n">If</span> <span class="n">any</span> <span class="n">registered</span> <span class="n">events</span> <span class="n">have</span> <span class="n">triggered</span><span class="p">,</span> <span class="n">mark</span> <span class="n">them</span> <span class="n">active</span><span class="p">.</span>
+    <span class="k">else</span>
+        <span class="n">Wait</span> <span class="n">until</span> <span class="n">at</span> <span class="n">least</span> <span class="n">one</span> <span class="n">event</span> <span class="n">has</span> <span class="n">triggered</span><span class="p">,</span> <span class="n">and</span> <span class="n">mark</span> <span class="n">it</span> <span class="n">active</span><span class="p">.</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="n">n_priorities</span><span class="p">;</span> <span class="o">++</span><span class="n">p</span><span class="p">)</span> <span class="p">{</span>
+       <span class="k">if</span> <span class="p">(</span><span class="n">any</span> <span class="n">event</span> <span class="n">with</span> <span class="n">priority</span> <span class="n">of</span> <span class="n">p</span> <span class="n">is</span> <span class="n">active</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">Run</span> <span class="n">all</span> <span class="n">active</span> <span class="n">events</span> <span class="n">with</span> <span class="n">priority</span> <span class="n">of</span> <span class="n">p</span><span class="p">.</span>
+          <span class="k">break</span><span class="p">;</span> <span class="cm">/* Do not run any events of a less important priority */</span>
+       <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">EVLOOP_ONCE</span> <span class="n">was</span> <span class="n">set</span> <span class="n">or</span> <span class="n">EVLOOP_NONBLOCK</span> <span class="n">was</span> <span class="n">set</span><span class="p">)</span>
+       <span class="k">break</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>为了方便起见，你也可以调用：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_base_dispatch</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>该函数等同于没有flags参数的<code>event_base_loop()</code>，因此，循环会一直运行直到没有注册的events或者<code>event_base_loopbreak()</code>、<code>event_base_loopexit()</code>被调用。</p>
+<p>这些函数在<code>&lt;event2/event.h&gt;</code>中定义。它们从 Libevent 1.0 开始就存在了。</p>
+<h3 id="停止事件循环">停止事件循环</h3>
+<p>如果你想在所有的events被移除之前停止事件循环，可以调用如下两个方法：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">int</span> <span class="nf">event_base_loopexit</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">tv</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">event_base_loopbreak</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>event_base_loopexit()</code>函数告诉event_base在指定的时间tv后停止循环。如果tv参数为空的话，event_base立即停止循环，如果event_base当前正在运行active events的回调，则直到运行完之后才会停止。</p>
+<p><code>event_base_loopbreak()</code>函数告诉event_base立即退出循环，区别于<code>event_base_loopexit(base, NULL)</code>，<code>event_base_loopbreak()</code>会在处理完当前active events之后立马退出。</p>
+<p>还要注意<code>event_base_loopexit(base,NULL)</code>和<code>event_base_loopbreak(base)</code>在没有事件循环运行时的行为不同：<code>loopexit</code>安排事件循环的下一个实例在下一轮回调运行后立即停止（就像它已经被调用一样与 <code>EVLOOP_ONCE</code>) 而<code>loopbreak</code>只停止当前正在运行的循环，如果事件循环没有运行，则无效。</p>
+<p>两个函数均在成功时返回0，失败时返回-1.</p>
+<p>下面是立马停止的例子：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cm">/* Here&#39;s a callback function that calls loopbreak */</span>
+<span class="kt">void</span> <span class="nf">cb</span><span class="p">(</span><span class="kt">int</span> <span class="n">sock</span><span class="p">,</span> <span class="kt">short</span> <span class="n">what</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span> <span class="o">=</span> <span class="n">arg</span><span class="p">;</span>
+    <span class="n">event_base_loopbreak</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">main_loop</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">watchdog_fd</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">watchdog_event</span><span class="p">;</span>
+
+    <span class="cm">/* Construct a new event to trigger whenever there are any bytes to
+</span><span class="cm">       read from a watchdog socket.  When that happens, we&#39;ll call the
+</span><span class="cm">       cb function, which will make the loop exit immediately without
+</span><span class="cm">       running any other active events at all.
+</span><span class="cm">     */</span>
+    <span class="n">watchdog_event</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">watchdog_fd</span><span class="p">,</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="n">base</span><span class="p">);</span>
+
+    <span class="n">event_add</span><span class="p">(</span><span class="n">watchdog_event</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>下面是10秒钟后停止的例子：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">run_base_with_ticks</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">ten_sec</span><span class="p">;</span>
+
+  <span class="n">ten_sec</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+  <span class="n">ten_sec</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+  <span class="cm">/* Now we run the event_base for a series of 10-second intervals, printing
+</span><span class="cm">     &#34;Tick&#34; after each.  For a much better way to implement a 10-second
+</span><span class="cm">     timer, see the section below about persistent timer events. */</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+     <span class="cm">/* This schedules an exit ten seconds from now. */</span>
+     <span class="n">event_base_loopexit</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ten_sec</span><span class="p">);</span>
+
+     <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+     <span class="n">puts</span><span class="p">(</span><span class="s">&#34;Tick&#34;</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>有时你想知道调用<code>event_base_dispatch()</code>或者<code>event_base_loop()</code>退出是否正常，或者想知道是调用哪种方式退出的，你可以使用如下函数：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_base_got_exit</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">event_base_got_break</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果循环分别用<code>event_base_loopexit()</code>或<code>event_base_break()</code>停止，这两个函数将返回 true，否则返回 false。它们的值将在您下次启动事件循环时重置。</p>
+<h3 id="重新检查events">重新检查events</h3>
+<p>通常，Libevent 检查事件，然后运行具有最高优先级的所有活动事件，然后再次检查事件，依此类推。但有时您可能希望在当前回调运行后立即停止 Libevent，并告诉它再次扫描。与<code>event_base_loopbreak()</code>类似，您可以使用函数<code>event_base_loopcontinue()</code>执行此操作。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">int</span> <span class="nf">event_base_loopcontinue</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果我们当前没有运行事件回调，则调用<code>event_base_loopcontinue()</code>无效。</p>
+<h3 id="检查内部时间缓存">检查内部时间缓存</h3>
+<p>有时，你希望在事件回调中获得当前时间，但是你不想调用<code>gettimeofday()</code>，因为此函数为系统调用，你正在避免使用系统调用。</p>
+<p>在回调中，您可以向 Libevent 询问它开始执行这一轮回调时的当前时间：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_base_gettimeofday_cached</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span>
+    <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">tv_out</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>该函数如果正在执行回调，则将tv_out参数设置为缓存的时间，否则调用<code>evutil_gettimeofday()</code>函数返回真是的时间。该函数在成功时返回0，失败是返回负值。</p>
+<p>注意，该时间为Libevent执行回调时的缓存的时间，所以可能不准确，如果你的回调执行了很长时间，他可能非常不准确，你可以强制刷新此缓存时间：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_base_update_cache_time</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>该函数在成功时返回0，在失败时返回-1，如果在没有运行事件循环时调用此函数，则没有作用。</p>
+<h3 id="转储event_base状态">转储event_base状态</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">event_base_dump_events</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="n">FILE</span> <span class="o">*</span><span class="n">f</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>为了协助调试你的程序（或者调试libevent），你有时想要所有events的完整列表以及它们的状态，调用<code>event_base_dump_events()</code>函数会将此列表写入你提供的文件中去。</p>
+<p>这个列表可供阅读的，它的格式在未来的libevent中会改变。</p>
+<h3 id="在-event_base-中的每个事件上运行一个函数">在 event_base 中的每个事件上运行一个函数</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">typedef</span> <span class="nf">int</span> <span class="p">(</span><span class="o">*</span><span class="n">event_base_foreach_event_cb</span><span class="p">)(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="p">,</span>
+    <span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">event_base_foreach_event</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span>
+                             <span class="n">event_base_foreach_event_cb</span> <span class="n">fn</span><span class="p">,</span>
+                             <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>您可以使用 <code>event_base_foreach_event()</code> 迭代与 <code>event_base()</code> 关联的每个active或pending的事件。提供的回调将在每个事件中以未指定的顺序被调用一次。 <code>event_base_foreach_event()</code>的第三个参数将作为第三个参数传递给回调的每次调用。</p>
+<p>回调函数必须返回 0 才能继续迭代，或者返回某个其他整数才能停止迭代。回调函数最终返回的任何值都将由 <code>event_base_foreach_function()</code> 返回。</p>
+<p>您的回调函数不得修改它接收到的任何事件，或向event_base添加或删除任何事件，或以其他方式修改与event_base关联的任何事件，否则可能发生未定义的行为，直至或包括崩溃和堆粉碎。</p>
+<p><code>event_base</code>锁将在调用<code>event_base_foreach_event()</code>的持续时间内保持不变— 这将阻止其他线程对 event_base 执行任何有用的操作，因此请确保您的回调不会花费很长时间。</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">刘光轩</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-09-04
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        <a class="prev" href="/post/event/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Event</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="/post/%E8%AE%BE%E7%BD%AEevent_base/">
+            <span class="next-text nav-default">设置event_base</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021<span class="heart"><i class="iconfont icon-heart"></i></span><span>刘光轩</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

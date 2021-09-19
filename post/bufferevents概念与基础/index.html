@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>bufferevent：概念与基础 - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="刘光轩" /><meta name="description" content="大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下： 决定我们要向连接写入一些数据；" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="bufferevent：概念与基础" />
+<meta property="og:description" content="大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下： 决定我们要向连接写入一些数据；" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-09-05T19:23:14&#43;08:00" />
+<meta property="article:modified_time" content="2021-09-05T19:23:14&#43;08:00" />
+
+<meta itemprop="name" content="bufferevent：概念与基础">
+<meta itemprop="description" content="大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下： 决定我们要向连接写入一些数据；"><meta itemprop="datePublished" content="2021-09-05T19:23:14&#43;08:00" />
+<meta itemprop="dateModified" content="2021-09-05T19:23:14&#43;08:00" />
+<meta itemprop="wordCount" content="7324">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="bufferevent：概念与基础"/>
+<meta name="twitter:description" content="大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下： 决定我们要向连接写入一些数据；"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Blog</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于我</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Blog</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于我</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">bufferevent：概念与基础</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-09-05 </span>
+        
+          <span class="more-meta"> 约 7324 字 </span>
+          <span class="more-meta"> 预计阅读 15 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下：</p>
+<ul>
+<li>决定我们要向连接写入一些数据；将该数据放入缓冲区。</li>
+<li>等待连接变为可写</li>
+<li>尽可能多地写入数据</li>
+<li>记住我们写了多少，如果我们还有更多的数据要写，等待连接再次变为可写。</li>
+</ul>
+<p>这种缓冲 IO 模式很常见，以至于 Libevent 为其提供了通用机制。 <code>bufferevent</code>由底层传输（如套接字）、读取缓冲区和写入缓冲区组成。与在底层传输准备好读取或写入时提供回调的常规事件不同，<code>bufferevent</code> 在读取或写入足够的数据时调用其用户提供的回调。</p>
+<p>有多种类型的bufferevent，它们都共享一个公共接口。在撰写本文时，存在以下类型：</p>
+<ul>
+<li>
+<p>基于套接字的bufferevent</p>
+<p>它使用 <code>event_*</code> 接口作为后端方法，从底层流套接字发送和接收数据。</p>
+</li>
+<li>
+<p>异步IO的bufferevent</p>
+<p>使用 Windows IOCP 接口向底层流套接字发送和接收数据的bufferevent。（仅限 Windows，实验性的）</p>
+</li>
+<li>
+<p>过滤的bufferevent</p>
+<p>在将传入和传出数据传递给底层 bufferevent 对象之前处理传入和传出数据的bufferevent - 例如，压缩或转换数据。</p>
+</li>
+<li>
+<p>成对的bufferevent</p>
+<p>两个之间互相传输数据</p>
+</li>
+</ul>
+<p>注意：</p>
+<p>bufferevent目前只支持面向字节流的TCP协议，在未来可能会支持面向数据报的UDP协议。</p>
+<p>本节中的所有函数和类型都在 <code>event2/bufferevent.h</code> 中声明。与 <code>evbuffer</code> 相关的函数在 <code>event2/buffer.h</code> 中声明；有关这些的信息，请参阅下一章。</p>
+<h4 id="bufferevents-and-evbuffers">Bufferevents and evbuffers</h4>
+<p>每一个bufferevent有一个输入缓冲区和输出缓冲区，类型为<code>struct evbuffer</code>，当你对bufferevent执行写操作时，实际上是写到了输出缓冲区上，当bufferevent有数据需要你读时，你实际上是从输入缓冲区进行读取的。</p>
+<p>我们将在后面的章节讨论evbuffer。</p>
+<h4 id="回调和水位">回调和水位</h4>
+<p>每一个bufferevent有两个相关的回调：读回调、写回调。默认情况下，只要从底层传输读取任何数据，就会调用读取回调。每当输出缓冲区中的足够数据被清空到底层传输时，就会调用写入回调。您可以通过bufferevent的读写“水位”来覆盖这些函数的行为。</p>
+<p>每一个bufferevent有4个水位：</p>
+<ul>
+<li>
+<p>读低水位</p>
+<p>当发生读取数据时，输入缓冲区大于等于此数值，则会调用读取回调。默认是0，所以每次读取数据都会调用读取回调。</p>
+</li>
+<li>
+<p>读高水位</p>
+<p>如果 bufferevent 的输入缓冲区达到此级别，则 bufferevent 将停止读取，直到从输入缓冲区中排出足够的数据使我们再次低于它。默认为无限制，因此我们永远不会因为输入缓冲区的大小而停止读取。</p>
+</li>
+<li>
+<p>写低水位</p>
+<p>当发生写数据时，输出缓冲区小于等于此数值，我们都会调用写回调。默认为 0，因此除非清空输出缓冲区，否则不会调用写入回调。</p>
+</li>
+<li>
+<p>写高水位</p>
+<p>不直接由bufferevent使用，当bufferevent用作另一个bufferevent的底层传输时，此水位可能具有特殊含义。请参阅下面有关过滤bufferevent的说明。</p>
+</li>
+</ul>
+<p>bufferevent 也有一个“错误”或“事件”回调，它被调用以告诉应用程序有关非面向数据的事件，例如连接关闭或发生错误时。定义了以下事件标志：</p>
+<ul>
+<li>
+<p>BEV_EVENT_READING</p>
+<p>读事件</p>
+</li>
+<li>
+<p>BEV_EVENT_WRITING</p>
+<p>写事件</p>
+</li>
+<li>
+<p>BEV_EVENT_ERROR</p>
+<p>错误事件</p>
+</li>
+<li>
+<p>BEV_EVENT_TIMEOUT</p>
+<p>超时事件</p>
+</li>
+<li>
+<p>BEV_EVENT_EOF</p>
+<p>结束事件</p>
+</li>
+<li>
+<p>BEV_EVENT_CONNECTED</p>
+<p>连接成功事件</p>
+</li>
+</ul>
+<h4 id="延迟回调">延迟回调</h4>
+<p>默认情况下，当相应的条件发生时，会立即执行 <code>bufferevent</code> 回调。 （这也适用于 <code>evbuffer</code> 回调；我们稍后会谈到。）当依赖关系变得复杂时，这种立即调用可能会带来麻烦。例如，假设有一个回调在 evbuffer A 变空时将数据移动到 evbuffer A 中，而另一个回调在 evbuffer A 变满时将数据从 evbuffer A 中处理出来。由于这些调用都发生在堆栈上，如果依赖关系变得足够糟糕，您可能会面临堆栈溢出的风险。</p>
+<p>为了解决这个问题，你可以告诉一个 <code>bufferevent</code>（或一个 <code>evbuffer</code>）它的回调应该被推迟。当满足延迟回调的条件时，它不会立即调用它，而是作为 <code>event_loop()</code> 调用的一部分排队，并在常规事件的回调之后调用。</p>
+<h4 id="bufferevents-的可选标志位">bufferevents 的可选标志位</h4>
+<p>在创建bufferevents的时候，你可以传入标志位来改变其默认行为，标志位如下所示：</p>
+<ul>
+<li>
+<p>BEV_OPT_CLOSE_ON_FREE</p>
+<p>当bufferevent被释放的时候，关闭底层传输，这会关闭底层socket传输，释放底层的bufferevent等。</p>
+</li>
+<li>
+<p>BEV_OPT_THREADSAFE</p>
+<p>自动为bufferevent分配锁，可以在多线程中安全的使用</p>
+</li>
+<li>
+<p>BEV_OPT_DEFER_CALLBACKS</p>
+<p>如上所述，延迟回调</p>
+</li>
+<li>
+<p>BEV_OPT_UNLOCK_CALLBACKS</p>
+<p>默认情况下，当bufferevent设置为线程安全时，当调用用户的回调时，bufferevent会自动加锁，设置此选项告诉libevent在调用用户回调的时候不加锁。</p>
+</li>
+</ul>
+<h4 id="基于socket的bufferevents">基于socket的bufferevents</h4>
+<p>最简单的bufferevent类型是基于套接字的。基于套接字的 bufferevent 使用 Libevent 的底层事件机制来检测底层网络套接字何时准备好进行读取和/或写入操作，并使用底层网络调用（如 readv、writev、WSASend 或 WSARecv）来传输和接收数据。</p>
+<p><strong>创建基于套接字的bufferevent</strong></p>
+<p>可以使用<code>bufferevent_socket_new()</code>函数创建一个基于套接字的bufferevent：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="nf">bufferevent_socket_new</span><span class="p">(</span>
+    <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span>
+    <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span>
+    <span class="k">enum</span> <span class="nc">bufferevent_options</span> <span class="n">options</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>base：event_base</li>
+<li>options：位掩码（BEV_OPT_CLOSE_ON_FREE等）</li>
+<li>fd：可选的文件描述符，可以设置为-1，代表想之后设置文件描述符。</li>
+</ul>
+<p><strong>提示：</strong></p>
+<p>确保传入此函数的socket为非阻塞模式，libevent提供了便利的方法来设置非阻塞<code>evutil_make_socket_nonblocking </code>。</p>
+<p>这个函数在成功时返回一个bufferevent，失败时返回NULL。</p>
+<p><strong>在基于套接字的bufferevent上启动连接</strong></p>
+<p>如果bufferevent的socket还未连接，你可以启动一个新连接</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">bufferevent_socket_connect</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span>
+    <span class="k">struct</span> <span class="nc">sockaddr</span> <span class="o">*</span><span class="n">address</span><span class="p">,</span> <span class="kt">int</span> <span class="n">addrlen</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中参数address、addrlen和标准的connect函数的参数一样，如果bufferevent还没有设置socket，调用此函数会分配一个新的socket给它，并设置为非阻塞模式。</p>
+<p>如果 bufferevent 已经有一个套接字，调用 bufferevent_socket_connect() 会告诉 Libevent 套接字未连接，并且在连接操作成功之前不应在套接字上进行读取或写入。</p>
+<p>在连接没有成功建立之前往输出缓冲区写数据是允许的。</p>
+<p>此函数在成功时返回0，失败时返回-1。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/bufferevent.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">eventcb</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">short</span> <span class="n">events</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">BEV_EVENT_CONNECTED</span><span class="p">)</span> <span class="p">{</span>
+         <span class="cm">/* We&#39;re connected to 127.0.0.1:8080.   Ordinarily we&#39;d do
+</span><span class="cm">            something here, like start reading or writing. */</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">BEV_EVENT_ERROR</span><span class="p">)</span> <span class="p">{</span>
+         <span class="cm">/* An error occured while connecting. */</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main_loop</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">sockaddr_in</span> <span class="n">sin</span><span class="p">;</span>
+
+    <span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+
+    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sin</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">sin</span><span class="p">));</span>
+    <span class="n">sin</span><span class="p">.</span><span class="n">sin_family</span> <span class="o">=</span> <span class="n">AF_INET</span><span class="p">;</span>
+    <span class="n">sin</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">.</span><span class="n">s_addr</span> <span class="o">=</span> <span class="n">htonl</span><span class="p">(</span><span class="mh">0x7f000001</span><span class="p">);</span> <span class="cm">/* 127.0.0.1 */</span>
+    <span class="n">sin</span><span class="p">.</span><span class="n">sin_port</span> <span class="o">=</span> <span class="n">htons</span><span class="p">(</span><span class="mi">8080</span><span class="p">);</span> <span class="cm">/* Port 8080 */</span>
+
+    <span class="n">bev</span> <span class="o">=</span> <span class="n">bufferevent_socket_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">BEV_OPT_CLOSE_ON_FREE</span><span class="p">);</span>
+
+    <span class="n">bufferevent_setcb</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">eventcb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">bufferevent_socket_connect</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span>
+        <span class="p">(</span><span class="k">struct</span> <span class="nc">sockaddr</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">sin</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">sin</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="cm">/* Error starting connection */</span>
+        <span class="n">bufferevent_free</span><span class="p">(</span><span class="n">bev</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><del><code>bufferevent_base_connect()</code></del> 函数是在 Libevent-2.0.2-alpha 中引入的。在此之前，您必须自己在套接字上手动调用 <code>connect()</code>，当连接完成时，bufferevent 会将其报告为写入。</p>
+<p>译者注：</p>
+<p>此处原作者应该是笔误，函数的名字为<code>bufferevent_socket_connect</code>。</p>
+<p>请注意，如果您使用 bufferevent_socket_connect() 来建立socket连接，您只会收到 BEV_EVENT_CONNECTED 事件。如果您自己调用 connect()来建立连接，将报告写入事件。</p>
+<p>如果您想自己调用connect()，但在连接成功时仍然收到BEV_EVENT_CONNECTED 事件，请在connect() 返回-1 且errno 等于EAGAIN 或EINPROGRESS 后调用bufferevent_socket_connect(bev, NULL, 0)。</p>
+<p><strong>通过主机名启动连接</strong></p>
+<p>很多时候，您希望将解析主机名和连接到它的操作合并为一个操作。有一个接口：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">bufferevent_socket_connect_hostname</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span>
+    <span class="k">struct</span> <span class="nc">evdns_base</span> <span class="o">*</span><span class="n">dns_base</span><span class="p">,</span> <span class="kt">int</span> <span class="n">family</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">hostname</span><span class="p">,</span>
+    <span class="kt">int</span> <span class="n">port</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">bufferevent_socket_get_dns_error</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数解析 DNS 名称hostname，查找family类型的address。（允许的family类型是 AF_INET、AF_INET6 和 AF_UNSPEC。）如果名称解析失败，它会调用带有错误事件的事件回调。如果成功，它会像 bufferevent_socket_connect 一样启动连接尝试。</p>
+<p>dns_base参数是可选的，如果是NULL的话，libevent会在等待名称查找完成之前阻塞，这通常不是你想要的。如果提供的话，则libevent使用它来异步查找主机名，有关DNS的更多信息，请参阅第九章。</p>
+<p>就像<code>bufferevent_socket_connect()</code>函数一样，这个函数告诉libevent，bufferevent上的任何现有套接字都是未连接的，并且在解析完成且连接操作成功之前不应在套接字上进行读取或者写入操作。</p>
+<p>如果发生错误，错误原因可能是DNS主机名查找错误，你可以调用<code>bufferevent_socket_get_dns_error()</code>函数来获取最近发生的错误。如果返回值为0，则代表没有错误发生。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cm">/* Don&#39;t actually copy this code: it is a poor way to implement an
+</span><span class="cm">   HTTP client.  Have a look at evhttp instead.
+</span><span class="cm">*/</span>
+<span class="cp">#include</span> <span class="cpf">&lt;event2/dns.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/bufferevent.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/buffer.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/util.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">readcb</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+    <span class="kt">int</span> <span class="n">n</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">evbuffer</span> <span class="o">*</span><span class="n">input</span> <span class="o">=</span> <span class="n">bufferevent_get_input</span><span class="p">(</span><span class="n">bev</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">((</span><span class="n">n</span> <span class="o">=</span> <span class="n">evbuffer_remove</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fwrite</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">stdout</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">eventcb</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">short</span> <span class="n">events</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">BEV_EVENT_CONNECTED</span><span class="p">)</span> <span class="p">{</span>
+         <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Connect okay.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">BEV_EVENT_ERROR</span><span class="o">|</span><span class="n">BEV_EVENT_EOF</span><span class="p">))</span> <span class="p">{</span>
+         <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span> <span class="o">=</span> <span class="n">ptr</span><span class="p">;</span>
+         <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">BEV_EVENT_ERROR</span><span class="p">)</span> <span class="p">{</span>
+                 <span class="kt">int</span> <span class="n">err</span> <span class="o">=</span> <span class="n">bufferevent_socket_get_dns_error</span><span class="p">(</span><span class="n">bev</span><span class="p">);</span>
+                 <span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span>
+                         <span class="n">printf</span><span class="p">(</span><span class="s">&#34;DNS error: %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">evutil_gai_strerror</span><span class="p">(</span><span class="n">err</span><span class="p">));</span>
+         <span class="p">}</span>
+         <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Closing</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+         <span class="n">bufferevent_free</span><span class="p">(</span><span class="n">bev</span><span class="p">);</span>
+         <span class="n">event_base_loopexit</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">evdns_base</span> <span class="o">*</span><span class="n">dns_base</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Trivial HTTP 0.x client</span><span class="se">\n</span><span class="s">&#34;</span>
+               <span class="s">&#34;Syntax: %s [hostname] [resource]</span><span class="se">\n</span><span class="s">&#34;</span>
+               <span class="s">&#34;Example: %s www.google.com /</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+    <span class="n">dns_base</span> <span class="o">=</span> <span class="n">evdns_base_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="n">bev</span> <span class="o">=</span> <span class="n">bufferevent_socket_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">BEV_OPT_CLOSE_ON_FREE</span><span class="p">);</span>
+    <span class="n">bufferevent_setcb</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span> <span class="n">readcb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">eventcb</span><span class="p">,</span> <span class="n">base</span><span class="p">);</span>
+    <span class="n">bufferevent_enable</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span> <span class="n">EV_READ</span><span class="o">|</span><span class="n">EV_WRITE</span><span class="p">);</span>
+    <span class="n">evbuffer_add_printf</span><span class="p">(</span><span class="n">bufferevent_get_output</span><span class="p">(</span><span class="n">bev</span><span class="p">),</span> <span class="s">&#34;GET %s</span><span class="se">\r\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+    <span class="n">bufferevent_socket_connect_hostname</span><span class="p">(</span>
+        <span class="n">bev</span><span class="p">,</span> <span class="n">dns_base</span><span class="p">,</span> <span class="n">AF_UNSPEC</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">80</span><span class="p">);</span>
+    <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="通用bufferevent操作">通用bufferevent操作</h4>
+<p><strong>释放bufferevent</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">bufferevent_free</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个函数释放一个bufferevent，bufferevent是内部引用计数的，所以如果bufferevent在你释放它时有挂起的延迟回调，他在回调完成之前不会被删除。</p>
+<p>然后，<code>bufferevent_free()</code>函数会尽快释放bufferevent，如果在bufferevent上有待写入的数据，他可能不会在bufferevent释放之前被刷新。</p>
+<p>如果设置了<code>BEV_OPT_CLOSE_ON_FREE </code>标志位，并且此bufferevent有一个与之关联的socket或底层bufferevent作为其传输，则当您释放bufferevent时，该传输将关闭。</p>
+<p><strong>操纵回调、水位、启用操作</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">typedef</span> <span class="nf">void</span> <span class="p">(</span><span class="o">*</span><span class="n">bufferevent_data_cb</span><span class="p">)(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="nf">void</span> <span class="p">(</span><span class="o">*</span><span class="n">bufferevent_event_cb</span><span class="p">)(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span>
+    <span class="kt">short</span> <span class="n">events</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">bufferevent_setcb</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span>
+    <span class="n">bufferevent_data_cb</span> <span class="n">readcb</span><span class="p">,</span> <span class="n">bufferevent_data_cb</span> <span class="n">writecb</span><span class="p">,</span>
+    <span class="n">bufferevent_event_cb</span> <span class="n">eventcb</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">cbarg</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">bufferevent_getcb</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span>
+    <span class="n">bufferevent_data_cb</span> <span class="o">*</span><span class="n">readcb_ptr</span><span class="p">,</span>
+    <span class="n">bufferevent_data_cb</span> <span class="o">*</span><span class="n">writecb_ptr</span><span class="p">,</span>
+    <span class="n">bufferevent_event_cb</span> <span class="o">*</span><span class="n">eventcb_ptr</span><span class="p">,</span>
+    <span class="kt">void</span> <span class="o">**</span><span class="n">cbarg_ptr</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>bufferevent_setcb()</code>函数修改<code>bufferevent</code>的一个或多个回调。当足够的数据被读取时调用读回调，当足够的数据被写入时调用写回调，当有事件发生时调用事件回调。第一个参数时发生事件的<code>bufferevent</code>，最后一个参数是用户在<code>bufferevent_setcb()</code>中提供的<code>cbarg</code>，你可以使用此方法传递参数至自己的回调函数中去。事件回调中的<code>events</code>参数为事件标志位的位集合。参考上述“回调和水位”部分。</p>
+<p>你可以用<code>NULL</code>参数来代替回调函数，达到禁用回调的目的。注意所有的回调函数共享同一个<code>cbarg</code>参数，所以如果修改此参数会影响到所有的回调。</p>
+<p>可以给<code>bufferevent_getcb()</code>传递指针来获取当前的回调，会将<code>readcb_ptr</code>设置位读回调，<code>writecb_ptr</code>设置为写回调，<code>eventcb_ptr</code>设置位事件回调，<code>cbarg_ptr</code>指向当前回调参数字段。如果任一参数为NULL，则被忽略。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">bufferevent_enable</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span> <span class="kt">short</span> <span class="n">events</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">bufferevent_disable</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span> <span class="kt">short</span> <span class="n">events</span><span class="p">);</span>
+
+<span class="kt">short</span> <span class="nf">bufferevent_get_enabled</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>你可以在一个<code>bufferevent</code>上启动或禁用<code>EV_READ</code>、<code>EV_WRITE</code>、<code>EV_READ|EV_WRITE</code>。当读或者写没有启用的时候，bufferevent不会尝试进行数据的读写。</p>
+<p>输出缓冲区为空的时候没必要禁用写操作：bufferevent会自动停止写入，当有数据可写的时候会重新启动。</p>
+<p>类似的，当输入缓冲区到达高水位的时候，没必要禁用读操作：bufferevent会自动停止读取，当有足够的空间可读的时候会自动重启。</p>
+<p>默认的，一个新创建的<code>bufferevent</code>启用了写操作，但是没有启用读操作。</p>
+<p>你可以调用<code>bufferevent_get_enabled()</code>函数来确定在当前bufferevent上启用了哪些事件。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">bufferevent_setwatermark</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span> <span class="kt">short</span> <span class="n">events</span><span class="p">,</span>
+    <span class="n">size_t</span> <span class="n">lowmark</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">highmark</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>bufferevent_setwatermark()</code>函数调整整个缓冲区的读水位、写水位或者两者。（如果events参数设置为EV_READ，则会调整读水位，如果events参数设置为EV_WRITE，则会调整写水位）</p>
+<p>高水位的0代表无限制。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/bufferevent.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/buffer.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/util.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;errno.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="k">struct</span> <span class="nc">info</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">;</span>
+    <span class="n">size_t</span> <span class="n">total_drained</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="nf">read_callback</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">info</span> <span class="o">*</span><span class="n">inf</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">evbuffer</span> <span class="o">*</span><span class="n">input</span> <span class="o">=</span> <span class="n">bufferevent_get_input</span><span class="p">(</span><span class="n">bev</span><span class="p">);</span>
+    <span class="n">size_t</span> <span class="n">len</span> <span class="o">=</span> <span class="n">evbuffer_get_length</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">len</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">inf</span><span class="o">-&gt;</span><span class="n">total_drained</span> <span class="o">+=</span> <span class="n">len</span><span class="p">;</span>
+        <span class="n">evbuffer_drain</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Drained %lu bytes from %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+             <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span> <span class="n">len</span><span class="p">,</span> <span class="n">inf</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">event_callback</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">short</span> <span class="n">events</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">info</span> <span class="o">*</span><span class="n">inf</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">evbuffer</span> <span class="o">*</span><span class="n">input</span> <span class="o">=</span> <span class="n">bufferevent_get_input</span><span class="p">(</span><span class="n">bev</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">finished</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">BEV_EVENT_EOF</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">size_t</span> <span class="n">len</span> <span class="o">=</span> <span class="n">evbuffer_get_length</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Got a close from %s.  We drained %lu bytes from it, &#34;</span>
+            <span class="s">&#34;and have %lu left.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">inf</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span>
+            <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span><span class="n">inf</span><span class="o">-&gt;</span><span class="n">total_drained</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span><span class="n">len</span><span class="p">);</span>
+        <span class="n">finished</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">BEV_EVENT_ERROR</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Got an error from %s: %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+            <span class="n">inf</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">evutil_socket_error_to_string</span><span class="p">(</span><span class="n">EVUTIL_SOCKET_ERROR</span><span class="p">()));</span>
+        <span class="n">finished</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">finished</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+        <span class="n">bufferevent_free</span><span class="p">(</span><span class="n">bev</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="nf">setup_bufferevent</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">b1</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">info</span> <span class="o">*</span><span class="n">info1</span><span class="p">;</span>
+
+    <span class="n">info1</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">info</span><span class="p">));</span>
+    <span class="n">info1</span><span class="o">-&gt;</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#34;buffer 1&#34;</span><span class="p">;</span>
+    <span class="n">info1</span><span class="o">-&gt;</span><span class="n">total_drained</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="cm">/* ... Here we should set up the bufferevent and make sure it gets
+</span><span class="cm">       connected... */</span>
+
+    <span class="cm">/* Trigger the read callback only whenever there is at least 128 bytes
+</span><span class="cm">       of data in the buffer. */</span>
+    <span class="n">bufferevent_setwatermark</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="n">bufferevent_setcb</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">read_callback</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">event_callback</span><span class="p">,</span> <span class="n">info1</span><span class="p">);</span>
+
+    <span class="n">bufferevent_enable</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">EV_READ</span><span class="p">);</span> <span class="cm">/* Start reading. */</span>
+    <span class="k">return</span> <span class="n">b1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>操纵bufferevent中的数据</strong></p>
+<p>如果不进行数据的读取和写入，那么进行数据的网络传输将变得毫无意义。bufferevent提供了如下的方法可以进行数据的读写。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">evbuffer</span> <span class="o">*</span><span class="nf">bufferevent_get_input</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">);</span>
+<span class="k">struct</span> <span class="nc">evbuffer</span> <span class="o">*</span><span class="nf">bufferevent_get_output</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这是两个非常基础而且强大的函数：分别各自返回了输出和输出缓冲区。有关evbuffer的更多细节，请参考下一章节。</p>
+<p>注意：应用程序只能在输入缓冲区上移除数据（不是添加）。只能在输出缓冲区上添加数据（不是移除）。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">bufferevent_write</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span>
+    <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">size</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">bufferevent_write_buffer</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span>
+    <span class="k">struct</span> <span class="nc">evbuffer</span> <span class="o">*</span><span class="n">buf</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这两个函数向bufferevent的输出缓冲区写数据。调用<code>bufferevent_write()</code>函数，将以data为起始位置，长度为size的数据添加到输出缓冲区的末尾。<code>bufferevent_write_buffer</code>函数将移除buf的全部内容，并添加到输出缓冲区的末尾。两个函数在成功时均返回0，在失败时返回-1.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">size_t</span> <span class="nf">bufferevent_read</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">size</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">bufferevent_read_buffer</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span>
+    <span class="k">struct</span> <span class="nc">evbuffer</span> <span class="o">*</span><span class="n">buf</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这两个函数从bufferevent的输入缓冲区中读数据。调用<code>bufferevent_read()</code>函数，将数据读取到data所在的内存中去，最多读取size字节，并返回实际读取的字节数。<code>bufferevent_read_buffer()</code>函数将读取输入缓冲区的全部内容，并将内容放置在buf的内存中，该函数在成功时返回0，失败时返回-1。</p>
+<p>注意：调用<code>bufferevent_read()</code>函数时，必须确保data有足够的空间容纳size字节的数据。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/bufferevent.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;event2/buffer.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;ctype.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">void</span>
+<span class="nf">read_callback_uppercase</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="cm">/* This callback removes the data from bev&#39;s input buffer 128
+</span><span class="cm">           bytes at a time, uppercases it, and starts sending it
+</span><span class="cm">           back.
+</span><span class="cm">
+</span><span class="cm">           (Watch out!  In practice, you shouldn&#39;t use toupper to implement
+</span><span class="cm">           a network protocol, unless you know for a fact that the current
+</span><span class="cm">           locale is the one you want to be using.)
+</span><span class="cm">         */</span>
+
+        <span class="kt">char</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">128</span><span class="p">];</span>
+        <span class="n">size_t</span> <span class="n">n</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="n">bufferevent_read</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">tmp</span><span class="p">));</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+                        <span class="k">break</span><span class="p">;</span> <span class="cm">/* No more data. */</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+                        <span class="n">tmp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">toupper</span><span class="p">(</span><span class="n">tmp</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+                <span class="n">bufferevent_write</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">struct</span> <span class="nc">proxy_info</span> <span class="p">{</span>
+        <span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">other_bev</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="kt">void</span>
+<span class="nf">read_callback_proxy</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="cm">/* You might use a function like this if you&#39;re implementing
+</span><span class="cm">           a simple proxy: it will take data from one connection (on
+</span><span class="cm">           bev), and write it to another, copying as little as
+</span><span class="cm">           possible. */</span>
+        <span class="k">struct</span> <span class="nc">proxy_info</span> <span class="o">*</span><span class="n">inf</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">;</span>
+
+        <span class="n">bufferevent_read_buffer</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span>
+            <span class="n">bufferevent_get_output</span><span class="p">(</span><span class="n">inf</span><span class="o">-&gt;</span><span class="n">other_bev</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="k">struct</span> <span class="nc">count</span> <span class="p">{</span>
+        <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">last_fib</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="p">};</span>
+
+<span class="kt">void</span>
+<span class="nf">write_callback_fibonacci</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="cm">/* Here&#39;s a callback that adds some Fibonacci numbers to the
+</span><span class="cm">           output buffer of bev.  It stops once we have added 1k of
+</span><span class="cm">           data; once this data is drained, we&#39;ll add more. */</span>
+        <span class="k">struct</span> <span class="nc">count</span> <span class="o">*</span><span class="n">c</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">;</span>
+
+        <span class="k">struct</span> <span class="nc">evbuffer</span> <span class="o">*</span><span class="n">tmp</span> <span class="o">=</span> <span class="n">evbuffer_new</span><span class="p">();</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">evbuffer_get_length</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1024</span><span class="p">)</span> <span class="p">{</span>
+                 <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">next</span> <span class="o">=</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">last_fib</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">last_fib</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+                 <span class="n">c</span><span class="o">-&gt;</span><span class="n">last_fib</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">last_fib</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+                 <span class="n">c</span><span class="o">-&gt;</span><span class="n">last_fib</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+
+                 <span class="n">evbuffer_add_printf</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s">&#34;%lu&#34;</span><span class="p">,</span> <span class="n">next</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="cm">/* Now we add the whole contents of tmp to bev. */</span>
+        <span class="n">bufferevent_write_buffer</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span> <span class="n">tmp</span><span class="p">);</span>
+
+        <span class="cm">/* We don&#39;t need tmp any longer. */</span>
+        <span class="n">evbuffer_free</span><span class="p">(</span><span class="n">tmp</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>读写超时</strong></p>
+<p>与其它事件一样，一定的时间过去之后，如果bufferevent没有任何数据成功写入或者读出，则可以调用超时。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">bufferevent_set_timeouts</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span>
+    <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">timeout_read</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">timeout_write</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>将超时设置为NULL，意味着将其删除。</p>
+<p>当bufferevent等待了<code>timeout_read</code>秒后仍然没有数据可以读取时，将触发读超时；当bufferevent等待了<code>timeout_write</code>秒后，仍然无法写入数据，则将触发写入超时。</p>
+<p>注意：超时仅仅在bufferevent可读、可写的时候才会计数。换句话说，当bufferevnet禁用读操作的时候或者输入缓冲区到达高水位的时候，读取超时将不会启用；类似地，写操作禁用的时候或者没有数据可写的时候，写超时不会启用。</p>
+<p>当发生读或写超时时，相应的读或写操作在<code>bufferevent</code>上被禁用。然后使用 <code>BEV_EVENT_TIMEOUT|BEV_EVENT_READING</code> 或 <code>BEV_EVENT_TIMEOUT|BEV_EVENT_WRITING</code> 调用事件回调。</p>
+<p><strong>刷新</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">bufferevent_flush</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span>
+    <span class="kt">short</span> <span class="n">iotype</span><span class="p">,</span> <span class="k">enum</span> <span class="nc">bufferevent_flush_mode</span> <span class="n">state</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>刷新bufferevent，即告诉bufferevent强制尽可能多的从底层传输多读取或者多写入数据，忽略其它限制写入的因素。详细细节取决于type字段。</p>
+<p>iotype 参数应为 <code>EV_READ</code>、<code>EV_WRITE</code> 或 <code>EV_READ|EV_WRITE</code> 以指示是否应处理读取、写入或两者的字节。状态参数可以是 <code>BEV_NORMAL</code>、<code>BEV_FLUSH</code> 或 <code>BEV_FINISHED</code> 之一。 <code>BEV_FINISHED</code> 表示应该告诉对方不再发送数据； <code>BEV_NORMAL</code> 和 <code>BEV_FLUSH</code> 之间的区别取决于缓冲事件的类型。</p>
+<p>该函数在失败时返回-1，没有数据可以刷新时返回0，刷新了部分数据时返回1。</p>
+<h4 id="特定的bufferevent操作">特定的bufferevent操作</h4>
+<p>这些函数并不是在所有的bufferevent类型上均有效。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">bufferevent_priority_set</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span> <span class="kt">int</span> <span class="n">pri</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">bufferevent_get_priority</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>该函数将用于实现 <code>bufev</code> 的事件的优先级调整为 <code>pri</code>。有关优先级的更多信息，请参阅 <code>event_priority_set()</code>。</p>
+<p>该函数在成功时返回0，失败时返回-1，仅仅在基于套接字的bufferevent上有效。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">bufferevent_setfd</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">);</span>
+<span class="n">evutil_socket_t</span> <span class="nf">bufferevent_getfd</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这些函数设置或者获取基于fd事件的文件描述符，只有基于套接字的bufferevent支持<code>setfd()</code>。这两个函数在失败时返回-1，<code>bufferevent_setfd()</code>函数在成功时返回0。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="nf">bufferevent_get_base</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>返回bufferevent的event_base。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="nf">bufferevent_get_underlying</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果存在的话，此函数返回bufev的底层传输的bufferevent。</p>
+<h4 id="手动对bufferevent进行上锁和解锁">手动对bufferevent进行上锁和解锁</h4>
+<p>与evbuffer一样，有时你想确保对bufferevent的操作为原子的。libevent公开了以下两个接口，可用于手动上锁和解锁。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">bufferevent_lock</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">bufferevent_unlock</span><span class="p">(</span><span class="k">struct</span> <span class="nc">bufferevent</span> <span class="o">*</span><span class="n">bufev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>注意：如果当创建bufferevent的时候没有指定<code>BEV_OPT_THREADSAFE</code>，或者libevent没有启用线程支持，那么上锁将没有任何作用。</p>
+<p>当调用此函数锁住bufferevent的时候，将同时锁住evbuffer。这些函数是递归的：对一个已经持有锁的bufferevent进行上锁是安全的，但是对应的要调用同等次数的解锁函数。</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">刘光轩</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-09-05
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        <a class="prev" href="/post/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">Bufferevents：高级主题</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="/post/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/">
+            <span class="next-text nav-default">可移植的工具函数</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021<span class="heart"><i class="iconfont icon-heart"></i></span><span>刘光轩</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

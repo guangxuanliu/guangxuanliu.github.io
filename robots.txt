@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://guangxuanliu.github.io/sitemap.xml

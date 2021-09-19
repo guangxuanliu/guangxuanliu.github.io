@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>前言 - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="刘光轩" /><meta name="description" content="从一万英尺外看libevent libevent是一个可以写快速、可移植、非阻塞的网络IO库，设计目标为： 可移植性 一个用libevent写的程" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/%E5%89%8D%E8%A8%80/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="前言" />
+<meta property="og:description" content="从一万英尺外看libevent libevent是一个可以写快速、可移植、非阻塞的网络IO库，设计目标为： 可移植性 一个用libevent写的程" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/%E5%89%8D%E8%A8%80/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-08-25T20:45:11&#43;08:00" />
+<meta property="article:modified_time" content="2021-08-25T20:45:11&#43;08:00" />
+
+<meta itemprop="name" content="前言">
+<meta itemprop="description" content="从一万英尺外看libevent libevent是一个可以写快速、可移植、非阻塞的网络IO库，设计目标为： 可移植性 一个用libevent写的程"><meta itemprop="datePublished" content="2021-08-25T20:45:11&#43;08:00" />
+<meta itemprop="dateModified" content="2021-08-25T20:45:11&#43;08:00" />
+<meta itemprop="wordCount" content="1294">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="前言"/>
+<meta name="twitter:description" content="从一万英尺外看libevent libevent是一个可以写快速、可移植、非阻塞的网络IO库，设计目标为： 可移植性 一个用libevent写的程"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Blog</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于我</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Blog</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于我</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">前言</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-08-25 </span>
+        
+          <span class="more-meta"> 约 1294 字 </span>
+          <span class="more-meta"> 预计阅读 3 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#从一万英尺外看libevent">从一万英尺外看libevent</a></li>
+            <li><a href="#库">库</a></li>
+            <li><a href="#头文件">头文件</a></li>
+            <li><a href="#如果你必须用旧版本的libevent">如果你必须用旧版本的libevent</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h3 id="从一万英尺外看libevent">从一万英尺外看libevent</h3>
+<p>libevent是一个可以写快速、可移植、非阻塞的网络IO库，设计目标为：</p>
+<ul>
+<li>
+<p>可移植性</p>
+<p>一个用libevent写的程序可以跨所有libevent支持的平台，即使是没有高效的方式实现非阻塞IO，libevent也支持普通的方式，以便你的程序在受限的环境中运行。</p>
+</li>
+<li>
+<p>速度</p>
+<p>libevent尝试在每个平台上用最快的非阻塞IO实现，而且并不会为此带来额外的开销。</p>
+</li>
+<li>
+<p>便利</p>
+<p>只要有可能，使用libevent编写的程序自然是稳定的，可移植的。</p>
+</li>
+</ul>
+<p>libevent划分为以下组件：</p>
+<ul>
+<li>
+<p>evutil</p>
+<p>为跨平台抽象出来的通用工具函数。</p>
+</li>
+<li>
+<p>event和event_base</p>
+<p>这是Libevent的核心。它为各种特定于平台的、基于事件的非阻塞 IO 后端提供抽象 API。它可以让您知道socket何时准备好读取或写入、执行基本超时功能以及检测操作系统信号。</p>
+</li>
+<li>
+<p>bufferevent</p>
+<p>这些函数为libevent基于事件的核心提供了更便利的封装接口，它让应用程序对缓冲区进行读取和写入，而不是通知您socket可以读取，让你知道IO何时实际发生。</p>
+</li>
+<li>
+<p>evbuffer</p>
+<p>该模块为bufferevents的底层缓冲实现，提供了高效便利的访问。</p>
+</li>
+<li>
+<p>evhttp</p>
+<p>一个简单的HTTP客户端/服务端实现</p>
+</li>
+<li>
+<p>evdns</p>
+<p>一个简单的dns客户端/服务端实现</p>
+</li>
+<li>
+<p>evrpc</p>
+<p>一个简单的RPC实现</p>
+</li>
+</ul>
+<h3 id="库">库</h3>
+<p>当编译libevent的时候，默认安装以下库：</p>
+<ul>
+<li>
+<p>libevent_core</p>
+<p>所有核心事件、缓冲区功能。这个库包含了event_base、evbuffer、bufferevent和工具函数。</p>
+</li>
+<li>
+<p>libevent_extra</p>
+<p>一些你可能需要，也可能不需要的基于特定协议的功能，包括HTTP、DNS和RPC。</p>
+</li>
+<li>
+<p>libevent</p>
+<p>因为历史原因而存在，包含了libevent_core和libevent_extra，你不应该再使用这个库，在未来可能会取消这个库。</p>
+</li>
+<li>
+<p>libevent_pthreads</p>
+<p>基于pthreads的线程、锁的可移植实现。它独立于libevent_core，如果你不需要以多线程的方式使用libevent的话，就不需要链接此库。</p>
+</li>
+<li>
+<p>libevent_openssl</p>
+<p>这个库使用bufferevents和OpenSSl来对通信进行加密。它独立于libevent_core，如果你不需要使用加密连接，就不需要链接此库。</p>
+</li>
+</ul>
+<h3 id="头文件">头文件</h3>
+<p>所有公开的头文件位于event2目录下，可以划分为3大类：</p>
+<ul>
+<li>
+<p>API头文件</p>
+<p>API头文件定义了公开的接口，这些头文件没有特殊的后缀。</p>
+</li>
+<li>
+<p>兼容性头文件</p>
+<p>包含一些已经弃用函数的定义，除非你从旧版本的libevent移植程序，否则你不应该使用这些文件。</p>
+</li>
+<li>
+<p>结构体头文件</p>
+<p>这些头文件定义了容易变动的结构。其中一些是公开的，以便于需要快速访问结构内容；有些是由于历史原因而暴露的。直接依赖头文件中的任何结构可能会破坏程序与其他版本的libevent的二进制兼容性，有时会导致难以调试的问题。这些头文件的后缀是<code>_struct.h</code>。</p>
+</li>
+</ul>
+<h3 id="如果你必须用旧版本的libevent">如果你必须用旧版本的libevent</h3>
+<p>Libevent 2.0 对其 API 进行了修改，使其总体上更加合理且不易出错。如果可能，您应该编写新程序来使用 Libevent 2.0 API。但有时您可能需要使用较旧的 API，要么更新现有应用程序，要么支持由于某种原因无法安装 Libevent 2.0 或更高版本的环境。</p>
+<p>旧版本的 Libevent 具有较少的头文件，并且没有将它们放在<code>event2</code>目录下：</p>
+<table>
+<thead>
+<tr>
+<th>旧头文件</th>
+<th>替代的新的头文件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>event.h</td>
+<td>event2/event*.h, event2/buffer*.h event2/bufferevent*.h event2/tag*.h</td>
+</tr>
+<tr>
+<td>evdns.h</td>
+<td>event2/dns*.h</td>
+</tr>
+<tr>
+<td>evhttp.h</td>
+<td>event2/http*.h</td>
+</tr>
+<tr>
+<td>evrpc.h</td>
+<td>event2/rpc*.h</td>
+</tr>
+<tr>
+<td>evutil.h</td>
+<td>event2/util*.h</td>
+</tr>
+</tbody>
+</table>
+<p>。。。</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">刘光轩</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-08-25
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        <a class="prev" href="/post/%E8%AE%BE%E7%BD%AElibevent/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">设置libevent</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="/post/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/">
+            <span class="next-text nav-default">异步IO简介</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021<span class="heart"><i class="iconfont icon-heart"></i></span><span>刘光轩</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

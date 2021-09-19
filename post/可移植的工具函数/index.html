@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>可移植的工具函数 - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="刘光轩" /><meta name="description" content="Libevent 的辅助函数和类型 &amp;lt;event2/util.h&amp;gt;头文件定义了许多函数，您可能会发现这些函数对使用 Libevent 实现可移植应用程序很有帮助。 libevent" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="可移植的工具函数" />
+<meta property="og:description" content="Libevent 的辅助函数和类型 &lt;event2/util.h&gt;头文件定义了许多函数，您可能会发现这些函数对使用 Libevent 实现可移植应用程序很有帮助。 libevent" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-09-05T18:30:48&#43;08:00" />
+<meta property="article:modified_time" content="2021-09-05T18:30:48&#43;08:00" />
+
+<meta itemprop="name" content="可移植的工具函数">
+<meta itemprop="description" content="Libevent 的辅助函数和类型 &lt;event2/util.h&gt;头文件定义了许多函数，您可能会发现这些函数对使用 Libevent 实现可移植应用程序很有帮助。 libevent"><meta itemprop="datePublished" content="2021-09-05T18:30:48&#43;08:00" />
+<meta itemprop="dateModified" content="2021-09-05T18:30:48&#43;08:00" />
+<meta itemprop="wordCount" content="2762">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="可移植的工具函数"/>
+<meta name="twitter:description" content="Libevent 的辅助函数和类型 &lt;event2/util.h&gt;头文件定义了许多函数，您可能会发现这些函数对使用 Libevent 实现可移植应用程序很有帮助。 libevent"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Blog</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于我</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Blog</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于我</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">可移植的工具函数</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-09-05 </span>
+        
+          <span class="more-meta"> 约 2762 字 </span>
+          <span class="more-meta"> 预计阅读 6 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li><a href="#libevent-的辅助函数和类型">Libevent 的辅助函数和类型</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h3 id="libevent-的辅助函数和类型">Libevent 的辅助函数和类型</h3>
+<p><code>&lt;event2/util.h&gt;</code>头文件定义了许多函数，您可能会发现这些函数对使用 Libevent 实现可移植应用程序很有帮助。 libevent 在内部使用这些类型和函数。</p>
+<h4 id="基本类型">基本类型</h4>
+<p><strong>evutil_socket_t</strong></p>
+<p>在除了Windows之外的大部分地方，socket是一个int值，操作系统按数字的顺序处理它们。但是在Windows上，socket的类型为SOCKET，这是一个类似指针的操作系统句柄，并且你接收到它们的顺序是未定义的。我们将 <code>evutil_socket_t</code> 类型定义为一个整数，它可以保存 <code>socket()</code> 或 <code>accept()</code> 的输出，而不会在 <code>Windows </code>上指针截断的风险。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#ifdef WIN32
+</span><span class="cp">#define evutil_socket_t intptr_t
+</span><span class="cp">#else
+</span><span class="cp">#define evutil_socket_t int
+</span><span class="cp">#endif
+</span></code></pre></td></tr></table>
+</div>
+</div><p><strong>标准整数类型</strong></p>
+<p>在较古老的系统上，没有C99的<code>stdint.h</code>头文件，为了应对这种情况，libevent定义了自己版本的特定位宽的整数。</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Width</th>
+<th>Signed</th>
+<th>Maximum</th>
+<th>Minimum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ev_uint64_t</td>
+<td>64</td>
+<td>No</td>
+<td>EV_UINT64_MAX</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ev_int64_t</td>
+<td>64</td>
+<td>Yes</td>
+<td>EV_INT64_MAX</td>
+<td>EV_INT64_MIN</td>
+</tr>
+<tr>
+<td>ev_uint32_t</td>
+<td>32</td>
+<td>No</td>
+<td>EV_UINT32_MAX</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ev_int32_t</td>
+<td>32</td>
+<td>Yes</td>
+<td>EV_INT32_MAX</td>
+<td>EV_INT32_MIN</td>
+</tr>
+<tr>
+<td>ev_uint16_t</td>
+<td>16</td>
+<td>No</td>
+<td>EV_UINT16_MAX</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ev_int16_t</td>
+<td>16</td>
+<td>Yes</td>
+<td>EV_INT16_MAX</td>
+<td>EV_INT16_MIN</td>
+</tr>
+<tr>
+<td>ev_uint8_t</td>
+<td>8</td>
+<td>No</td>
+<td>EV_UINT8_MAX</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ev_int8_t</td>
+<td>8</td>
+<td>Yes</td>
+<td>EV_INT8_MAX</td>
+<td>EV_INT8_MIN</td>
+</tr>
+</tbody>
+</table>
+<p>与 C99 标准一样，每种类型都具有指定的宽度（以位为单位）。</p>
+<p><strong>其他兼容类型</strong></p>
+<p>如果平台上包含<code>ssize_t</code>，则<code>ev_ssize_t</code> 类型被定义为 <code>ssize_t</code>，在没有<code>ssize_t</code>的平台上定义为合理的默认值。 <code>ev_ssize_t</code> 的最大可能值为 <code>EV_SSIZE_MAX</code>；最小的是 <code>EV_SSIZE_MIN</code>。 （size_t 的最大可能值是 <code>EV_SIZE_MAX</code>，以防您的平台没有为您定义 <code>SIZE_MAX</code>。）</p>
+<p><code>ev_off_t</code> 类型用于表示文件或内存块的偏移量。它在具有合理 <code>off_t</code> 定义的平台上被定义为 <code>off_t</code>，在 Windows 上被定义为 <code>ev_int64_t</code>。</p>
+<p>套接字 API 的某些实现提供了长度类型 <code>socklen_t</code>，而有些则不提供。 <code>ev_socklen_t</code> 在它存在的平台上定义为这种类型，否则为合理的默认值。</p>
+<p><code>ev_intptr_t</code> 类型是一个有符号整数，它大到足以容纳一个指针而不会丢失位。 <code>ev_uintptr_t</code> 类型是一个无符号整数，大到足以容纳一个指针而不会丢失位。</p>
+<h4 id="定时器函数">定时器函数</h4>
+<p>并非每个平台都定义了标准的 timeval 操作函数，因此我们提供了自己的实现。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define evutil_timeradd(tvp, uvp, vvp) </span><span class="cm">/* ... */</span><span class="cp">
+</span><span class="cp">#define evutil_timersub(tvp, uvp, vvp) </span><span class="cm">/* ... */</span><span class="cp">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>这些宏分别添加或减去它们的前两个参数，并将结果存储在第三个参数中。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define evutil_timerclear(tvp) </span><span class="cm">/* ... */</span><span class="cp">
+</span><span class="cp">#define evutil_timerisset(tvp) </span><span class="cm">/* ... */</span><span class="cp">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>清除 timeval 会将其值设置为零。如果它是非零的，则检查它是否被设置返回true，否则返回false。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="cp">#define evutil_timercmp(tvp, uvp, cmp)
+</span></code></pre></td></tr></table>
+</div>
+</div><p><code>evutil_timercmp</code> 宏比较两个时间值，如果它们处于关系运算符 <code>cmp</code> 指定的关系中，则结果为真。例如，<code>evutil_timercmp(t1, t2,&lt;=)</code> 的意思是，“是 t1 &lt;= t2 吗？”请注意，与某些操作系统的版本不同，Libevent 的 <code>timercmp</code> 支持所有 C 关系操作（即 &lt;、&gt;、==、!=、&lt;= 和 &gt;=）。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_gettimeofday</span><span class="p">(</span><span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">tv</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">timezone</span> <span class="o">*</span><span class="n">tz</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>evutil_gettimeofday 函数将 tv 设置为当前时间。未使用 tz 参数。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">timeval</span> <span class="n">tv1</span><span class="p">,</span> <span class="n">tv2</span><span class="p">,</span> <span class="n">tv3</span><span class="p">;</span>
+
+<span class="cm">/* Set tv1 = 5.5 seconds */</span>
+<span class="n">tv1</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span> <span class="n">tv1</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">500</span><span class="o">*</span><span class="mi">1000</span><span class="p">;</span>
+
+<span class="cm">/* Set tv2 = now */</span>
+<span class="n">evutil_gettimeofday</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tv2</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+<span class="cm">/* Set tv3 = 5.5 seconds in the future */</span>
+<span class="n">evutil_timeradd</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tv1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv3</span><span class="p">);</span>
+
+<span class="cm">/* all 3 should print true */</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">evutil_timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tv1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv1</span><span class="p">,</span> <span class="o">==</span><span class="p">))</span>  <span class="cm">/* == &#34;If tv1 == tv1&#34; */</span>
+   <span class="n">puts</span><span class="p">(</span><span class="s">&#34;5.5 sec == 5.5 sec&#34;</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">evutil_timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tv3</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv2</span><span class="p">,</span> <span class="o">&gt;=</span><span class="p">))</span>  <span class="cm">/* == &#34;If tv3 &gt;= tv2&#34; */</span>
+   <span class="n">puts</span><span class="p">(</span><span class="s">&#34;The future is after the present.&#34;</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">evutil_timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tv1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv2</span><span class="p">,</span> <span class="o">&lt;</span><span class="p">))</span>   <span class="cm">/* == &#34;If tv1 &lt; tv2&#34; */</span>
+   <span class="n">puts</span><span class="p">(</span><span class="s">&#34;It is no longer the past.&#34;</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="套接字-api-兼容性">套接字 API 兼容性</h4>
+<p>本节之所以存在，是因为由于历史原因，Windows 从未真正以良好兼容（并且非常兼容）的方式实现 Berkeley 套接字 API。以下是您可以用来假装它具有的一些功能。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_closesocket</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">s</span><span class="p">);</span>
+
+<span class="cp">#define EVUTIL_CLOSESOCKET(s) evutil_closesocket(s)
+</span></code></pre></td></tr></table>
+</div>
+</div><p>这个函数关闭一个套接字。在 Unix 上，它是 <code>close()</code> 的别名；在 Windows 上，它调用<code> closesocket()</code>。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define EVUTIL_SOCKET_ERROR()
+</span><span class="cp">#define EVUTIL_SET_SOCKET_ERROR(errcode)
+</span><span class="cp">#define evutil_socket_geterror(sock)
+</span><span class="cp">#define evutil_socket_error_to_string(errcode)
+</span></code></pre></td></tr></table>
+</div>
+</div><p>这些宏访问和操作套接字错误代码。 <code>EVUTIL_SOCKET_ERROR()</code> 返回来自该线程的最后一个套接字操作的全局错误代码，<code>evutil_socket_geterror()</code> 为函数传入指定的套接字。（两者在类 Unix 系统上都是 <code>errno</code>。） <code>EVUTIL_SET_SOCKET_ERROR()</code> 更改当前套接字错误代码（如在 Unix 上设置 errno），而 <code>evutil_socket_error_to_string()</code> 返回给定套接字错误代码的字符串表示（如 Unix 上的 <code>strerror()</code>）。</p>
+<p>我们需要这些函数，因为Windows没有使用socket错误使用errno，取而代之的是WSAGetLastError()。</p>
+<p>注意，Windows 套接字错误与您在 errno 中看到的标准 C 错误不同。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_make_socket_nonblocking</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">sock</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>即使您需要在套接字上执行非阻塞 IO 的调用也不能移植到 Windows。 <code>evutil_make_socket_nonblocking() </code>函数接受一个新套接字（来自 <code>socket() </code>或 <code>accept()</code>）并将其转换为非阻塞套接字。 （它在 Unix 上设置 <code>O_NONBLOCK</code>，在 Windows 上设置<code> FIONBIO</code>。）</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_make_listen_socket_reuseable</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">sock</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数确保监听套接字使用的地址在套接字关闭后立即可用于另一个套接字。 （它在 Unix 上设置 <code>SO_REUSEADDR</code> 而在 Windows 上什么也不做。你不想在 Windows 上使用 <code>SO_REUSEADDR</code>；它在那里意味着不同的东西。）</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_make_socket_closeonexec</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">sock</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个调用告诉操作系统如果我们调用<code> exec()</code> 就应该关闭这个套接字。它在 Unix 上设置<code> FD_CLOEXEC</code> 标志，而在 Windows 上什么也不做。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_socketpair</span><span class="p">(</span><span class="kt">int</span> <span class="n">family</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="kt">int</span> <span class="n">protocol</span><span class="p">,</span>
+        <span class="n">evutil_socket_t</span> <span class="n">sv</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个函数的行为就像 Unix <code>socketpair()</code>调用：它创建两个相互连接的套接字，可以与普通的套接字 IO 调用一起使用。它将两个套接字存储在<code>sv[0]</code>和 <code>sv[1]</code> 中，成功返回 0，失败返回 -1。</p>
+<p>在 Windows 上，这仅支持家族 <code>AF_INET</code>、类型 <code>SOCK_STREAM</code> 和协议 0。请注意，这可能会在某些 Windows 主机上失败，其中防火墙软件巧妙地对 <code>127.0.0.1</code> 进行了防火墙保护，以防止主机与自身对话。</p>
+<h4 id="字符串操作函数">字符串操作函数</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="n">ev_int64_t</span> <span class="nf">evutil_strtoll</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">s</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">endptr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">base</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数的行为与 <code>strtol</code> 相同，但处理 64 位整数。在某些平台上，它仅支持十进制。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_snprintf</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">buflen</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">,</span> <span class="p">...);</span>
+<span class="kt">int</span> <span class="nf">evutil_vsnprintf</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">buflen</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">,</span> <span class="n">va_list</span> <span class="n">ap</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这些<code>snprintf</code>替换函数的行为与标准<code> snprintf</code> 和 <code>vsnprintf</code> 接口相同。如果缓冲区足够长，它们返回将写入缓冲区的字节数，不计算终止的 <code>NUL</code> 字节。 （此行为符合 C99 <code>snprintf()</code> 标准，与 Windows <code>_snprintf()</code> 形成对比，后者在字符串不适合缓冲区时返回负数。）</p>
+<h4 id="与语言环境无关的字符串操作函数">与语言环境无关的字符串操作函数</h4>
+<p>有时，在实现基于 ASCII 的协议时，您希望根据 ASCII 的字符类型概念来操作字符串，而不管您当前的语言环境如何。 Libevent 提供了一些函数来帮助解决这个问题：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_ascii_strcasecmp</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">str1</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">str2</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">evutil_ascii_strncasecmp</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">str1</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">str2</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">n</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这些函数的行为与 <code>strcasecmp()</code> 和<code>strncasecmp()</code>一样，不同之处在于它们总是使用 ASCII 字符集进行比较，而不管当前的语言环境如何。</p>
+<h4 id="ipv6相关">IPV6相关</h4>
+<p>因为暂时用不到，所以没有翻译。</p>
+<h4 id="结构宏可移植函数">结构宏可移植函数</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="cp">#define evutil_offsetof(type, field) </span><span class="cm">/* ... */</span><span class="cp">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>作为标准的 offsetof 宏，这个宏产生从字段出现的类型开始的字节数。</p>
+<h4 id="安全随机数生成器">安全随机数生成器</h4>
+<p>许多应用程序（包括 evdns）需要一个难以预测的随机数来源以确保其安全性。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">evutil_secure_rng_get_bytes</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">n</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数用 n 字节的随机数据填充 buf 的 n 字节缓冲区。</p>
+<p>如果您的平台提供 <code>arc4random() </code>函数，Libevent 会使用它。否则，它使用自己的 <code>arc4random()</code> 实现，由操作系统的熵池（Windows 上的 <code>CryptGenRandom</code>，其他系统的 <code>/dev/urandom</code>）作为种子。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">evutil_secure_rng_init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">evutil_secure_rng_add_bytes</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">dat</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">datlen</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>您不需要手动初始化安全随机数生成器，但是如果您想确保它成功初始化，您可以通过调用 <code>evutil_secure_rng_init()</code> 来实现。它在成功时返回 0。如果它返回 -1，则 Libevent 无法在您的操作系统上找到良好的熵源，并且您无法在不自行初始化的情况下安全地使用 RNG。</p>
+<p>如果您在程序可能会放弃特权的环境中运行（例如，通过运行 chroot()），您应该在这样做之前调用 <code>evutil_secure_rng_init()</code>。</p>
+<p>您可以通过调用 <code>evutil_secure_rng_add_bytes()</code> 自己向熵池添加更多随机字节；这在典型使用中不是必需的。</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">刘光轩</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-09-05
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        <a class="prev" href="/post/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">bufferevent：概念与基础</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="/post/event/">
+            <span class="next-text nav-default">Event</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021<span class="heart"><i class="iconfont icon-heart"></i></span><span>刘光轩</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

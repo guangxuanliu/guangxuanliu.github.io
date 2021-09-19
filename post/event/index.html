@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Event - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="刘光轩" /><meta name="description" content="事件 event是libevent的基本操作单元，每一个event代表一系列条件的集合，包括： 一个文件描述符准备好了读、写 一个文件描述符准备好" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/event/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Event" />
+<meta property="og:description" content="事件 event是libevent的基本操作单元，每一个event代表一系列条件的集合，包括： 一个文件描述符准备好了读、写 一个文件描述符准备好" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/event/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-09-04T20:17:14&#43;08:00" />
+<meta property="article:modified_time" content="2021-09-04T20:17:14&#43;08:00" />
+
+<meta itemprop="name" content="Event">
+<meta itemprop="description" content="事件 event是libevent的基本操作单元，每一个event代表一系列条件的集合，包括： 一个文件描述符准备好了读、写 一个文件描述符准备好"><meta itemprop="datePublished" content="2021-09-04T20:17:14&#43;08:00" />
+<meta itemprop="dateModified" content="2021-09-04T20:17:14&#43;08:00" />
+<meta itemprop="wordCount" content="7505">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Event"/>
+<meta name="twitter:description" content="事件 event是libevent的基本操作单元，每一个event代表一系列条件的集合，包括： 一个文件描述符准备好了读、写 一个文件描述符准备好"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Blog</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于我</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Blog</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于我</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Event</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-09-04 </span>
+        
+          <span class="more-meta"> 约 7505 字 </span>
+          <span class="more-meta"> 预计阅读 15 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#事件">事件</a>
+          <ul>
+            <li><a href="#构造event对象">构造event对象</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="事件">事件</h2>
+<p>event是libevent的基本操作单元，每一个event代表一系列条件的集合，包括：</p>
+<ul>
+<li>一个文件描述符准备好了读、写</li>
+<li>一个文件描述符准备好了读、写（仅限于边缘触发）</li>
+<li>超时到期</li>
+<li>发生了信号</li>
+<li>用户触发的事件</li>
+</ul>
+<p>events拥有类似的生命周期。当你调用libevent的函数设置了一个event，并且将它关联到一个event_base，它的状态是<strong>initialized</strong>，在此时，你可以将它add进event_base，此时它的状态变为<strong>pending</strong>，当触发条件的事件发生时（比如，文件描述符状态改变或者超时到期），它的状态会变为<strong>active</strong>，此时用户提供的回调函数将会被调用，如果event被设置为<strong>persistent</strong>，它仍然保持pending状态，如果不是persistent的，当回调函数结束后，将不再是pending状态，你可以将pending 的event删除，使其变为non-pending状态，你可以将non-pending状态的event调用add使其变为pending状态。</p>
+<h3 id="构造event对象">构造event对象</h3>
+<p>调用<code>event_new()</code>创建一个新的event。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define EV_TIMEOUT      0x01
+</span><span class="cp">#define EV_READ         0x02
+</span><span class="cp">#define EV_WRITE        0x04
+</span><span class="cp">#define EV_SIGNAL       0x08
+</span><span class="cp">#define EV_PERSIST      0x10
+</span><span class="cp">#define EV_ET           0x20
+</span><span class="cp"></span>
+<span class="k">typedef</span> <span class="nf">void</span> <span class="p">(</span><span class="o">*</span><span class="n">event_callback_fn</span><span class="p">)(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+
+<span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="nf">event_new</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span>
+    <span class="kt">short</span> <span class="n">what</span><span class="p">,</span> <span class="n">event_callback_fn</span> <span class="n">cb</span><span class="p">,</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">event_free</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">event</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>event_new()</code>使用指定的event_base分配并构造一个新的event，<code>what</code>参数是上面列举的一些标志位（具体语义将在下面描述），如果<code>fd</code>非负，我们将监控此fd的读写事件，当event变为active，libevent会调用<code>cb</code>回调函数，并传递参数：</p>
+<ul>
+<li>fd，文件描述符</li>
+<li>bitfield，代表触发的事件的位集合</li>
+<li>args，构造事件时指定的参数</li>
+</ul>
+<p>当发生内部错误或参数无效时，返回NULL。</p>
+<p>所有新创建的事件均为<code>initialized</code>，并且是<code>non-pending</code>状态，可以调用<code>event_add()</code>函数使其变为<code>pending</code>状态。</p>
+<p>可以调用<code>event_free()</code>函数来释放一个event，当event处于<code>pengding</code>或者active状态时调用该函数是安全的。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">cb_func</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">what</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">data</span> <span class="o">=</span> <span class="n">arg</span><span class="p">;</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;Got an event on socket %d:%s%s%s%s [%s]&#34;</span><span class="p">,</span>
+            <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">fd</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">what</span><span class="o">&amp;</span><span class="n">EV_TIMEOUT</span><span class="p">)</span> <span class="o">?</span> <span class="s">&#34; timeout&#34;</span> <span class="o">:</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">what</span><span class="o">&amp;</span><span class="n">EV_READ</span><span class="p">)</span>    <span class="o">?</span> <span class="s">&#34; read&#34;</span> <span class="o">:</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">what</span><span class="o">&amp;</span><span class="n">EV_WRITE</span><span class="p">)</span>   <span class="o">?</span> <span class="s">&#34; write&#34;</span> <span class="o">:</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">what</span><span class="o">&amp;</span><span class="n">EV_SIGNAL</span><span class="p">)</span>  <span class="o">?</span> <span class="s">&#34; signal&#34;</span> <span class="o">:</span> <span class="s">&#34;&#34;</span><span class="p">,</span>
+            <span class="n">data</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">main_loop</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">fd1</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">fd2</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev1</span><span class="p">,</span> <span class="o">*</span><span class="n">ev2</span><span class="p">;</span>
+        <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">five_seconds</span> <span class="o">=</span> <span class="p">{</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">};</span>
+        <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+
+        <span class="cm">/* The caller has already set up fd1, fd2 somehow, and make them
+</span><span class="cm">           nonblocking. */</span>
+
+        <span class="n">ev1</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">fd1</span><span class="p">,</span> <span class="n">EV_TIMEOUT</span><span class="o">|</span><span class="n">EV_READ</span><span class="o">|</span><span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">cb_func</span><span class="p">,</span>
+           <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="s">&#34;Reading event&#34;</span><span class="p">);</span>
+        <span class="n">ev2</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">fd2</span><span class="p">,</span> <span class="n">EV_WRITE</span><span class="o">|</span><span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">cb_func</span><span class="p">,</span>
+           <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="s">&#34;Writing event&#34;</span><span class="p">);</span>
+
+        <span class="n">event_add</span><span class="p">(</span><span class="n">ev1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">five_seconds</span><span class="p">);</span>
+        <span class="n">event_add</span><span class="p">(</span><span class="n">ev2</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+        <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="event-flags">event flags</h4>
+<ul>
+<li>
+<p>EV_TIMEOUT</p>
+<p>在指定的时间过去之后，event将变为active。</p>
+</li>
+<li>
+<p>EV_READ</p>
+<p>标志着文件描述符变为可读。</p>
+</li>
+<li>
+<p>EV_WRITE</p>
+<p>标志着文件描述符变为可写。</p>
+</li>
+<li>
+<p>EV_SIGNAL</p>
+<p>用来实现信号检测，参考“构造信号事件”小节</p>
+</li>
+<li>
+<p>EV_PERSIST</p>
+<p>标志着event为<code>persistent</code>状态，参考“关于事件持久性”小节</p>
+</li>
+<li>
+<p>EV_ET</p>
+<p>指示事件应该是边缘触发的，如果底层 <code>event_base </code>后端支持边缘触发的事件。这会影响 <code>EV_READ</code> 和 <code>EV_WRITE</code> 的语义。</p>
+</li>
+</ul>
+<p>从 Libevent 2.0.1-alpha 开始，任何数量的事件都可能同时在相同条件下等待处理。例如，如果给定的 fd 准备好读取，您可能有两个事件将变为活动状态。它们的回调运行的顺序是未定义的。</p>
+<h4 id="关于事件持久性">关于事件持久性</h4>
+<p>默认情况下，当一个<code>pending</code>的事件变为active（因为fd变为可读、可写或者超时），当回调被执行前，它变为<code>non-pending</code>状态，因此，如果你想让事件继续变为<code>pending</code>状态，你可以在回调函数里面调用<code>event_add()</code>函数。</p>
+<p>如果设置了<code>EV_PERSIST</code>标志位，事件则是持久的，当回调被调用后，事件仍然保持<code>pending</code>状态。你可以在回调函数中调用<code>event_del()</code>函数来使事件变为<code>non-pending</code>状态。</p>
+<p>每当事件的回调运行时，持久性事件的超时就会重置。因此，如果一个event有如下标志位：EV_READ|EV_PERSIST和5秒的超时，事件会在以下情况下变为active：</p>
+<ul>
+<li>当socket变为可读时</li>
+<li>当距离上次事件变为active状态已经过去了5秒</li>
+</ul>
+<h4 id="创建一个将自己作为回调参数的事件">创建一个将自己作为回调参数的事件</h4>
+<p>你可能经常会需要创建一个将自己作为回调参数的事件，你不可以将该事件的指针作为参数传递到<code>event_new()</code>中，因为它还不存在，为了解决此问题，你可以使用<code>event_self_cbarg()</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="o">*</span><span class="nf">event_self_cbarg</span><span class="p">();</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>event_self_cbarg()</code>函数返回一个“魔术”指针，当作为事件回调参数传递时，它告诉 event_new() 创建一个接收自身作为其回调参数的事件。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="k">static</span> <span class="kt">int</span> <span class="n">n_calls</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">cb_func</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">what</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">me</span> <span class="o">=</span> <span class="n">arg</span><span class="p">;</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;cb_func called %d times so far.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="o">++</span><span class="n">n_calls</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">n_calls</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">)</span>
+       <span class="n">event_del</span><span class="p">(</span><span class="n">me</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">run</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">one_sec</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span> <span class="p">};</span>
+    <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">;</span>
+    <span class="cm">/* We&#39;re going to set up a repeating timer to get called called 100
+</span><span class="cm">       times. */</span>
+    <span class="n">ev</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">cb_func</span><span class="p">,</span> <span class="n">event_self_cbarg</span><span class="p">());</span>
+    <span class="n">event_add</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">one_sec</span><span class="p">);</span>
+    <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数还可与 <code>event_new()</code>、<code>evtimer_new()</code>、<code>evsignal_new()</code>、<code>event_assign()</code>、<code>evtimer_assign()</code> 和 <code>evsignal_assign()</code> 一起使用。但是，它不能用作非事件的回调参数。</p>
+<h4 id="仅超时事件">仅超时事件</h4>
+<p>为方便起见，您可以使用一组以 evtimer_ 开头的宏来代替 event_* 调用来分配和操作纯超时事件。除了提高代码的清晰度之外，使用这些宏没有任何好处。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define evtimer_new(base, callback, arg) \
+</span><span class="cp">    event_new((base), -1, 0, (callback), (arg))
+</span><span class="cp">#define evtimer_add(ev, tv) \
+</span><span class="cp">    event_add((ev),(tv))
+</span><span class="cp">#define evtimer_del(ev) \
+</span><span class="cp">    event_del(ev)
+</span><span class="cp">#define evtimer_pending(ev, tv_out) \
+</span><span class="cp">    event_pending((ev), EV_TIMEOUT, (tv_out))
+</span></code></pre></td></tr></table>
+</div>
+</div><p>译者注：</p>
+<p>从宏定义可以看出，<code>evtimer_new</code>被定义为flag为0的<code>event_new</code>别名，所以<code>evtimer_new</code>创建的定时器不是<code>persistent</code>的，如果想让定时器间隔一段时间就被执行一次，还需要手动的在回调函数里面再次执行<code>event_pending</code>函数，所以使用此方式创建定时器仅仅是可读性高一些。</p>
+<h4 id="构造信号事件">构造信号事件</h4>
+<p>libevent可以监视POSIX风格的信号，可以调用如下函数：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define evsignal_new(base, signum, cb, arg) \
+</span><span class="cp">    event_new(base, signum, EV_SIGNAL|EV_PERSIST, cb, arg)
+</span></code></pre></td></tr></table>
+</div>
+</div><p>除了用信号来代替文件描述符外，其余参数和event_new一样。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">hup_event</span><span class="p">;</span>
+<span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+
+<span class="cm">/* call sighup_function on a HUP signal */</span>
+<span class="n">hup_event</span> <span class="o">=</span> <span class="n">evsignal_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">SIGHUP</span><span class="p">,</span> <span class="n">sighup_function</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>请注意，信号回调在信号发生后在事件循环中运行，因此它们可以安全地调用您不应该从常规 POSIX 信号处理程序调用的函数。</p>
+<p>警告：不要给信号事件设定超时，它可能并不被支持。</p>
+<p>译者注：</p>
+<p>经译者测试，如果给一个信号事件添加了超时之后，该事件经过指定时间之后会被触发，不过事件为非persistent，即仅仅触发一次。</p>
+<p>在处理信号事件时，您还可以使用一组方便的宏。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define evsignal_add(ev, tv) \
+</span><span class="cp">    event_add((ev),(tv))
+</span><span class="cp">#define evsignal_del(ev) \
+</span><span class="cp">    event_del(ev)
+</span><span class="cp">#define evsignal_pending(ev, what, tv_out) \
+</span><span class="cp">    event_pending((ev), (what), (tv_out))
+</span></code></pre></td></tr></table>
+</div>
+</div><p><strong>注意事项</strong></p>
+<p>使用当前版本的 Libevent，对于大多数后端，每个进程一次只有一个 <code>event_base</code> 可以监听信号。如果您一次将信号事件添加到两个 <code>event_base</code> 即使信号不同！只有一个 <code>event_base</code> 会接收信号。</p>
+<p><code>kqueue</code> 后端没有这个限制。</p>
+<h4 id="在没有堆分配的情况下设置事件">在没有堆分配的情况下设置事件</h4>
+<p>出于性能和其他原因，有些人喜欢将事件作为更大结构的一部分进行分配。对于事件的每次使用，这会为他们节省：</p>
+<ul>
+<li>用于在堆上分配小对象的内存分配器开销。</li>
+<li>取消引用结构事件指针的时间开销。</li>
+<li>如果事件不在缓存中，则可能的额外缓存未命中的时间开销。</li>
+</ul>
+<p>使用这种方法可能会破坏与其他版本的 Libevent 的二进制兼容性，这些版本的事件结构可能具有不同的大小。</p>
+<p>这些开销对大多数应用程序来说影响微乎其微，你应该坚持使用<code>event_new()</code>，除非你明确知道在堆上分配内存导致巨大的性能开销。如果未来版本的 Libevent 使用比您正在构建的事件结构更大的事件结构，则使用 <code>event_assign()</code>可能会导致难以诊断的错误。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_assign</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span>
+    <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">what</span><span class="p">,</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">callback</span><span class="p">)(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">),</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>event_assign()</code> 的所有参数都与 <code>event_new()</code> 相同，但 event 参数必须指向未初始化的事件。它在成功时返回 0，在内部错误或错误参数时返回 -1。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp"></span><span class="cm">/* Watch out!  Including event_struct.h means that your code will not
+</span><span class="cm"> * be binary-compatible with future versions of Libevent. */</span>
+<span class="cp">#include</span> <span class="cpf">&lt;event2/event_struct.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="k">struct</span> <span class="nc">event_pair</span> <span class="p">{</span>
+         <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">;</span>
+         <span class="k">struct</span> <span class="nc">event</span> <span class="n">read_event</span><span class="p">;</span>
+         <span class="k">struct</span> <span class="nc">event</span> <span class="n">write_event</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="kt">void</span> <span class="nf">readcb</span><span class="p">(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">writecb</span><span class="p">(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">struct</span> <span class="nc">event_pair</span> <span class="o">*</span><span class="nf">event_pair_new</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">struct</span> <span class="nc">event_pair</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_pair</span><span class="p">));</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">p</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="n">p</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">;</span>
+        <span class="n">event_assign</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">read_event</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">EV_READ</span><span class="o">|</span><span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">readcb</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
+        <span class="n">event_assign</span><span class="p">(</span><span class="o">&amp;</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">write_event</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">EV_WRITE</span><span class="o">|</span><span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">writecb</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>您还可以使用 <code>event_assign()</code> 来初始化栈分配或静态分配的event。</p>
+<p><strong>警告</strong></p>
+<p>不要对一个<code>pending</code>到<code>event_base</code>的event调用<code>event_assign()</code>，这样做会导致极度难以调试的bug，如果event已经<code>initialized</code>并且处于<code>pending</code>状态，在调用<code>event_assign()</code>之前应该先调用<code>event_del()</code>。</p>
+<p>有一些方便的宏可以用于<code>event_assign()</code>仅超时或信号事件：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#define evtimer_assign(event, base, callback, arg) \
+</span><span class="cp">    event_assign(event, base, -1, 0, callback, arg)
+</span><span class="cp">#define evsignal_assign(event, base, signum, callback, arg) \
+</span><span class="cp">    event_assign(event, base, signum, EV_SIGNAL|EV_PERSIST, callback, arg)
+</span></code></pre></td></tr></table>
+</div>
+</div><p>如果您需要使用 <code>event_assign() </code>并保持与 Libevent 未来版本的二进制兼容性，您可以要求 Libevent 库在运行时告诉您结构事件应该有多大：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="n">size_t</span> <span class="nf">event_get_struct_event_size</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数返回您需要为event留出的字节数。和以前一样，只有当您知道堆分配是您程序中的一个重要问题时，才应该使用此函数，因为它会使您的代码更难以阅读和编写。</p>
+<p>请注意， <code>event_get_struct_event_size()</code>将来可能会给您一个小于<code>sizeof(struct event)</code>的值。如果发生这种情况，则意味着 struct 事件末尾的任何额外字节只是为未来版本的 Libevent 保留的填充字节。</p>
+<p>这是与上面相同的示例，但我们不依赖于 <code>event_struct.h</code> 中 <code>struct event</code> 的大小，而是使用 <code>event_get_struct_size()</code> 在运行时使用正确的大小。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cm">/* When we allocate an event_pair in memory, we&#39;ll actually allocate
+</span><span class="cm"> * more space at the end of the structure.  We define some macros
+</span><span class="cm"> * to make accessing those events less error-prone. */</span>
+<span class="k">struct</span> <span class="nc">event_pair</span> <span class="p">{</span>
+         <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="cm">/* Macro: yield the struct event &#39;offset&#39; bytes from the start of &#39;p&#39; */</span>
+<span class="cp">#define EVENT_AT_OFFSET(p, offset) \
+</span><span class="cp">            ((struct event*) ( ((char*)(p)) + (offset) ))
+</span><span class="cp"></span><span class="cm">/* Macro: yield the read event of an event_pair */</span>
+<span class="cp">#define READEV_PTR(pair) \
+</span><span class="cp">            EVENT_AT_OFFSET((pair), sizeof(struct event_pair))
+</span><span class="cp"></span><span class="cm">/* Macro: yield the write event of an event_pair */</span>
+<span class="cp">#define WRITEEV_PTR(pair) \
+</span><span class="cp">            EVENT_AT_OFFSET((pair), \
+</span><span class="cp">                sizeof(struct event_pair)+event_get_struct_event_size())
+</span><span class="cp"></span>
+<span class="cm">/* Macro: yield the actual size to allocate for an event_pair */</span>
+<span class="cp">#define EVENT_PAIR_SIZE() \
+</span><span class="cp">            (sizeof(struct event_pair)+2*event_get_struct_event_size())
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">readcb</span><span class="p">(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">writecb</span><span class="p">(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">struct</span> <span class="nc">event_pair</span> <span class="o">*</span><span class="nf">event_pair_new</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">struct</span> <span class="nc">event_pair</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">EVENT_PAIR_SIZE</span><span class="p">());</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">p</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="n">p</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">;</span>
+        <span class="n">event_assign</span><span class="p">(</span><span class="n">READEV_PTR</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">base</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">EV_READ</span><span class="o">|</span><span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">readcb</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
+        <span class="n">event_assign</span><span class="p">(</span><span class="n">WRITEEV_PTR</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">base</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">EV_WRITE</span><span class="o">|</span><span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">writecb</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="事件的pending-和-non-pending">事件的pending 和 non-pending</h4>
+<p>一旦你构造了一个事件，直到你将它变为pending状态之前，他都没有其它任何用处，你可以调用如下函数将其变为pending状态：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_add</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">tv</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在处于non-pending状态的event上调用此函数，会将其在event_base上变为pending状态，此函数在成功时返回0，失败是返回-1，如果tv参数为NULL，则event没有超时，否则，tv参数指定其超时的秒数和微秒数。</p>
+<p>如果您对已经pending的事件调用 event_add()，它将使变为pending，并使用提供的超时重新安排它。如果事件已经处于pending状态，并且您使用超时 NULL 重新添加它，则 event_add() 将无效。</p>
+<p><strong>注意：</strong> tv为相对事件，并非绝对时间，如果你想将超时设置在10秒后，请将<code>tv-&gt;tv_sec</code>赋值为10，而不是<code>time(NULL)+10</code>。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_del</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在<code>initialized</code>事件上调用 <code>event_del</code> 使其变为<code>non-pending</code>和<code>non-active</code>状态。如果事件处于<code>non-pending</code>或<code>non-active</code>状态，则没有任何影响。成功时返回值为 0，失败时返回 -1。</p>
+<p>如果在事件变为活动状态后但在其回调有机会执行之前删除事件，则不会执行回调。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_remove_timer</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>最后，您可以在不删除其 IO 或信号组件的情况下完全删除挂起事件的超时。如果事件没有超时挂起，则 <code>event_remove_timer() </code>无效。如果事件只有超时但没有 IO 或信号组件，则<code>event_remove_timer() </code>与 <code>event_del() </code>具有相同的效果。成功时返回值为 0，失败时返回 -1。</p>
+<h4 id="具有优先级的事件">具有优先级的事件</h4>
+<p>当多个事件同时触发时，libevent并没有规定执行回调的顺序。你可以使用priorities，来定义一些事件比另一些事件重要。</p>
+<p>就像在以前的章节中讨论的一样，每一个event_base有一个或多个优先级与之关联。在初始化event之后，添加到event_base之前，你可以设置优先级</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_priority_set</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="kt">int</span> <span class="n">priority</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>priority参数取值范围为0至event_base的priorities-1，该函数在成功时返回0，失败时返回-1.</p>
+<p>当多个具有不同优先级的事件同时变为active时，低优先级的事件不会运行，libevent会优先运行高优先级的事件，然后再次检查事件。只有当所有高优先级的事件没有处于active状态的时候才会运行低优先级的事件。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">void</span> <span class="nf">read_cb</span><span class="p">(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">write_cb</span><span class="p">(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">main_loop</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">important</span><span class="p">,</span> <span class="o">*</span><span class="n">unimportant</span><span class="p">;</span>
+  <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">;</span>
+
+  <span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+  <span class="n">event_base_priority_init</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+  <span class="cm">/* Now base has priority 0, and priority 1 */</span>
+  <span class="n">important</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">EV_WRITE</span><span class="o">|</span><span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">write_cb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+  <span class="n">unimportant</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">EV_READ</span><span class="o">|</span><span class="n">EV_PERSIST</span><span class="p">,</span> <span class="n">read_cb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+  <span class="n">event_priority_set</span><span class="p">(</span><span class="n">important</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">event_priority_set</span><span class="p">(</span><span class="n">unimportant</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+  <span class="cm">/* Now, whenever the fd is ready for writing, the write callback will
+</span><span class="cm">     happen before the read callback.  The read callback won&#39;t happen at
+</span><span class="cm">     all until the write callback is no longer active. */</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当你没有设置event的优先级时，默认值为队列的长度除以2。</p>
+<p>译者注：</p>
+<p>经过实际测试发现，当没有设置event的优先级时，默认值为event_base的优先级除以2。测试代码如下所示</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">signal_cb</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">events</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">event</span> <span class="o">*</span><span class="n">me</span> <span class="o">=</span> <span class="p">(</span><span class="n">event</span><span class="o">*</span><span class="p">)</span><span class="n">args</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">priority</span> <span class="o">=</span> <span class="n">event_get_priority</span><span class="p">(</span><span class="n">me</span><span class="p">);</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;</span><span class="se">\t</span><span class="s">priority:&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">priority</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+    <span class="n">event_base_priority_init</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="mi">21</span><span class="p">);</span>
+    <span class="n">event</span> <span class="o">*</span><span class="n">hup_event</span> <span class="o">=</span> <span class="n">evsignal_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">SIGINT</span><span class="p">,</span> <span class="n">signal_cb</span><span class="p">,</span> <span class="n">event_self_cbarg</span><span class="p">());</span>
+    <span class="n">evsignal_add</span><span class="p">(</span><span class="n">hup_event</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="n">event_base_dispatch</span><span class="p">(</span><span class="n">base</span><span class="p">);</span>
+    <span class="n">evsignal_del</span><span class="p">(</span><span class="n">hup_event</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="检测事件状态">检测事件状态</h4>
+<p>有时你想判断是否添加了一个事件。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_pending</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">,</span> <span class="kt">short</span> <span class="n">what</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">tv_out</span><span class="p">);</span>
+
+<span class="cp">#define event_get_signal(ev) </span><span class="cm">/* ... */</span><span class="cp">
+</span><span class="cp"></span><span class="n">evutil_socket_t</span> <span class="nf">event_get_fd</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+<span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="nf">event_get_base</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+<span class="kt">short</span> <span class="nf">event_get_events</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+<span class="n">event_callback_fn</span> <span class="nf">event_get_callback</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+<span class="kt">void</span> <span class="o">*</span><span class="nf">event_get_callback_arg</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">event_get_priority</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">event_get_assignment</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span>
+        <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">**</span><span class="n">base_out</span><span class="p">,</span>
+        <span class="n">evutil_socket_t</span> <span class="o">*</span><span class="n">fd_out</span><span class="p">,</span>
+        <span class="kt">short</span> <span class="o">*</span><span class="n">events_out</span><span class="p">,</span>
+        <span class="n">event_callback_fn</span> <span class="o">*</span><span class="n">callback_out</span><span class="p">,</span>
+        <span class="kt">void</span> <span class="o">**</span><span class="n">arg_out</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>event_pending</code>函数确定给定的事件是pending或者active的。如果是，并且在 what 参数中设置了任何标志 EV_READ、EV_WRITE、EV_SIGNAL 和 EV_TIMEOUT，则该函数返回事件当前pending或active的所有标志。如果提供了 tv_out，并且 EV_TIMEOUT 设置在 what 中，并且事件当前处于挂起状态或超时处于活动状态，则 tv_out 设置为保持事件超时到期的时间。</p>
+<p><code>event_get_fd()</code> 和 <code>event_get_signal()</code> 函数返回为事件配置的文件描述符或信号编号。 <code>event_get_base() </code>函数返回其配置的 <code>event_base</code>。 <code>event_get_events()</code> 函数返回事件的事件标志（EV_READ、EV_WRITE 等）。 <code>event_get_callback()</code> 和 <code>event_get_callback_arg()</code> 函数返回回调函数和参数指针。 <code>event_get_priority()</code> 函数返回事件当前分配的优先级。</p>
+<p><code>event_get_assignment()</code> 函数将事件的所有分配字段复制到提供的指针中。如果任何指针为 NULL，则将其忽略。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cm">/* Change the callback and callback_arg of &#39;ev&#39;, which must not be
+</span><span class="cm"> * pending. */</span>
+<span class="kt">int</span> <span class="nf">replace_callback</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">,</span> <span class="n">event_callback_fn</span> <span class="n">new_callback</span><span class="p">,</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">new_callback_arg</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">;</span>
+    <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">;</span>
+    <span class="kt">short</span> <span class="n">events</span><span class="p">;</span>
+
+    <span class="kt">int</span> <span class="n">pending</span><span class="p">;</span>
+
+    <span class="n">pending</span> <span class="o">=</span> <span class="n">event_pending</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">EV_READ</span><span class="o">|</span><span class="n">EV_WRITE</span><span class="o">|</span><span class="n">EV_SIGNAL</span><span class="o">|</span><span class="n">EV_TIMEOUT</span><span class="p">,</span>
+                            <span class="nb">NULL</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pending</span><span class="p">)</span> <span class="p">{</span>
+        <span class="cm">/* We want to catch this here so that we do not re-assign a
+</span><span class="cm">         * pending event.  That would be very very bad. */</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span>
+                <span class="s">&#34;Error! replace_callback called on a pending event!</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">event_get_assignment</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">base</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">events</span><span class="p">,</span>
+                         <span class="nb">NULL</span> <span class="cm">/* ignore old callback */</span> <span class="p">,</span>
+                         <span class="nb">NULL</span> <span class="cm">/* ignore old callback argument */</span><span class="p">);</span>
+
+    <span class="n">event_assign</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">new_callback</span><span class="p">,</span> <span class="n">new_callback_arg</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="查找当前正在运行的事件">查找当前正在运行的事件</h4>
+<p>出于调试或其他目的，您可以获得指向当前正在运行的事件的指针。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="nf">event_base_get_running_event</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>请注意，此函数的行为仅在从提供的 event_base 循环中调用时才定义。不支持从另一个线程调用它，并且可能导致未定义的行为。</p>
+<h4 id="配置一次性事件">配置一次性事件</h4>
+<p>如果你不需要多次添加一个事件，或者一旦添加就删除它，并且它不必是持久的，你可以使用 <code>event_base_once()</code>。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">int</span> <span class="nf">event_base_once</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="p">,</span> <span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span>
+  <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">),</span> <span class="kt">void</span> <span class="o">*</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>该函数的接口与<code>event_new()</code>相同，只是它不支持 EV_SIGNAL 或 EV_PERSIST。计划事件以默认优先级插入和运行。当回调最终完成时，Libevent 释放内部事件结构本身。成功时返回值为 0，失败时返回 -1。</p>
+<p>使用 <code>event_base_once </code>插入的事件无法删除或手动激活：如果您希望能够取消事件，请使用常规的 <code>event_new()</code> 或 <code>event_assign() </code>接口创建它。</p>
+<h4 id="手动激活事件">手动激活事件</h4>
+<p>极少情况下，即使事件的条件尚未触发，您也可能希望使变为active状态。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="kt">void</span> <span class="nf">event_active</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">,</span> <span class="kt">int</span> <span class="n">what</span><span class="p">,</span> <span class="kt">short</span> <span class="n">ncalls</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>该函数以what的标志位（EV_READ, EV_WRITE, and EV_TIMEOUT的位与）来使一个event变为active状态。事件不需要之前处于pending状态，并且激活它不会使其处于pending状态。</p>
+<p>警告：对同一事件递归地调用<code>event_active()</code>函数可能会导致资源耗尽。下面的代码片段展示了这一情况。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">;</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">cb</span><span class="p">(</span><span class="kt">int</span> <span class="n">sock</span><span class="p">,</span> <span class="kt">short</span> <span class="n">which</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="cm">/* Whoops: Calling event_active on the same event unconditionally
+</span><span class="cm">           from within its callback means that no other events might not get
+</span><span class="cm">           run! */</span>
+
+        <span class="n">event_active</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">EV_WRITE</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+
+        <span class="n">ev</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">EV_PERSIST</span> <span class="o">|</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+        <span class="n">event_add</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+        <span class="n">event_active</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">EV_WRITE</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+        <span class="n">event_base_loop</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这会造成事件循环只执行一次并永远调用函数<code>cb</code>的情况。</p>
+<p>可用定时器解决上述问题：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">;</span>
+<span class="k">struct</span> <span class="nc">timeval</span> <span class="n">tv</span><span class="p">;</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">cb</span><span class="p">(</span><span class="kt">int</span> <span class="n">sock</span><span class="p">,</span> <span class="kt">short</span> <span class="n">which</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">evtimer_pending</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">))</span> <span class="p">{</span>
+       <span class="n">event_del</span><span class="p">(</span><span class="n">ev</span><span class="p">);</span>
+       <span class="n">evtimer_add</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">);</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new</span><span class="p">();</span>
+
+   <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+   <span class="n">tv</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+   <span class="n">ev</span> <span class="o">=</span> <span class="n">evtimer_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+   <span class="n">evtimer_add</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">);</span>
+
+   <span class="n">event_base_loop</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>也可使用<code>event_config_set_max_dispatch_interval()</code>解决上述问题：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">;</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">cb</span><span class="p">(</span><span class="kt">int</span> <span class="n">sock</span><span class="p">,</span> <span class="kt">short</span> <span class="n">which</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">event_active</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">EV_WRITE</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">struct</span> <span class="nc">event_config</span> <span class="o">*</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">event_config_new</span><span class="p">();</span>
+        <span class="cm">/* Run at most 16 callbacks before checking for other events. */</span>
+        <span class="n">event_config_set_max_dispatch_interval</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span> <span class="o">=</span> <span class="n">event_base_new_with_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">);</span>
+        <span class="n">ev</span> <span class="o">=</span> <span class="n">event_new</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">EV_PERSIST</span> <span class="o">|</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="n">cb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+        <span class="n">event_add</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+        <span class="n">event_active</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">EV_WRITE</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+        <span class="n">event_base_loop</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="优化common-timeouts">优化common timeouts</h4>
+<p>当前版本的 Libevent 使用二叉堆算法来跟踪挂起事件的超时。二叉堆为添加和删除每个事件超时提供了 <code>O(lg n) </code>的性能。如果您添加具有随机分布的超时值集的事件，这是最佳选择，但如果您有大量具有相同超时值的事件，则不是这样。</p>
+<p>例如，假设您有一万个事件，每个事件都应在添加5秒后触发其超时。在这种情况下，您可以通过使用双向链接队列实现为每次超时获得<code>O(1)</code>性能。</p>
+<p>自然，您不会希望为所有超时值使用队列，因为只有对于恒定超时值，队列才会更快。如果某些超时或多或少是随机分布的，那么将这些超时之一添加到队列将花费 <code>O(n)</code> 时间，这将比二叉堆要糟糕得多。</p>
+<p>Libevent 允许您通过将一些超时放在队列中，将其他超时放在二叉堆中来解决这个问题。为此，您需要向 Libevent 请求一个特殊的<code>common timeout</code>时间值，然后您可以使用它来添加具有该时间值的事件。如果您有大量具有单个公共超时的事件，则使用此优化应该可以提高超时性能。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="nf">event_base_init_common_timeout</span><span class="p">(</span>
+    <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">duration</span><span class="p">);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此函数将 <code>event_base</code> 和要初始化的公共超时的持续时间作为其参数。它返回一个指向特殊结构 <code>timeval</code> 的指针，您可以使用该指针指示应将事件添加到 <code>O(1)</code> 队列而不是 <code>O(lg n)</code> 堆。这个特殊的时间值可以在你的代码中自由复制或分配。它仅适用于您用来构建它的特定基础。不要依赖它的实际内容：Libevent 使用它们来告诉自己使用哪个队列。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="cm">/* We&#39;re going to create a very large number of events on a given base,
+</span><span class="cm"> * nearly all of which have a ten-second timeout.  If initialize_timeout
+</span><span class="cm"> * is called, we&#39;ll tell Libevent to add the ten-second ones to an O(1)
+</span><span class="cm"> * queue. */</span>
+<span class="k">struct</span> <span class="nc">timeval</span> <span class="n">ten_seconds</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span> <span class="p">};</span>
+
+<span class="kt">void</span> <span class="nf">initialize_timeout</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">timeval</span> <span class="n">tv_in</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span> <span class="p">};</span>
+    <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">tv_out</span><span class="p">;</span>
+    <span class="n">tv_out</span> <span class="o">=</span> <span class="n">event_base_init_common_timeout</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv_in</span><span class="p">);</span>
+    <span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ten_seconds</span><span class="p">,</span> <span class="n">tv_out</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="nc">timeval</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">my_event_add</span><span class="p">(</span><span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="nc">timeval</span> <span class="o">*</span><span class="n">tv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="cm">/* Note that ev must have the same event_base that we passed to
+</span><span class="cm">       initialize_timeout */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">tv</span> <span class="o">&amp;&amp;</span> <span class="n">tv</span><span class="o">-&gt;</span><span class="n">tv_sec</span> <span class="o">==</span> <span class="mi">10</span> <span class="o">&amp;&amp;</span> <span class="n">tv</span><span class="o">-&gt;</span><span class="n">tv_usec</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">event_add</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ten_seconds</span><span class="p">);</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="n">event_add</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">tv</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>与所有优化函数一样，您应该避免使用 <code>common_timeout</code> 功能，除非您非常确定它对您很重要。</p>
+<h4 id="区分正常的event">区分正常的event</h4>
+<p>Libevent 提供了一些函数，您可以使用这些函数将<code>initialized</code>的event与内存被复位的event区分开（例如，通过使用 <code>calloc() </code>分配它或使用<code>memset()</code>或 <code>bzero() </code>清除它）。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">int</span> <span class="nf">event_initialized</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">);</span>
+
+<span class="cp">#define evsignal_initialized(ev) event_initialized(ev)
+</span><span class="cp">#define evtimer_initialized(ev) event_initialized(ev)
+</span></code></pre></td></tr></table>
+</div>
+</div><p>警告：</p>
+<p>这些函数无法可靠地区分<code>initialized</code>的事件和<code>uninitialized</code>的内存。除非您知道有问题的内存已清除或为<code>initialized</code>事件，否则不应使用它们。</p>
+<p>一般来说，你不需要使用这些函数。 <code>event_new() </code>返回的事件总是被初始化。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="k">struct</span> <span class="nc">reader</span> <span class="p">{</span>
+    <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="cp">#define READER_ACTUAL_SIZE() \
+</span><span class="cp">    (sizeof(struct reader) + \
+</span><span class="cp">     event_get_struct_event_size())
+</span><span class="cp"></span>
+<span class="cp">#define READER_EVENT_PTR(r) \
+</span><span class="cp">    ((struct event *) (((char*)(r))+sizeof(struct reader)))
+</span><span class="cp"></span>
+<span class="k">struct</span> <span class="nc">reader</span> <span class="o">*</span><span class="nf">allocate_reader</span><span class="p">(</span><span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">reader</span> <span class="o">*</span><span class="n">r</span> <span class="o">=</span> <span class="n">calloc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">READER_ACTUAL_SIZE</span><span class="p">());</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="n">r</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">fd</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">r</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">readcb</span><span class="p">(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">add_reader</span><span class="p">(</span><span class="k">struct</span> <span class="nc">reader</span> <span class="o">*</span><span class="n">r</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">event_base</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">event</span> <span class="o">*</span><span class="n">ev</span> <span class="o">=</span> <span class="n">READER_EVENT_PTR</span><span class="p">(</span><span class="n">r</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">event_initialized</span><span class="p">(</span><span class="n">ev</span><span class="p">))</span>
+        <span class="n">event_assign</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="n">EV_READ</span><span class="p">,</span> <span class="n">readcb</span><span class="p">,</span> <span class="n">r</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">event_add</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div>
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">刘光轩</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-09-04
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        <a class="prev" href="/post/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">可移植的工具函数</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="/post/%E8%BF%90%E8%A1%8Cevent_loop/">
+            <span class="next-text nav-default">运行event_loop</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021<span class="heart"><i class="iconfont icon-heart"></i></span><span>刘光轩</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
