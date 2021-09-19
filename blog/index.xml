@@ -6,7 +6,26 @@
     <description>Recent content in Blog on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 11 Sep 2021 17:06:07 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 13 Sep 2021 20:30:35 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Evbuffers：缓冲IO的功能</title>
+      <link>https://guangxuanliu.github.io/blog/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/</link>
+      <pubDate>Mon, 13 Sep 2021 20:30:35 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/blog/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/</guid>
+      <description>Libevent 的 evbuffer 功能实现了一个字节队列，针对将数据添加到末尾和从前面删除数据进行了优化。
+Evbuffers 通常用于执行缓冲网络 IO 的“缓冲”部分。它们不提供调度 IO 或在 IO 准备好时触发 IO 的功能：这是 bufferevents 所做的功能。
+除非特别说明，本章的所有函数声明在event2/buffer.h头文件中。
+创建或释放evbuffer struct evbuffer *evbuffer_new(void); void evbuffer_free(struct evbuffer *buf); evbuffer_new()分配内存并且返回一个新的空的evbuffer，evbuffer_free()释放并且清除evbuffer的内容。
+evbuffer与线程安全 int evbuffer_enable_locking(struct evbuffer *buf, void *lock); void evbuffer_lock(struct evbuffer *buf); void evbuffer_unlock(struct evbuffer *buf); 默认情况下，同时在多个线程中访问evbuffer并不是安全的。如果需要在多线程中访问，你需要在evbuffer上调用evbuffer_enable_locking()，如果lock参数为NULL，libevent使用使用evthread_set_lock_creation_callback函数的锁创建函数来分配一个新的锁。如果lock参数不为空的话，则用之作为锁。
+evbuffer_lock()和evbuffer_unlock()函数分别获取和释放锁。你可以使用它们来进行一系列的原子操作。如果evbuffer没有启用加锁，则这些函数调用无效。
+（注意，单个操作无须调用evbuffer_lock()和evbuffer_unlock()，如果evbuffer启用了加锁，单个操作已经是原子的了。只有在多线程同时有多个操作的情况下手动锁定evbuffer。）
+检查evbuffer size_t evbuffer_get_length(const struct evbuffer *buf); 该函数返回存储在evbuffer中的字节数。
+size_t evbuffer_get_contiguous_space(const struct evbuffer *buf); 该函数返回evbuffer中前面连续的字节数。evbuffer的字节可能存储在多个分散的内存块中，这个函数返回第一个内存块中连续的字节数。
+向evbuffer添加数据 int evbuffer_add(struct evbuffer *buf, const void *data, size_t datlen); 该函数将以data起始的datlen长度的数据添加到buf的尾部。
+int evbuffer_add_printf(struct evbuffer *buf, const char *fmt, .</description>
+    </item>
+    
     <item>
       <title>Bufferevents：高级主题</title>
       <link>https://guangxuanliu.github.io/blog/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/</link>
