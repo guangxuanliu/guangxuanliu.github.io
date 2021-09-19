@@ -218,9 +218,7 @@ libevent尝试在每个平台上用最快的非阻塞IO实现，而且并不会�
       <pubDate>Sun, 22 Aug 2021 22:38:01 +0800</pubDate>
       
       <guid>https://guangxuanliu.github.io/blog/libevent%E7%BC%96%E7%A8%8B%E6%89%8B%E5%86%8C/</guid>
-      <description>了解libevent   关于这篇文档
-  异步IO简介
-  libevent参考手册   前言
+      <description>了解libevent  关于这篇文档 异步IO简介  libevent参考手册   前言
   设置libevent
   设置event_base
   运行event_loop
@@ -232,7 +230,7 @@ libevent尝试在每个平台上用最快的非阻塞IO实现，而且并不会�
   Connection Listeners：接收TCP连接
   DNS
   本文翻译自英文版教程，因为本人水平有限，所以翻译的过程中难免有些地方措辞不当，表达不出原作者的意思，还请读者斧正。
-原教程链接：http://www.wangafu.net/~nickm/libevent-book/</description>
+原教程链接：libevent-book</description>
     </item>
     
     <item>

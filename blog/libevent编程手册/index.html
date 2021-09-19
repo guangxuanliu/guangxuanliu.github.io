@@ -99,6 +99,10 @@
                     <div class="d-none d-md-inline tags">
                         <ul class="list-unstyled d-inline">
                             
+                            <li class="d-inline middot">
+                                <a href="https://guangxuanliu.github.io/tags/libevent">libevent</a>
+                            </li>
+                            
                         </ul>
                     </div>
                 </div>
@@ -107,41 +111,37 @@
                     
     <h2 id="了解libevent">了解libevent</h2>
 <ul>
-<li>
-<p>关于这篇文档</p>
-</li>
-<li>
-<p>异步IO简介</p>
-</li>
+<li><a href="../%E5%85%B3%E4%BA%8E%E8%BF%99%E7%AF%87%E6%96%87%E6%A1%A3">关于这篇文档</a></li>
+<li><a href="../%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B">异步IO简介</a></li>
 </ul>
 <h2 id="libevent参考手册">libevent参考手册</h2>
 <ul>
 <li>
-<p>前言</p>
+<p><a href="../%E5%89%8D%E8%A8%80">前言</a></p>
 </li>
 <li>
-<p>设置libevent</p>
+<p><a href="../%E8%AE%BE%E7%BD%AElibevent">设置libevent</a></p>
 </li>
 <li>
-<p>设置event_base</p>
+<p><a href="../%E8%AE%BE%E7%BD%AEevent_base">设置event_base</a></p>
 </li>
 <li>
-<p>运行event_loop</p>
+<p><a href="../%E8%BF%90%E8%A1%8Cevent_loop">运行event_loop</a></p>
 </li>
 <li>
-<p>事件</p>
+<p><a href="../event">事件</a></p>
 </li>
 <li>
-<p>可移植的工具函数</p>
+<p><a href="../%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0">可移植的工具函数</a></p>
 </li>
 <li>
-<p>Bufferevents：概念与基础</p>
+<p><a href="../bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80">Bufferevents：概念与基础</a></p>
 </li>
 <li>
-<p>Bufferevents：高级主题</p>
+<p><a href="../bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98">Bufferevents：高级主题</a></p>
 </li>
 <li>
-<p>Evbuffers：缓冲IO的功能</p>
+<p><a href="../evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD">Evbuffers：缓冲IO的功能</a></p>
 </li>
 <li>
 <p>Connection Listeners：接收TCP连接</p>
@@ -151,7 +151,7 @@
 </li>
 </ul>
 <p>本文翻译自<a href="http://www.wangafu.net/~nickm/libevent-book/">英文版教程</a>，因为本人水平有限，所以翻译的过程中难免有些地方措辞不当，表达不出原作者的意思，还请读者斧正。</p>
-<p>原教程链接：http://www.wangafu.net/~nickm/libevent-book/</p>
+<p>原教程链接：<a href="http://www.wangafu.net/~nickm/libevent-book/">libevent-book</a></p>
 
 
 
@@ -191,6 +191,10 @@
             <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/python.min.js" defer></script>
         
             <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/stan.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/C&#43;&#43;.min.js" defer></script>
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/c&#43;&#43;.min.js" defer></script>
         
         <script>
             window.addEventListener('load', function() {
