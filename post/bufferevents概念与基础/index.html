@@ -1103,7 +1103,25 @@
     </footer>
   </article>
         </div>
-        
+        <div id="comments-gitment"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/theme-next/theme-next-gitment@1/default.min.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/gh/theme-next/theme-next-gitment@1/gitment.browser.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var gitment = new Gitment({
+        id: '2021-09-05 19:23:14 \u002b0800 CST',
+        title: 'bufferevent：概念与基础',
+        link: decodeURI(location.href),
+        desc: '大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下： 决定我们要向连接写入一些数据；',
+        owner: 'guangxuanliu',
+        repo: 'guangxuanliu.github.io',
+        oauth: {
+          client_id: '184031b39e979afa99c5',
+          client_secret: '75e0104ea7cb206ca999d81d49e34133c4da7027'
+        }
+      });
+      gitment.render('comments-gitment');
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/imsun/gitment">comments powered by gitment.</a></noscript>
 
   
 
