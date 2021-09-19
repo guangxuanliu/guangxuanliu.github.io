@@ -8,6 +8,15 @@
     <language>zh-cn</language>
     <lastBuildDate>Mon, 13 Sep 2021 20:30:35 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>About</title>
+      <link>https://guangxuanliu.github.io/about/</link>
+      <pubDate>Sun, 19 Sep 2021 19:35:52 +0800</pubDate>
+      
+      <guid>https://guangxuanliu.github.io/about/</guid>
+      <description>一名C++程序员。可以通过guangxuanliu@gmail.com联系到我。</description>
+    </item>
+    
+    <item>
       <title>Evbuffers：缓冲IO的功能</title>
       <link>https://guangxuanliu.github.io/post/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/</link>
       <pubDate>Mon, 13 Sep 2021 20:30:35 +0800</pubDate>
