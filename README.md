@@ -1,2 +1,2 @@
 # guangxuanliu.github.io
-This is my blog.
+[个人博客](https://liuguangxuan.top)仓库
