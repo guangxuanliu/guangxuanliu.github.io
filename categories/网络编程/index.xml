@@ -2,116 +2,116 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>网络编程 on 刘光轩的个人博客</title>
-    <link>https://guangxuanliu.github.io/categories/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</link>
+    <link>http://guangxuanliu.github.io/categories/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/</link>
     <description>Recent content in 网络编程 on 刘光轩的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Mon, 13 Sep 2021 20:30:35 +0800</lastBuildDate><atom:link href="https://guangxuanliu.github.io/categories/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 13 Sep 2021 20:30:35 +0800</lastBuildDate><atom:link href="http://guangxuanliu.github.io/categories/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Evbuffers：缓冲IO的功能</title>
-      <link>https://guangxuanliu.github.io/post/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/</link>
+      <link>http://guangxuanliu.github.io/post/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/</link>
       <pubDate>Mon, 13 Sep 2021 20:30:35 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/</guid>
+      <guid>http://guangxuanliu.github.io/post/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/</guid>
       <description>Libevent 的 evbuffer 功能实现了一个字节队列，针对将数据添加到末尾和从前面删除数据进行了优化。 Evbuffers 通常用于执行缓冲网络 IO 的“缓冲”部分。它们不提供调度 IO 或在 IO</description>
     </item>
     
     <item>
       <title>Bufferevents：高级主题</title>
-      <link>https://guangxuanliu.github.io/post/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/</link>
+      <link>http://guangxuanliu.github.io/post/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/</link>
       <pubDate>Sat, 11 Sep 2021 17:06:07 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/</guid>
+      <guid>http://guangxuanliu.github.io/post/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/</guid>
       <description>这一章节讲述一些bufferevent的高级特性，对初学者来说并不是必须的。如果你刚刚学习如何使用bufferevent，可以跳过本章节。 成</description>
     </item>
     
     <item>
       <title>bufferevent：概念与基础</title>
-      <link>https://guangxuanliu.github.io/post/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/</link>
+      <link>http://guangxuanliu.github.io/post/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/</link>
       <pubDate>Sun, 05 Sep 2021 19:23:14 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/</guid>
+      <guid>http://guangxuanliu.github.io/post/bufferevents%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%9F%BA%E7%A1%80/</guid>
       <description>大多数时候，除了响应事件之外，应用程序还希望执行一些数据缓冲。例如，当我们想要写入数据时，通常的模式运行如下： 决定我们要向连接写入一些数据；</description>
     </item>
     
     <item>
       <title>可移植的工具函数</title>
-      <link>https://guangxuanliu.github.io/post/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/</link>
+      <link>http://guangxuanliu.github.io/post/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/</link>
       <pubDate>Sun, 05 Sep 2021 18:30:48 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/</guid>
+      <guid>http://guangxuanliu.github.io/post/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E7%9A%84%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0/</guid>
       <description>Libevent 的辅助函数和类型 &amp;lt;event2/util.h&amp;gt;头文件定义了许多函数，您可能会发现这些函数对使用 Libevent 实现可移植应用程序很有帮助。 libevent</description>
     </item>
     
     <item>
       <title>Event</title>
-      <link>https://guangxuanliu.github.io/post/event/</link>
+      <link>http://guangxuanliu.github.io/post/event/</link>
       <pubDate>Sat, 04 Sep 2021 20:17:14 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/event/</guid>
+      <guid>http://guangxuanliu.github.io/post/event/</guid>
       <description>事件 event是libevent的基本操作单元，每一个event代表一系列条件的集合，包括： 一个文件描述符准备好了读、写 一个文件描述符准备好</description>
     </item>
     
     <item>
       <title>运行event_loop</title>
-      <link>https://guangxuanliu.github.io/post/%E8%BF%90%E8%A1%8Cevent_loop/</link>
+      <link>http://guangxuanliu.github.io/post/%E8%BF%90%E8%A1%8Cevent_loop/</link>
       <pubDate>Sat, 04 Sep 2021 17:36:09 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/%E8%BF%90%E8%A1%8Cevent_loop/</guid>
+      <guid>http://guangxuanliu.github.io/post/%E8%BF%90%E8%A1%8Cevent_loop/</guid>
       <description>运行事件循环 一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待ev</description>
     </item>
     
     <item>
       <title>设置event_base</title>
-      <link>https://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AEevent_base/</link>
+      <link>http://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AEevent_base/</link>
       <pubDate>Fri, 27 Aug 2021 22:34:48 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AEevent_base/</guid>
+      <guid>http://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AEevent_base/</guid>
       <description>创建event_base 在你使用libevent的函数之前，你应该先创建一个或多个event_base结构，每一个event_base拥有e</description>
     </item>
     
     <item>
       <title>设置libevent</title>
-      <link>https://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AElibevent/</link>
+      <link>http://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AElibevent/</link>
       <pubDate>Wed, 25 Aug 2021 21:41:15 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AElibevent/</guid>
+      <guid>http://guangxuanliu.github.io/post/%E8%AE%BE%E7%BD%AElibevent/</guid>
       <description>设置libevent libevent有一些全局的设置会影响整个libevent库。你必须在调用库的任何函数之前进行设置，否则会导致libev</description>
     </item>
     
     <item>
       <title>前言</title>
-      <link>https://guangxuanliu.github.io/post/%E5%89%8D%E8%A8%80/</link>
+      <link>http://guangxuanliu.github.io/post/%E5%89%8D%E8%A8%80/</link>
       <pubDate>Wed, 25 Aug 2021 20:45:11 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/%E5%89%8D%E8%A8%80/</guid>
+      <guid>http://guangxuanliu.github.io/post/%E5%89%8D%E8%A8%80/</guid>
       <description>从一万英尺外看libevent libevent是一个可以写快速、可移植、非阻塞的网络IO库，设计目标为： 可移植性 一个用libevent写的程</description>
     </item>
     
     <item>
       <title>异步IO简介</title>
-      <link>https://guangxuanliu.github.io/post/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/</link>
+      <link>http://guangxuanliu.github.io/post/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/</link>
       <pubDate>Wed, 25 Aug 2021 20:29:26 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/</guid>
+      <guid>http://guangxuanliu.github.io/post/%E5%BC%82%E6%AD%A5io%E7%AE%80%E4%BB%8B/</guid>
       <description>异步IO简介 大多数编程初学者使用的是阻塞的IO函数调用，也称为同步IO，当你调用它的时候，除非函数操作完成或者函数超时然后网络栈放弃的时候才</description>
     </item>
     
     <item>
       <title>关于这篇文档</title>
-      <link>https://guangxuanliu.github.io/post/%E5%85%B3%E4%BA%8E%E8%BF%99%E7%AF%87%E6%96%87%E6%A1%A3/</link>
+      <link>http://guangxuanliu.github.io/post/%E5%85%B3%E4%BA%8E%E8%BF%99%E7%AF%87%E6%96%87%E6%A1%A3/</link>
       <pubDate>Mon, 23 Aug 2021 22:01:43 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/%E5%85%B3%E4%BA%8E%E8%BF%99%E7%AF%87%E6%96%87%E6%A1%A3/</guid>
+      <guid>http://guangxuanliu.github.io/post/%E5%85%B3%E4%BA%8E%E8%BF%99%E7%AF%87%E6%96%87%E6%A1%A3/</guid>
       <description>这篇文档会教你如何使用libevent2.0(或者更新的版本)来写快速的、可移植的网络编程，假设你： 有C语言的编程基础 知道C语言网络编程调用</description>
     </item>
     
     <item>
       <title>Libevent编程手册</title>
-      <link>https://guangxuanliu.github.io/post/libevent%E7%BC%96%E7%A8%8B%E6%89%8B%E5%86%8C/</link>
+      <link>http://guangxuanliu.github.io/post/libevent%E7%BC%96%E7%A8%8B%E6%89%8B%E5%86%8C/</link>
       <pubDate>Sun, 22 Aug 2021 22:38:01 +0800</pubDate>
       
-      <guid>https://guangxuanliu.github.io/post/libevent%E7%BC%96%E7%A8%8B%E6%89%8B%E5%86%8C/</guid>
+      <guid>http://guangxuanliu.github.io/post/libevent%E7%BC%96%E7%A8%8B%E6%89%8B%E5%86%8C/</guid>
       <description>了解libevent 关于这篇文档 异步IO简介 libevent参考手册 前言 设置libevent 设置event_base 运行event_loop</description>
     </item>
     
