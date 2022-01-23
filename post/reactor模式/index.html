@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Reactor模式 - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="Liu Guangxuan" /><meta name="description" content="" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/reactor%E6%A8%A1%E5%BC%8F/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="Reactor模式" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/reactor%E6%A8%A1%E5%BC%8F/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-01-23T10:15:49&#43;08:00" />
+<meta property="article:modified_time" content="2022-01-23T10:15:49&#43;08:00" />
+
+<meta itemprop="name" content="Reactor模式">
+<meta itemprop="description" content=""><meta itemprop="datePublished" content="2022-01-23T10:15:49&#43;08:00" />
+<meta itemprop="dateModified" content="2022-01-23T10:15:49&#43;08:00" />
+<meta itemprop="wordCount" content="1886">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Reactor模式"/>
+<meta name="twitter:description" content=""/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">Reactor模式</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-01-23 </span>
+        <div class="post-category">
+            <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"> 设计模式 </a>
+            </div>
+          <span class="more-meta"> 约 1886 字 </span>
+          <span class="more-meta"> 预计阅读 4 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#前言">前言</a></li>
+        <li><a href="#主要组成">主要组成</a></li>
+        <li><a href="#交互关系">交互关系</a></li>
+        <li><a href="#使用场景">使用场景</a>
+          <ul>
+            <li><a href="#客户端连接服务端">客户端连接服务端</a></li>
+            <li><a href="#客户端发送数据至服务器">客户端发送数据至服务器</a></li>
+          </ul>
+        </li>
+        <li><a href="#主要实现类">主要实现类</a>
+          <ul>
+            <li><a href="#initiationdispatcher">InitiationDispatcher</a></li>
+            <li><a href="#event_handler">Event_Handler</a></li>
+            <li><a href="#logging_acceptor">Logging_Acceptor</a></li>
+            <li><a href="#logging_handler">Logging_Handler</a></li>
+            <li><a href="#main">main</a></li>
+          </ul>
+        </li>
+        <li><a href="#参考文档">参考文档</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="前言">前言</h2>
+<p><code>Reactor</code>为<code>Douglas C. Schmidt</code>提出的一种设计模式，翻译为反应器模式，或者分发器模式。很多开源的项目都使用了此设计模式，如<code>muduo</code>、<code>Redis</code>、<code>Nginx</code>、<code>Netty</code>。</p>
+<p>本文假定读者有一定的C/C++的网络编程经验，并且对IO多路复用有一定的了解，如<code>select</code>、<code>poll</code>、<code>epoll</code>等函数。</p>
+<p>本文主要面向对<code>Reactor</code>有一定了解，但是并不知道C++类应该如何设计的读者。</p>
+<h2 id="主要组成">主要组成</h2>
+<p><img src="/images/Reactor.png" alt="Reactor"></p>
+<ul>
+<li>
+<p>Handlers</p>
+<p>在网络编程中即socket句柄。</p>
+</li>
+<li>
+<p>Synchronous Event Demultiplexer</p>
+<p>同步事件分离器，即IO多路复用函数（如<code>select</code>、<code>poll</code>、<code>epoll</code>）的包装类。</p>
+</li>
+<li>
+<p>Initiation Dispatcher</p>
+<p>调度器，控制整体的流程。负责事件的注册、分离、调度。</p>
+</li>
+<li>
+<p>Event Handler</p>
+<p>事件处理程序，一般为一个抽象基类，只定义接口，具体的实现由实现类负责。</p>
+</li>
+<li>
+<p>Concrete Event Handler</p>
+<p>具体的事件处理类，为<code>Event Handler</code>的子类，负责具体实现。如接受连接的<code>AcceptorHandler</code>、进行数据读写的<code>LoggingHandler</code>。</p>
+</li>
+</ul>
+<h2 id="交互关系">交互关系</h2>
+<p><img src="/images/image-20220123110034718.png" alt="image-20220123110034718"></p>
+<ul>
+<li>应用程序注册具体的事件处理对象到调度器中。当调度器中发生指定的类型的事件时，调用对应的事件处理对象。</li>
+<li>调度器获取事件处理对象的socket句柄。</li>
+<li>调度器将所有的socket句柄传入同步事件分离器中，即用IO多路复用函数进行阻塞调用。</li>
+<li>当有连接、可读事件发生时，IO多路复用函数返回，流程返回至调度器中。</li>
+<li>调度器通过事件的类型，调用对应的事件处理对象。</li>
+</ul>
+<h2 id="使用场景">使用场景</h2>
+<p>以一个日志服务器为例。</p>
+<h3 id="客户端连接服务端">客户端连接服务端</h3>
+<p><img src="/images/image-20220123110749843.png" alt="image-20220123110749843"></p>
+<ol>
+<li>具体的事件处理类<code>Logging Acceptor</code>向调度器注册，<code>Logging Acceptor</code>负责处理所有客户端的连接事件。</li>
+<li>调度器调用<code>handle_events()</code>函数。</li>
+<li>调度器通过调用同步事件分离器的IO多路复用函数来等待事件的到来，如<code>select()</code>函数。</li>
+<li>客户端通过IP地址和端口连接至服务器。</li>
+<li>调度器调用<code>Logging Acceptor</code>的<code>handle_event()</code>函数，来处理新连接。</li>
+<li><code>Logging Acceptor</code>调用<code>accept()</code>函数来接受新的连接。</li>
+<li><code>Logging Acceptor</code>创建<code>Logging Handler</code>代表一个socket的连接。</li>
+<li><code>Logging Handler</code>向调度器注册，当有新的可读事件发生时，调度器通知<code>Logging Handler</code>。</li>
+</ol>
+<h3 id="客户端发送数据至服务器">客户端发送数据至服务器</h3>
+<p><img src="/images/image-20220123111416247.png" alt="image-20220123111416247"></p>
+<ol>
+<li>客户端调用<code>send()</code>函数发送一条数据至服务端。</li>
+<li>调度器通过句柄索引到<code>Logging Handler</code>，然后调用对应的<code>handle_event()</code>函数。</li>
+<li>通过<code>recv()</code>函数来接收数据（此处应该以非阻塞的方式进行，如果一次没有读取一整条完整的数据包，则再进行步骤2、3，如此循环）。</li>
+<li><code>Logging Handler</code>处理数据，然后调用<code>write()</code>函数进行回复。</li>
+<li>控制流程返回至调度器中。</li>
+</ol>
+<h2 id="主要实现类">主要实现类</h2>
+<h3 id="initiationdispatcher">InitiationDispatcher</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="c1">//InitiationDispatcher.h
+</span><span class="c1"></span>
+<span class="k">enum</span> <span class="nc">Event_Type</span>
+    <span class="c1">// = TITLE
+</span><span class="c1"></span>    <span class="c1">//  Types of events handled by the
+</span><span class="c1"></span>    <span class="c1">//  Initiation_Dispatcher.
+</span><span class="c1"></span>    <span class="c1">//
+</span><span class="c1"></span>    <span class="c1">// = DESCRIPTION
+</span><span class="c1"></span>    <span class="c1">//  These values are powers of two so
+</span><span class="c1"></span>    <span class="c1">//  their bits can be efficiently ‘‘or’d’’
+</span><span class="c1"></span>    <span class="c1">//  together to form composite values.
+</span><span class="c1"></span><span class="p">{</span>
+    <span class="n">ACCEPT_EVENT</span> <span class="o">=</span> <span class="mo">01</span><span class="p">,</span>
+    <span class="n">READ_EVENT</span> <span class="o">=</span> <span class="mo">02</span><span class="p">,</span>
+    <span class="n">WRITE_EVENT</span> <span class="o">=</span> <span class="mo">04</span><span class="p">,</span>
+    <span class="n">TIMEOUT_EVENT</span> <span class="o">=</span> <span class="mo">010</span><span class="p">,</span>
+    <span class="n">SIGNAL_EVENT</span> <span class="o">=</span> <span class="mo">020</span><span class="p">,</span>
+    <span class="n">CLOSE_EVENT</span> <span class="o">=</span> <span class="mo">040</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">Initiation_Dispatcher</span>
+    <span class="c1">// = TITLE
+</span><span class="c1"></span>    <span class="c1">//  Demultiplex and dispatch Event_Handlers
+</span><span class="c1"></span>    <span class="c1">//  in response to client requests.
+</span><span class="c1"></span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="c1">// Register an Event_Handler of a particular
+</span><span class="c1"></span>    <span class="c1">// Event_Type (e.g., READ_EVENT, ACCEPT_EVENT,
+</span><span class="c1"></span>    <span class="c1">// etc.).
+</span><span class="c1"></span>    <span class="kt">int</span> <span class="n">register_handler</span><span class="p">(</span><span class="n">Event_Handler</span> <span class="o">*</span> <span class="n">eh</span><span class="p">,</span>
+                         <span class="n">Event_Type</span> <span class="n">et</span><span class="p">);</span>
+
+    <span class="c1">// Remove an Event_Handler of a particular
+</span><span class="c1"></span>    <span class="c1">// Event_Type.
+</span><span class="c1"></span>    <span class="kt">int</span> <span class="nf">remove_handler</span><span class="p">(</span><span class="n">Event_Handler</span> <span class="o">*</span> <span class="n">eh</span><span class="p">,</span>
+                       <span class="n">Event_Type</span> <span class="n">et</span><span class="p">);</span>
+
+    <span class="c1">// Entry point into the reactive event loop.
+</span><span class="c1"></span>    <span class="kt">int</span> <span class="nf">handle_events</span><span class="p">(</span><span class="n">Time_Value</span> <span class="o">*</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">0</span><span class="p">);</span>
+
+<span class="k">private</span><span class="o">:</span>
+    <span class="n">map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Event_Handler</span><span class="o">*&gt;</span> <span class="n">handlers_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="event_handler">Event_Handler</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="c1">// Event_Handler.h
+</span><span class="c1"></span>
+<span class="k">class</span> <span class="nc">Event_Handler</span>
+    <span class="c1">// = TITLE
+</span><span class="c1"></span>    <span class="c1">//  Abstract base class that serves as the
+</span><span class="c1"></span>    <span class="c1">//  target of the Initiation_Dispatcher.
+</span><span class="c1"></span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="c1">// Hook method that is called back by the
+</span><span class="c1"></span>    <span class="c1">// Initiation_Dispatcher to handle events.
+</span><span class="c1"></span>    <span class="k">virtual</span> <span class="kt">int</span> <span class="n">handle_event</span><span class="p">(</span><span class="n">Event_Type</span> <span class="n">et</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="c1">// Hook method that returns the underlying
+</span><span class="c1"></span>    <span class="c1">// I/O Handle.
+</span><span class="c1"></span>    <span class="k">virtual</span> <span class="n">Handle</span> <span class="nf">get_handle</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="k">const</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="logging_acceptor">Logging_Acceptor</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="c1">// Logging_Acceptor.h
+</span><span class="c1"></span>
+<span class="k">class</span> <span class="nc">Logging_Acceptor</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Event_Handler</span>
+    <span class="c1">// = TITLE
+</span><span class="c1"></span>    <span class="c1">//  Handles client connection requests.
+</span><span class="c1"></span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="c1">// Initialize the acceptor_ endpoint and
+</span><span class="c1"></span>    <span class="c1">// register with the Initiation Dispatcher.
+</span><span class="c1"></span>    <span class="n">Logging_Acceptor</span><span class="p">(</span><span class="k">const</span> <span class="n">INET_Addr</span> <span class="o">&amp;</span><span class="n">addr</span><span class="p">);</span>
+    
+    <span class="c1">// Factory method that accepts a new
+</span><span class="c1"></span>    <span class="c1">// SOCK_Stream connection and creates a
+</span><span class="c1"></span>    <span class="c1">// Logging_Handler object to handle logging
+</span><span class="c1"></span>    <span class="c1">// records sent using the connection.
+</span><span class="c1"></span>    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">handle_event</span><span class="p">(</span><span class="n">Event_Type</span> <span class="n">et</span><span class="p">);</span>
+    
+    <span class="c1">// Get the I/O Handle (called by the
+</span><span class="c1"></span>    <span class="c1">// Initiation Dispatcher when
+</span><span class="c1"></span>    <span class="c1">// Logging_Acceptor is registered).
+</span><span class="c1"></span>    <span class="k">virtual</span> <span class="n">HANDLE</span> <span class="nf">get_handle</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="k">const</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">acceptor_</span><span class="p">.</span><span class="n">get_handle</span><span class="p">();</span>
+    <span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+    <span class="c1">// Socket factory that accepts client
+</span><span class="c1"></span>    <span class="c1">// connections.
+</span><span class="c1"></span>    <span class="n">SOCK_Acceptor</span> <span class="n">acceptor_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="c1">// Logging_Acceptor.cpp
+</span><span class="c1"></span>
+<span class="n">Logging_Acceptor</span><span class="o">::</span><span class="n">Logging_Acceptor</span><span class="p">(</span><span class="k">const</span> <span class="n">INET_Addr</span> <span class="o">&amp;</span><span class="n">addr</span><span class="p">)</span>
+    <span class="o">:</span> <span class="n">acceptor_</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Register acceptor with the Initiation
+</span><span class="c1"></span>    <span class="c1">// Dispatcher, which &#34;double dispatches&#34;
+</span><span class="c1"></span>    <span class="c1">// the Logging_Acceptor::get_handle() method
+</span><span class="c1"></span>    <span class="c1">// to obtain the HANDLE.
+</span><span class="c1"></span>    <span class="n">Initiation_Dispatcher</span><span class="o">::</span><span class="n">instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">register_handler</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">ACCEPT_EVENT</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">Logging_Acceptor</span><span class="o">::</span><span class="n">handle_event</span><span class="p">(</span><span class="n">Event_Type</span> <span class="n">et</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Can only be called for an ACCEPT event.
+</span><span class="c1"></span>    <span class="n">assert</span> <span class="p">(</span><span class="n">et</span> <span class="o">==</span> <span class="n">ACCEPT_EVENT</span><span class="p">);</span>
+    <span class="n">SOCK_Stream</span> <span class="n">new_connection</span><span class="p">;</span>
+
+    <span class="c1">// Accept the connection.
+</span><span class="c1"></span>    <span class="n">acceptor_</span><span class="p">.</span><span class="n">accept</span> <span class="p">(</span><span class="n">new_connection</span><span class="p">);</span>
+
+    <span class="c1">// Create a new Logging Handler.
+</span><span class="c1"></span>    <span class="n">Logging_Handler</span> <span class="o">*</span><span class="n">handler</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Logging_Handler</span><span class="p">(</span><span class="n">new_connection</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="logging_handler">Logging_Handler</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="c1">// Logging_Handler.h
+</span><span class="c1"></span>
+<span class="k">class</span> <span class="nc">Logging_Handler</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Event_Handler</span>
+    <span class="c1">// = TITLE
+</span><span class="c1"></span>    <span class="c1">//  Receive and process logging records
+</span><span class="c1"></span>    <span class="c1">//  sent by a client application.
+</span><span class="c1"></span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="c1">// Initialize the client stream.
+</span><span class="c1"></span>    <span class="n">Logging_Handler</span><span class="p">(</span><span class="n">SOCK_Stream</span> <span class="o">&amp;</span><span class="n">cs</span><span class="p">);</span>
+
+    <span class="c1">// Hook method that handles the reception
+</span><span class="c1"></span>    <span class="c1">// of logging records from clients.
+</span><span class="c1"></span>    <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">handle_event</span><span class="p">(</span><span class="n">Event_Type</span> <span class="n">et</span><span class="p">);</span>
+
+    <span class="c1">// Get the I/O Handle (called by the
+</span><span class="c1"></span>    <span class="c1">// Initiation Dispatcher when
+</span><span class="c1"></span>    <span class="c1">// Logging_Handler is registered).
+</span><span class="c1"></span>    <span class="k">virtual</span> <span class="n">HANDLE</span> <span class="nf">get_handle</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="k">const</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">peer_stream_</span><span class="p">.</span><span class="n">get_handle</span><span class="p">();</span>
+    <span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+    <span class="c1">// Receives logging records from a client.
+</span><span class="c1"></span>    <span class="n">SOCK_Stream</span> <span class="n">peer_stream_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c++" data-lang="c++"><span class="c1">// Logging_Handler.cpp
+</span><span class="c1"></span>
+<span class="n">Logging_Handler</span><span class="o">::</span><span class="n">Logging_Handler</span><span class="p">(</span><span class="n">SOCK_Stream</span> <span class="o">&amp;</span><span class="n">cs</span><span class="p">)</span>
+    <span class="o">:</span><span class="n">peer_stream_</span><span class="p">(</span><span class="n">cs</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Register with the dispatcher for
+</span><span class="c1"></span>    <span class="c1">// READ events.
+</span><span class="c1"></span>    <span class="n">Initiation_Dispatcher</span><span class="o">::</span><span class="n">instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">register_handler</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">READ_EVENT</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">Logging_Handler</span><span class="o">::</span><span class="n">handle_event</span><span class="p">(</span><span class="n">Event_Type</span> <span class="n">et</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">et</span> <span class="o">==</span> <span class="n">READ_EVENT</span><span class="p">)</span> 
+    <span class="p">{</span>
+        <span class="n">Log_Record</span> <span class="n">log_record</span><span class="p">;</span>
+        <span class="n">peer_stream_</span><span class="p">.</span><span class="n">recv</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">log_record</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">log_record</span><span class="p">);</span>
+        
+        <span class="c1">// Write logging record to standard output.
+</span><span class="c1"></span>        <span class="n">log_record</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">STDOUT</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="nf">if</span><span class="p">(</span><span class="n">et</span> <span class="o">==</span> <span class="n">CLOSE_EVENT</span><span class="p">)</span> 
+    <span class="p">{</span>
+        <span class="n">peer_stream_</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+        <span class="k">delete</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="k">this</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="main">main</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-C++" data-lang="C++"><span class="c1">// main.cpp
+</span><span class="c1"></span>
+<span class="c1">// Server port number.
+</span><span class="c1"></span><span class="k">const</span> <span class="n">u_short</span> <span class="n">PORT</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Logging server port number.
+</span><span class="c1"></span>    <span class="n">INET_Addr</span> <span class="n">server_addr</span> <span class="p">(</span><span class="n">PORT</span><span class="p">);</span>
+    
+    <span class="c1">// Initialize logging server endpoint and
+</span><span class="c1"></span>    <span class="c1">// register with the Initiation_Dispatcher.
+</span><span class="c1"></span>    <span class="n">Logging_Acceptor</span> <span class="n">la</span> <span class="p">(</span><span class="n">server_addr</span><span class="p">);</span>
+    
+    <span class="c1">// Main event loop that handles client
+</span><span class="c1"></span>    <span class="c1">// logging records and connection requests.
+</span><span class="c1"></span>    
+    <span class="k">for</span> <span class="p">(;;)</span>
+    <span class="p">{</span>
+        <span class="n">Initiation_Dispatcher</span><span class="o">::</span><span class="n">instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">handle_events</span> <span class="p">();</span>
+    <span class="p">}</span>
+    
+    <span class="cm">/* NOTREACHED */</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="参考文档">参考文档</h2>
+<p><a href="http://www.dre.vanderbilt.edu/~schmidt/PDF/reactor-siemens.pdf">Reactor pattern</a>，如有能力，请阅读原文档。</p>
+    </div>
+
+    
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/cmake%E9%A1%B9%E7%9B%AE%E7%A4%BA%E4%BE%8B/">
+            <span class="next-text nav-default">CMake项目示例</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="guangxuanliu/guangxuanliu.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021 - 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>Liu Guangxuan</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
