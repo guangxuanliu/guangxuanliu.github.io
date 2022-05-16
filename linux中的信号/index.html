@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title> - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="Liu Guangxuan" /><meta name="description" content="Linux中的信号 Linux中涉及到信号的知识，这个信号并非Qt中的信号与槽中的信号，更非手机的信号。而是常见的在shell终端中输入kill -9杀死一个进程发送的信号；调试进程崩溃产生的core文件，常见的SIGSEGV信号。
+信号的概念 每个信号都有一个名字，这些名字都以3个字符SIG开头，例如SIGALRM是闹钟信号，由alarm函数设定的定时器超时后将产生此信号。SIGSEGV是因为进程引用了无效的内存所产生的信号，此信号的默认处理方式是终止进程，并生成core文件。
+在shell中，输入kill -l命令查看所有的信号。在开发中，需要包含signal.h。
+信号的产生 信号的产生有如下几种方式：
+ 由键盘按键触发。如 SIGINT：Ctrl &#43; C，用来终止前台的一个进程; 硬件异常产生的信号：除数为0，无效的内存引用等。这些条件通常由硬件检测到，并通知内核。然后内核为该条件发生时正在运行的进程产生适当的信号； 进程调用kill函数可将信号发送至其他进程； 用户用kill命令可将信号发送至其他进程；如kill -9 $(pidof a.out)将信号SIGKILL信号发送至a.out的进程。 软件条件触发的信号，如SIGPIPE、SIGALARM。  当一个信号产生时，内核通常在进程中以某种形式设置一个标志。当对信号采取了这种动作时，我们称为向进程递送了一个信号。
+常用的信号 列举一些日常开发或者使用Linux过程中常用的信号：
+ SIGABRT：异常终止。调用abort函数时产生此信号，代表进程异常终止； SIGALRM：定时器超时。用alarm函数设置的定时器超时时，发出此信号； SIGCHLD：子进程状态改变。如调用fork函数之后，子进程结束，父进程会收到此信号； SIGINT：在终端中前台执行一个进程，要退出时，按下键盘上的Ctrl&#43;C键，可以触发此信号； SIGQUIT：终端退出符。在终端中，按下键盘上的Ctrl&#43;\键，可以触发此信号； SIGTERM：终止。在终端中，kill命令默认发送的就是这个信号； SIGKILL：终止。这是两个不能被捕获或忽略信号中的一个。它向系统管理员提供了一中可以杀死任一进程的可靠方法； SIGSTOP：作业控制信号的一个，停止一个进程。此信号是两个不能被捕获或忽略信号中的另一个； SIGTSTP：交互式停止信号。按下键盘上的Ctrl&#43;Z键可以触发此信号，挂起前台进程。 SIGSEGV：无效内存引用。段违例（segmentation violation），进程崩溃多和此信号有关，会同时生成core文件，根据core文件可以查看崩溃的位置。 SIGPIPE：向已经终止的管道写。比较常见的场景是socket的tcp通信中，对方的socket已经关闭，但是己方还往里写，就会触发这个信号，一般在自己的通信库中需要设置此信号为忽略。  信号的处理方式  忽略此信号。大多数信号都可以用此方式处理，但是有两个信号不能忽略，SIGKILL和SIGSTOP，这两个信号向内核和root用户提供了使进程终止的可靠的方法。 捕获信号。需要设置捕获函数，具体捕获信号的方法参考下一节。 执行系统默认动作。大多数信号的默认动作为终止进程。  捕获信号 捕获信号有两种方式，signal函数和sigaction函数。使用方式及优缺点如下所述，开发过程中尽量使用sigaction函数。
+  signal函数
+signal函数接收两个参数，要处理的信号以及处理方式。处理方式参考上一节。
+ 优点：简单。 缺点：在不改变某一信号处理方式的情况下，不能确定该信号的处理方式。而且该函数的语义与实现有关，最好使用sigaction函数来代替该函数。  1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47  #include &amp;lt;stdio." /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/linux%E4%B8%AD%E7%9A%84%E4%BF%A1%E5%8F%B7/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="" />
+<meta property="og:description" content="Linux中的信号 Linux中涉及到信号的知识，这个信号并非Qt中的信号与槽中的信号，更非手机的信号。而是常见的在shell终端中输入kill -9杀死一个进程发送的信号；调试进程崩溃产生的core文件，常见的SIGSEGV信号。
+信号的概念 每个信号都有一个名字，这些名字都以3个字符SIG开头，例如SIGALRM是闹钟信号，由alarm函数设定的定时器超时后将产生此信号。SIGSEGV是因为进程引用了无效的内存所产生的信号，此信号的默认处理方式是终止进程，并生成core文件。
+在shell中，输入kill -l命令查看所有的信号。在开发中，需要包含signal.h。
+信号的产生 信号的产生有如下几种方式：
+ 由键盘按键触发。如 SIGINT：Ctrl &#43; C，用来终止前台的一个进程; 硬件异常产生的信号：除数为0，无效的内存引用等。这些条件通常由硬件检测到，并通知内核。然后内核为该条件发生时正在运行的进程产生适当的信号； 进程调用kill函数可将信号发送至其他进程； 用户用kill命令可将信号发送至其他进程；如kill -9 $(pidof a.out)将信号SIGKILL信号发送至a.out的进程。 软件条件触发的信号，如SIGPIPE、SIGALARM。  当一个信号产生时，内核通常在进程中以某种形式设置一个标志。当对信号采取了这种动作时，我们称为向进程递送了一个信号。
+常用的信号 列举一些日常开发或者使用Linux过程中常用的信号：
+ SIGABRT：异常终止。调用abort函数时产生此信号，代表进程异常终止； SIGALRM：定时器超时。用alarm函数设置的定时器超时时，发出此信号； SIGCHLD：子进程状态改变。如调用fork函数之后，子进程结束，父进程会收到此信号； SIGINT：在终端中前台执行一个进程，要退出时，按下键盘上的Ctrl&#43;C键，可以触发此信号； SIGQUIT：终端退出符。在终端中，按下键盘上的Ctrl&#43;\键，可以触发此信号； SIGTERM：终止。在终端中，kill命令默认发送的就是这个信号； SIGKILL：终止。这是两个不能被捕获或忽略信号中的一个。它向系统管理员提供了一中可以杀死任一进程的可靠方法； SIGSTOP：作业控制信号的一个，停止一个进程。此信号是两个不能被捕获或忽略信号中的另一个； SIGTSTP：交互式停止信号。按下键盘上的Ctrl&#43;Z键可以触发此信号，挂起前台进程。 SIGSEGV：无效内存引用。段违例（segmentation violation），进程崩溃多和此信号有关，会同时生成core文件，根据core文件可以查看崩溃的位置。 SIGPIPE：向已经终止的管道写。比较常见的场景是socket的tcp通信中，对方的socket已经关闭，但是己方还往里写，就会触发这个信号，一般在自己的通信库中需要设置此信号为忽略。  信号的处理方式  忽略此信号。大多数信号都可以用此方式处理，但是有两个信号不能忽略，SIGKILL和SIGSTOP，这两个信号向内核和root用户提供了使进程终止的可靠的方法。 捕获信号。需要设置捕获函数，具体捕获信号的方法参考下一节。 执行系统默认动作。大多数信号的默认动作为终止进程。  捕获信号 捕获信号有两种方式，signal函数和sigaction函数。使用方式及优缺点如下所述，开发过程中尽量使用sigaction函数。
+  signal函数
+signal函数接收两个参数，要处理的信号以及处理方式。处理方式参考上一节。
+ 优点：简单。 缺点：在不改变某一信号处理方式的情况下，不能确定该信号的处理方式。而且该函数的语义与实现有关，最好使用sigaction函数来代替该函数。  1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47  #include &lt;stdio." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/linux%E4%B8%AD%E7%9A%84%E4%BF%A1%E5%8F%B7/" /><meta property="article:section" content="" />
+
+
+
+<meta itemprop="name" content="">
+<meta itemprop="description" content="Linux中的信号 Linux中涉及到信号的知识，这个信号并非Qt中的信号与槽中的信号，更非手机的信号。而是常见的在shell终端中输入kill -9杀死一个进程发送的信号；调试进程崩溃产生的core文件，常见的SIGSEGV信号。
+信号的概念 每个信号都有一个名字，这些名字都以3个字符SIG开头，例如SIGALRM是闹钟信号，由alarm函数设定的定时器超时后将产生此信号。SIGSEGV是因为进程引用了无效的内存所产生的信号，此信号的默认处理方式是终止进程，并生成core文件。
+在shell中，输入kill -l命令查看所有的信号。在开发中，需要包含signal.h。
+信号的产生 信号的产生有如下几种方式：
+ 由键盘按键触发。如 SIGINT：Ctrl &#43; C，用来终止前台的一个进程; 硬件异常产生的信号：除数为0，无效的内存引用等。这些条件通常由硬件检测到，并通知内核。然后内核为该条件发生时正在运行的进程产生适当的信号； 进程调用kill函数可将信号发送至其他进程； 用户用kill命令可将信号发送至其他进程；如kill -9 $(pidof a.out)将信号SIGKILL信号发送至a.out的进程。 软件条件触发的信号，如SIGPIPE、SIGALARM。  当一个信号产生时，内核通常在进程中以某种形式设置一个标志。当对信号采取了这种动作时，我们称为向进程递送了一个信号。
+常用的信号 列举一些日常开发或者使用Linux过程中常用的信号：
+ SIGABRT：异常终止。调用abort函数时产生此信号，代表进程异常终止； SIGALRM：定时器超时。用alarm函数设置的定时器超时时，发出此信号； SIGCHLD：子进程状态改变。如调用fork函数之后，子进程结束，父进程会收到此信号； SIGINT：在终端中前台执行一个进程，要退出时，按下键盘上的Ctrl&#43;C键，可以触发此信号； SIGQUIT：终端退出符。在终端中，按下键盘上的Ctrl&#43;\键，可以触发此信号； SIGTERM：终止。在终端中，kill命令默认发送的就是这个信号； SIGKILL：终止。这是两个不能被捕获或忽略信号中的一个。它向系统管理员提供了一中可以杀死任一进程的可靠方法； SIGSTOP：作业控制信号的一个，停止一个进程。此信号是两个不能被捕获或忽略信号中的另一个； SIGTSTP：交互式停止信号。按下键盘上的Ctrl&#43;Z键可以触发此信号，挂起前台进程。 SIGSEGV：无效内存引用。段违例（segmentation violation），进程崩溃多和此信号有关，会同时生成core文件，根据core文件可以查看崩溃的位置。 SIGPIPE：向已经终止的管道写。比较常见的场景是socket的tcp通信中，对方的socket已经关闭，但是己方还往里写，就会触发这个信号，一般在自己的通信库中需要设置此信号为忽略。  信号的处理方式  忽略此信号。大多数信号都可以用此方式处理，但是有两个信号不能忽略，SIGKILL和SIGSTOP，这两个信号向内核和root用户提供了使进程终止的可靠的方法。 捕获信号。需要设置捕获函数，具体捕获信号的方法参考下一节。 执行系统默认动作。大多数信号的默认动作为终止进程。  捕获信号 捕获信号有两种方式，signal函数和sigaction函数。使用方式及优缺点如下所述，开发过程中尽量使用sigaction函数。
+  signal函数
+signal函数接收两个参数，要处理的信号以及处理方式。处理方式参考上一节。
+ 优点：简单。 缺点：在不改变某一信号处理方式的情况下，不能确定该信号的处理方式。而且该函数的语义与实现有关，最好使用sigaction函数来代替该函数。  1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47  #include &lt;stdio.">
+
+<meta itemprop="wordCount" content="174">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="Linux中的信号 Linux中涉及到信号的知识，这个信号并非Qt中的信号与槽中的信号，更非手机的信号。而是常见的在shell终端中输入kill -9杀死一个进程发送的信号；调试进程崩溃产生的core文件，常见的SIGSEGV信号。
+信号的概念 每个信号都有一个名字，这些名字都以3个字符SIG开头，例如SIGALRM是闹钟信号，由alarm函数设定的定时器超时后将产生此信号。SIGSEGV是因为进程引用了无效的内存所产生的信号，此信号的默认处理方式是终止进程，并生成core文件。
+在shell中，输入kill -l命令查看所有的信号。在开发中，需要包含signal.h。
+信号的产生 信号的产生有如下几种方式：
+ 由键盘按键触发。如 SIGINT：Ctrl &#43; C，用来终止前台的一个进程; 硬件异常产生的信号：除数为0，无效的内存引用等。这些条件通常由硬件检测到，并通知内核。然后内核为该条件发生时正在运行的进程产生适当的信号； 进程调用kill函数可将信号发送至其他进程； 用户用kill命令可将信号发送至其他进程；如kill -9 $(pidof a.out)将信号SIGKILL信号发送至a.out的进程。 软件条件触发的信号，如SIGPIPE、SIGALARM。  当一个信号产生时，内核通常在进程中以某种形式设置一个标志。当对信号采取了这种动作时，我们称为向进程递送了一个信号。
+常用的信号 列举一些日常开发或者使用Linux过程中常用的信号：
+ SIGABRT：异常终止。调用abort函数时产生此信号，代表进程异常终止； SIGALRM：定时器超时。用alarm函数设置的定时器超时时，发出此信号； SIGCHLD：子进程状态改变。如调用fork函数之后，子进程结束，父进程会收到此信号； SIGINT：在终端中前台执行一个进程，要退出时，按下键盘上的Ctrl&#43;C键，可以触发此信号； SIGQUIT：终端退出符。在终端中，按下键盘上的Ctrl&#43;\键，可以触发此信号； SIGTERM：终止。在终端中，kill命令默认发送的就是这个信号； SIGKILL：终止。这是两个不能被捕获或忽略信号中的一个。它向系统管理员提供了一中可以杀死任一进程的可靠方法； SIGSTOP：作业控制信号的一个，停止一个进程。此信号是两个不能被捕获或忽略信号中的另一个； SIGTSTP：交互式停止信号。按下键盘上的Ctrl&#43;Z键可以触发此信号，挂起前台进程。 SIGSEGV：无效内存引用。段违例（segmentation violation），进程崩溃多和此信号有关，会同时生成core文件，根据core文件可以查看崩溃的位置。 SIGPIPE：向已经终止的管道写。比较常见的场景是socket的tcp通信中，对方的socket已经关闭，但是己方还往里写，就会触发这个信号，一般在自己的通信库中需要设置此信号为忽略。  信号的处理方式  忽略此信号。大多数信号都可以用此方式处理，但是有两个信号不能忽略，SIGKILL和SIGSTOP，这两个信号向内核和root用户提供了使进程终止的可靠的方法。 捕获信号。需要设置捕获函数，具体捕获信号的方法参考下一节。 执行系统默认动作。大多数信号的默认动作为终止进程。  捕获信号 捕获信号有两种方式，signal函数和sigaction函数。使用方式及优缺点如下所述，开发过程中尽量使用sigaction函数。
+  signal函数
+signal函数接收两个参数，要处理的信号以及处理方式。处理方式参考上一节。
+ 优点：简单。 缺点：在不改变某一信号处理方式的情况下，不能确定该信号的处理方式。而且该函数的语义与实现有关，最好使用sigaction函数来代替该函数。  1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47  #include &lt;stdio."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+  <div class="post-content">
+    <h1 id="linux中的信号">Linux中的信号</h1>
+<p>Linux中涉及到信号的知识，这个信号并非Qt中的信号与槽中的信号，更非手机的信号。而是常见的在shell终端中输入<code>kill -9</code>杀死一个进程发送的信号；调试进程崩溃产生的core文件，常见的<code>SIGSEGV</code>信号。</p>
+<h2 id="信号的概念">信号的概念</h2>
+<p>每个信号都有一个名字，这些名字都以3个字符SIG开头，例如<code>SIGALRM</code>是闹钟信号，由alarm函数设定的定时器超时后将产生此信号。<code>SIGSEGV</code>是因为进程引用了无效的内存所产生的信号，此信号的默认处理方式是终止进程，并生成core文件。</p>
+<p>在shell中，输入<code>kill -l</code>命令查看所有的信号。在开发中，需要包含<code>signal.h</code>。</p>
+<h2 id="信号的产生">信号的产生</h2>
+<p>信号的产生有如下几种方式：</p>
+<ol>
+<li>由键盘按键触发。如 <code>SIGINT</code>：Ctrl + C，用来终止前台的一个进程;</li>
+<li>硬件异常产生的信号：除数为0，无效的内存引用等。这些条件通常由硬件检测到，并通知内核。然后内核为该条件发生时正在运行的进程产生适当的信号；</li>
+<li>进程调用kill函数可将信号发送至其他进程；</li>
+<li>用户用kill命令可将信号发送至其他进程；如<code>kill -9 $(pidof a.out)</code>将信号<code>SIGKILL</code>信号发送至<code>a.out</code>的进程。</li>
+<li>软件条件触发的信号，如<code>SIGPIPE</code>、<code>SIGALARM</code>。</li>
+</ol>
+<p>当一个信号产生时，内核通常在进程中以某种形式设置一个标志。当对信号采取了这种动作时，我们称为向进程递送了一个信号。</p>
+<h2 id="常用的信号">常用的信号</h2>
+<p>列举一些日常开发或者使用Linux过程中常用的信号：</p>
+<ul>
+<li>SIGABRT：异常终止。调用abort函数时产生此信号，代表进程异常终止；</li>
+<li>SIGALRM：定时器超时。用alarm函数设置的定时器超时时，发出此信号；</li>
+<li>SIGCHLD：子进程状态改变。如调用fork函数之后，子进程结束，父进程会收到此信号；</li>
+<li>SIGINT：在终端中前台执行一个进程，要退出时，按下键盘上的Ctrl+C键，可以触发此信号；</li>
+<li>SIGQUIT：终端退出符。在终端中，按下键盘上的Ctrl+\键，可以触发此信号；</li>
+<li>SIGTERM：终止。在终端中，kill命令默认发送的就是这个信号；</li>
+<li>SIGKILL：终止。这是两个不能被捕获或忽略信号中的一个。它向系统管理员提供了一中可以杀死任一进程的可靠方法；</li>
+<li>SIGSTOP：作业控制信号的一个，停止一个进程。此信号是两个不能被捕获或忽略信号中的另一个；</li>
+<li>SIGTSTP：交互式停止信号。按下键盘上的Ctrl+Z键可以触发此信号，挂起前台进程。</li>
+<li>SIGSEGV：无效内存引用。段违例（segmentation violation），进程崩溃多和此信号有关，会同时生成core文件，根据core文件可以查看崩溃的位置。</li>
+<li>SIGPIPE：向已经终止的管道写。比较常见的场景是socket的tcp通信中，对方的socket已经关闭，但是己方还往里写，就会触发这个信号，一般在自己的通信库中需要设置此信号为忽略。</li>
+</ul>
+<h2 id="信号的处理方式">信号的处理方式</h2>
+<ol>
+<li>忽略此信号。大多数信号都可以用此方式处理，但是有两个信号不能忽略，SIGKILL和SIGSTOP，这两个信号向内核和root用户提供了使进程终止的可靠的方法。</li>
+<li>捕获信号。需要设置捕获函数，具体捕获信号的方法参考下一节。</li>
+<li>执行系统默认动作。大多数信号的默认动作为终止进程。</li>
+</ol>
+<h2 id="捕获信号">捕获信号</h2>
+<p>捕获信号有两种方式，signal函数和sigaction函数。使用方式及优缺点如下所述，开发过程中尽量使用sigaction函数。</p>
+<ol>
+<li>
+<p>signal函数</p>
+<p>signal函数接收两个参数，要处理的信号以及处理方式。处理方式参考上一节。</p>
+<ul>
+<li>优点：简单。</li>
+<li>缺点：在不改变某一信号处理方式的情况下，不能确定该信号的处理方式。而且该函数的语义与实现有关，最好使用sigaction函数来代替该函数。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;signal.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">sig_func</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="c1">// 忽略信号
+</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">signal</span><span class="p">(</span><span class="n">SIGUSR1</span><span class="p">,</span> <span class="n">SIG_IGN</span><span class="p">)</span> <span class="o">==</span> <span class="n">SIG_ERR</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;can&#39;t ignore SIGUSR1</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 默认处理
+</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">signal</span><span class="p">(</span><span class="n">SIGUSR2</span><span class="p">,</span> <span class="n">SIG_DFL</span><span class="p">)</span> <span class="o">==</span> <span class="n">SIG_ERR</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;can&#39;t set default SIGUSR2</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 捕获信号
+</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">signal</span><span class="p">(</span><span class="n">SIGSEGV</span><span class="p">,</span> <span class="n">sig_func</span><span class="p">)</span> <span class="o">==</span> <span class="n">SIG_ERR</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;can&#39;t catch SIGSEGV</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 此信号不能捕获，所以会报错
+</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="n">signal</span><span class="p">(</span><span class="n">SIGSTOP</span><span class="p">,</span> <span class="n">sig_func</span><span class="p">)</span> <span class="o">==</span> <span class="n">SIG_ERR</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;can&#39;t catch SIGSTOP</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(;;)</span>
+    <span class="p">{</span>
+        <span class="n">pause</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 信号处理函数
+</span><span class="c1"></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">sig_func</span><span class="p">(</span><span class="kt">int</span> <span class="n">signo</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">psignal</span><span class="p">(</span><span class="n">signo</span><span class="p">,</span> <span class="s">&#34;received signal:&#34;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>sigaction函数</p>
+</li>
+</ol>
+<h2 id="阻塞信号">阻塞信号</h2>
+<h2 id="用信号传递数据">用信号传递数据</h2>
+
+  </div>
+</article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="guangxuanliu/guangxuanliu.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021 - 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>Liu Guangxuan</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
