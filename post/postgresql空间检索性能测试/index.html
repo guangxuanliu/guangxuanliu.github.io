@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>PostgreSQL空间检索性能测试 - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="Liu Guangxuan" /><meta name="description" content="" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/postgresql%E7%A9%BA%E9%97%B4%E6%A3%80%E7%B4%A2%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="PostgreSQL空间检索性能测试" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/postgresql%E7%A9%BA%E9%97%B4%E6%A3%80%E7%B4%A2%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-05-18T18:21:36&#43;08:00" />
+<meta property="article:modified_time" content="2022-05-18T18:21:36&#43;08:00" />
+
+<meta itemprop="name" content="PostgreSQL空间检索性能测试">
+<meta itemprop="description" content=""><meta itemprop="datePublished" content="2022-05-18T18:21:36&#43;08:00" />
+<meta itemprop="dateModified" content="2022-05-18T18:21:36&#43;08:00" />
+<meta itemprop="wordCount" content="1757">
+<meta itemprop="keywords" content="PostGIS,PostgreSQL," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="PostgreSQL空间检索性能测试"/>
+<meta name="twitter:description" content=""/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">PostgreSQL空间检索性能测试</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-05-18 </span>
+        <div class="post-category">
+            <a href="/categories/postgresql/"> PostgreSQL </a>
+            </div>
+          <span class="more-meta"> 约 1757 字 </span>
+          <span class="more-meta"> 预计阅读 4 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#前言">前言</a>
+          <ul>
+            <li><a href="#测试服务器">测试服务器</a></li>
+          </ul>
+        </li>
+        <li><a href="#表">表</a>
+          <ul>
+            <li><a href="#生成测试数据">生成测试数据</a></li>
+            <li><a href="#建立索引">建立索引</a></li>
+            <li><a href="#优化">优化</a></li>
+          </ul>
+        </li>
+        <li><a href="#测试时间">测试时间</a>
+          <ul>
+            <li><a href="#等值查询">等值查询</a></li>
+            <li><a href="#空间查询">空间查询</a></li>
+            <li><a href="#st_intersectsst_contains性能对比">st_intersects、st_contains、&amp;&amp;性能对比</a></li>
+          </ul>
+        </li>
+        <li><a href="#结论">结论</a></li>
+        <li><a href="#注">注</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="前言">前言</h2>
+<p>前几天安装好了<code>PostgreSQL</code>，并且安装了插件<code>PostGIS</code>，想测试一下空间查询性能如何。</p>
+<p>随机生成1亿条数据经纬度数据，插入表中。用<code>psql</code>做空间检索。</p>
+<h3 id="测试服务器">测试服务器</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">ip：192.168.100.93（本地机器）
+配置：
+	20核64G
+	cpu：Intel<span class="o">(</span>R<span class="o">)</span> Core<span class="o">(</span>TM<span class="o">)</span> i9-10900 CPU @ 2.80GHz
+	硬盘：500G NVME硬盘
+	
+数据库：
+	ssh终端登录，切换到postgres账户，用psql，可以直接连接数据库。
+	<span class="c1"># psql</span>
+	<span class="c1"># \c gis</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="表">表</h2>
+<p>数据库为<code>gis</code>，表为<code>airline</code>，创建表的sql语句如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">airline</span><span class="p">(</span><span class="w">
+</span><span class="w">    </span><span class="k">no</span><span class="w"> </span><span class="nb">serial</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="n">ph</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="n">gd</span><span class="w"> </span><span class="nb">numeric</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="n">hx</span><span class="w"> </span><span class="nb">numeric</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="n">sd</span><span class="w"> </span><span class="nb">numeric</span><span class="p">,</span><span class="w">
+</span><span class="w">    </span><span class="n">jwd</span><span class="w"> </span><span class="n">geometry</span><span class="p">(</span><span class="n">point</span><span class="p">,</span><span class="mi">4326</span><span class="p">),</span><span class="w">
+</span><span class="w">    </span><span class="n">sj</span><span class="w"> </span><span class="k">timestamp</span><span class="w">
+</span><span class="w"></span><span class="p">);</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="生成测试数据">生成测试数据</h3>
+<p>随机生成1亿条数据，经纬度随机生成，每次插入5千万条，分两次插入。</p>
+<p>经度取值范围：<code>-180°~180°</code>，保留小数点后5位数字。</p>
+<p>纬度取值范围：<code>-90°~90°</code>，保留小数点后5位数字。</p>
+<p>生成语句如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span><span class="w"> </span><span class="err">采用系统的</span><span class="n">random</span><span class="p">()</span><span class="err">函数生成经纬度</span><span class="w">
+</span><span class="w"></span><span class="o">#</span><span class="w"> </span><span class="err">经度取值范围为</span><span class="o">-</span><span class="mi">180</span><span class="err">°</span><span class="o">~</span><span class="mi">180</span><span class="err">°，保留小数点后</span><span class="mi">5</span><span class="err">位数字。</span><span class="w">
+</span><span class="w"></span><span class="o">#</span><span class="w"> </span><span class="err">纬度取值范围为</span><span class="o">-</span><span class="mi">90</span><span class="err">°</span><span class="o">~</span><span class="mi">90</span><span class="err">°，保留小数点后</span><span class="mi">5</span><span class="err">位数字。</span><span class="w">
+</span><span class="w"></span><span class="o">#</span><span class="w"> </span><span class="err">采用</span><span class="n">insert语句插入到表中</span><span class="w">
+</span><span class="w"></span><span class="o">#</span><span class="w"> </span><span class="err">其它列的数据为测试值，在此处无实际意义。</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">airline</span><span class="p">(</span><span class="n">ph</span><span class="p">,</span><span class="w"> </span><span class="n">gd</span><span class="p">,</span><span class="w"> </span><span class="n">hx</span><span class="p">,</span><span class="w"> </span><span class="n">sd</span><span class="p">,</span><span class="w"> </span><span class="n">sj</span><span class="p">,</span><span class="w"> </span><span class="n">jwd</span><span class="p">)</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="s1">&#39;A600&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">5000</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="n">clock_timestamp</span><span class="p">(),</span><span class="w"> </span><span class="n">ST_GeomFromText</span><span class="p">(</span><span class="s1">&#39;POINT(&#39;</span><span class="o">||</span><span class="w"> </span><span class="n">trunc</span><span class="p">((</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">random</span><span class="p">())::</span><span class="nb">numeric</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">)::</span><span class="nb">varchar</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">trunc</span><span class="p">((</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">random</span><span class="p">())::</span><span class="nb">numeric</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">)::</span><span class="nb">varchar</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;)&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">4326</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">generate_series</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">50000000</span><span class="p">);</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="建立索引">建立索引</h3>
+<p>如果先建立索引，然后再插入测试数据的话，数据插入的会比较慢，所以此处先插入了数据，然后再建立的索引。</p>
+<ul>
+<li><code>no</code>列，类型为<code>serial</code>，在该列上建立<code>btree</code>索引。</li>
+<li><code>jwd</code>列，类型为<code>geometry(Point， 4326)</code>，在该列上建立<code>gist</code>索引。</li>
+<li><code>sj</code>列，类型为<code>timestamp</code>，在该列上建立<code>btree</code>索引。</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">concurrently</span><span class="w"> </span><span class="n">idx_airline_no</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">airline</span><span class="p">(</span><span class="k">no</span><span class="p">);</span><span class="w">
+</span><span class="w"></span><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">concurrently</span><span class="w"> </span><span class="n">idx_airline_jwd</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">airline</span><span class="w"> </span><span class="k">using</span><span class="w"> </span><span class="n">gist</span><span class="p">(</span><span class="n">jwd</span><span class="p">);</span><span class="w">
+</span><span class="w"></span><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">concurrently</span><span class="w"> </span><span class="n">idx_airline_sj</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">airline</span><span class="p">(</span><span class="n">sj</span><span class="p">);</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>查看表：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">gis</span><span class="o">=#</span><span class="w"> </span><span class="err">\</span><span class="n">d</span><span class="w"> </span><span class="n">airline</span><span class="w">
+</span><span class="w">                                      </span><span class="k">Table</span><span class="w"> </span><span class="s2">&#34;public.airline&#34;</span><span class="w">
+</span><span class="w"> </span><span class="k">Column</span><span class="w"> </span><span class="o">|</span><span class="w">            </span><span class="k">Type</span><span class="w">             </span><span class="o">|</span><span class="w"> </span><span class="k">Collation</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="k">Nullable</span><span class="w"> </span><span class="o">|</span><span class="w">               </span><span class="k">Default</span><span class="w">                
+</span><span class="w"></span><span class="c1">--------+-----------------------------+-----------+----------+--------------------------------------
+</span><span class="c1"></span><span class="w"> </span><span class="k">no</span><span class="w">     </span><span class="o">|</span><span class="w"> </span><span class="nb">integer</span><span class="w">                     </span><span class="o">|</span><span class="w">           </span><span class="o">|</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">nextval</span><span class="p">(</span><span class="s1">&#39;airline_no_seq&#39;</span><span class="p">::</span><span class="n">regclass</span><span class="p">)</span><span class="w">
+</span><span class="w"> </span><span class="n">ph</span><span class="w">     </span><span class="o">|</span><span class="w"> </span><span class="nb">character</span><span class="w"> </span><span class="nb">varying</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w">       </span><span class="o">|</span><span class="w">           </span><span class="o">|</span><span class="w">          </span><span class="o">|</span><span class="w"> 
+</span><span class="w"> </span><span class="n">gd</span><span class="w">     </span><span class="o">|</span><span class="w"> </span><span class="nb">numeric</span><span class="w">                     </span><span class="o">|</span><span class="w">           </span><span class="o">|</span><span class="w">          </span><span class="o">|</span><span class="w"> 
+</span><span class="w"> </span><span class="n">hx</span><span class="w">     </span><span class="o">|</span><span class="w"> </span><span class="nb">numeric</span><span class="w">                     </span><span class="o">|</span><span class="w">           </span><span class="o">|</span><span class="w">          </span><span class="o">|</span><span class="w"> 
+</span><span class="w"> </span><span class="n">sd</span><span class="w">     </span><span class="o">|</span><span class="w"> </span><span class="nb">numeric</span><span class="w">                     </span><span class="o">|</span><span class="w">           </span><span class="o">|</span><span class="w">          </span><span class="o">|</span><span class="w"> 
+</span><span class="w"> </span><span class="n">jwd</span><span class="w">    </span><span class="o">|</span><span class="w"> </span><span class="n">geometry</span><span class="p">(</span><span class="n">Point</span><span class="p">,</span><span class="mi">4326</span><span class="p">)</span><span class="w">        </span><span class="o">|</span><span class="w">           </span><span class="o">|</span><span class="w">          </span><span class="o">|</span><span class="w"> 
+</span><span class="w"> </span><span class="n">sj</span><span class="w">     </span><span class="o">|</span><span class="w"> </span><span class="k">timestamp</span><span class="w"> </span><span class="k">without</span><span class="w"> </span><span class="n">time</span><span class="w"> </span><span class="k">zone</span><span class="w"> </span><span class="o">|</span><span class="w">           </span><span class="o">|</span><span class="w">          </span><span class="o">|</span><span class="w"> 
+</span><span class="w"></span><span class="n">Indexes</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="s2">&#34;idx_airline_jwd&#34;</span><span class="w"> </span><span class="n">gist</span><span class="w"> </span><span class="p">(</span><span class="n">jwd</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="s2">&#34;idx_airline_no&#34;</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">(</span><span class="k">no</span><span class="p">)</span><span class="w">
+</span><span class="w">    </span><span class="s2">&#34;idx_airline_sj&#34;</span><span class="w"> </span><span class="n">btree</span><span class="w"> </span><span class="p">(</span><span class="n">sj</span><span class="p">)</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="优化">优化</h3>
+<ul>
+<li>修改<code>postgresql.conf</code>配置文件，将其中<code>shared_buffers</code>字段的值修改为实际内存的四分之一，测试机器实际内存<code>64G</code>，所以此处修改为<code>16384MB</code>。</li>
+</ul>
+<h2 id="测试时间">测试时间</h2>
+<h3 id="等值查询">等值查询</h3>
+<p>按主键<code>no</code>，做简单的等值查询：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">airline</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="k">no</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">954362</span><span class="p">;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>耗时约为<code>4ms</code></p>
+<h3 id="空间查询">空间查询</h3>
+<p>查询坐标语句：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">select</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="k">no</span><span class="p">,</span><span class="w"> </span><span class="n">point</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">jwd</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">airline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">st_contains</span><span class="p">(</span><span class="n">ST_PolygonFromText</span><span class="p">(</span><span class="s1">&#39;POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">4326</span><span class="p">),</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">jwd</span><span class="p">);</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>查询记录条数语句：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">airline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">st_contains</span><span class="p">(</span><span class="n">ST_PolygonFromText</span><span class="p">(</span><span class="s1">&#39;POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">4326</span><span class="p">),</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">jwd</span><span class="p">);</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>测试结果：</p>
+<p>注：下面的测试区域中的数字为度，可以大概理解为1度约等于111公里。</p>
+<p>第一行为<code>1×1</code>的矩形，即<code>111×111</code>公里。详细的计算方法可以参考最后[注](# 注)章节。</p>
+<p>其他行依次类推。</p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>测试区域大小（度）</th>
+<th>首次查询时间（秒）</th>
+<th>第二次查询时间（秒）</th>
+<th>记录条数（条）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))</td>
+<td>0.156</td>
+<td>0.78</td>
+<td>1556</td>
+</tr>
+<tr>
+<td>2</td>
+<td>POLYGON((0 0, 2 0, 2 2, 0 2, 0 0))</td>
+<td>0.107</td>
+<td>0.086</td>
+<td>6175</td>
+</tr>
+<tr>
+<td>3</td>
+<td>POLYGON((0 0, 4 0, 4 4, 0 4, 0 0))</td>
+<td>0.162</td>
+<td>0.140</td>
+<td>24790</td>
+</tr>
+<tr>
+<td>4</td>
+<td>POLYGON((0 0, 8 0, 8 8, 0 8, 0 0))</td>
+<td>0.345</td>
+<td>0.388</td>
+<td>98798</td>
+</tr>
+<tr>
+<td>5</td>
+<td>POLYGON((0 0, 16 0, 16 16, 0 16, 0 0))</td>
+<td>1.174</td>
+<td>1.173</td>
+<td>396439</td>
+</tr>
+<tr>
+<td>6</td>
+<td>POLYGON((0 0, 32 0, 32 32, 0 32, 0 0))</td>
+<td>4.450</td>
+<td>4.423</td>
+<td>1582095</td>
+</tr>
+<tr>
+<td>7</td>
+<td>POLYGON((0 0, 64 0, 64 64, 0 64, 0 0))</td>
+<td>17.441</td>
+<td>17.519</td>
+<td>6323985</td>
+</tr>
+<tr>
+<td>8</td>
+<td>POLYGON((21 21, 22 21, 22 22, 21 22, 21 21))</td>
+<td>0.122</td>
+<td>0.119</td>
+<td>1504</td>
+</tr>
+<tr>
+<td>9</td>
+<td>POLYGON((21 21, 29 21, 29 29, 21 29, 21 21))</td>
+<td>0.393</td>
+<td>0.396</td>
+<td>98746</td>
+</tr>
+</tbody>
+</table>
+<h3 id="st_intersectsst_contains性能对比">st_intersects、st_contains、&amp;&amp;性能对比</h3>
+<p>分别测试了在<code>sp-gist</code>索引和<code>gist</code>索引下，三个函数或者运算符的查询性能，如下表所述。</p>
+<p>为避免缓存影响测试结果，所以每次测试均重启操作系统。</p>
+<table>
+<thead>
+<tr>
+<th>索引</th>
+<th>st_intersects(秒，首次查询/二次查询)</th>
+<th>st_contains(秒，首次查询/二次查询)</th>
+<th>&amp;&amp;(秒，首次查询/二次查询)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sp-gist</td>
+<td>23.4<br />8.2</td>
+<td>1:32.0<br />8.6</td>
+<td>1:29.0<br />6.3</td>
+</tr>
+<tr>
+<td>gist</td>
+<td>18.7<br />8.1</td>
+<td>1:28.4<br />8.5</td>
+<td>1:24.4<br />6.4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="结论">结论</h2>
+<p>总体而言，<code>gist</code>索引性能优于<code>sp-gist</code>索引，首次查询<code>st_intersects</code>性能比较好，第二次查询<code>&amp;&amp;</code>性能比较好。</p>
+<p>可应用的场景：查询附近的商家、附近的共享单车等……。按照测试这个数据量，均能在毫秒级别返回所需数据。</p>
+<h2 id="注">注</h2>
+<p>在经线上，纬度每差1度,实地距离大约为111千米。</p>
+<p>在纬线上，经度每差1度,实际距离为111×cosθ千米。（其中θ表示该纬线的纬度.在不同纬线上,经度每差1度的实际距离是不相等的）。</p>
+<p>中国的经纬度范围介于经度73.5°E（新疆帕米尔高原）至135°E（黑龙江黑瞎子岛），纬度4°N（南沙群岛中的曾母暗沙）至53.5°N（黑龙江漠河以北的黑龙江主航道的中心线）之间。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">111 * cos4 ≈ 110.7 km
+111 * cos53.5 ≈ 66 km
+</code></pre></td></tr></table>
+</div>
+</div>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/postgis/">PostGIS</a>
+          <a href="/tags/postgresql/">PostgreSQL</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/%E7%A6%BB%E7%BA%BF%E7%8E%AF%E5%A2%83%E5%AE%89%E8%A3%85postgresqlpostgis/">
+            <span class="next-text nav-default">离线环境安装PostgreSQL、PostGIS</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="guangxuanliu/guangxuanliu.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+      <a href="https://weibo.com/u/2361526901" class="iconfont icon-weibo" title="weibo"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021 - 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>Liu Guangxuan</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>

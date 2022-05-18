@@ -126,6 +126,30 @@
           <section id="posts" class="posts">
     <article class="post">
   <header class="post-header">
+    <h1 class="post-title"><a class="post-link" href="/post/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/">Evbuffers：缓冲IO的功能</a></h1>
+    <div class="post-meta">
+      <span class="post-time"> 2021-09-13 </span>
+      <div class="post-category">
+          <a href="/categories/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/"> 网络编程 </a>
+          <a href="/categories/linux/"> Linux </a>
+          </div>
+        <span class="more-meta"> 约 6647 字 </span>
+        <span class="more-meta"> 预计阅读 14 分钟 </span>
+    </div>
+  </header>
+  
+  <div class="post-content">
+    <div class="post-summary">
+      Libevent 的 evbuffer 功能实现了一个字节队列，针对将数据添加到末尾和从前面删除数据进行了优化。 Evbuffers 通常用于执行缓冲网络 IO 的“缓冲”部分。它们不提供调度 IO 或在 IO
+    </div>
+    <div class="read-more">
+      <a href="/post/evbuffers%E7%BC%93%E5%86%B2io%E7%9A%84%E5%8A%9F%E8%83%BD/" class="read-more-link">阅读更多</a>
+    </div>
+  </div>
+</article>
+
+    <article class="post">
+  <header class="post-header">
     <h1 class="post-title"><a class="post-link" href="/post/bufferevents%E9%AB%98%E7%BA%A7%E4%B8%BB%E9%A2%98/">Bufferevents：高级主题</a></h1>
     <div class="post-meta">
       <span class="post-time"> 2021-09-11 </span>
@@ -216,30 +240,6 @@
     </div>
     <div class="read-more">
       <a href="/post/event/" class="read-more-link">阅读更多</a>
-    </div>
-  </div>
-</article>
-
-    <article class="post">
-  <header class="post-header">
-    <h1 class="post-title"><a class="post-link" href="/post/%E8%BF%90%E8%A1%8Cevent_loop/">运行event_loop</a></h1>
-    <div class="post-meta">
-      <span class="post-time"> 2021-09-04 </span>
-      <div class="post-category">
-          <a href="/categories/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/"> 网络编程 </a>
-          <a href="/categories/linux/"> Linux </a>
-          </div>
-        <span class="more-meta"> 约 2932 字 </span>
-        <span class="more-meta"> 预计阅读 6 分钟 </span>
-    </div>
-  </header>
-  
-  <div class="post-content">
-    <div class="post-summary">
-      运行事件循环 一旦你在event_base上注册了一些events（下一章讲述如何创建并且注册events），你会想让libevent等待ev
-    </div>
-    <div class="read-more">
-      <a href="/post/%E8%BF%90%E8%A1%8Cevent_loop/" class="read-more-link">阅读更多</a>
     </div>
   </div>
 </article>
