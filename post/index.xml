@@ -196,14 +196,5 @@
       <description>大学时，想搭一个自己的博客。想着自己技术不怎么样，所以一直搁置着。 毕业后前几年，想搭一个自己的博客。也尝试用django搭建过一个博客，放在</description>
     </item>
     
-    <item>
-      <title>简历</title>
-      <link>https://guangxuanliu.github.io/post/%E7%AE%80%E5%8E%86/</link>
-      <pubDate>Tue, 18 May 2021 21:20:39 +0800</pubDate>
-      
-      <guid>https://guangxuanliu.github.io/post/%E7%AE%80%E5%8E%86/</guid>
-      <description></description>
-    </item>
-    
   </channel>
 </rss>
