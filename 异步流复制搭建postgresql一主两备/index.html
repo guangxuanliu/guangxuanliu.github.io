@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title> - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="Liu Guangxuan" /><meta name="description" content="异步流复制搭建PostgreSQL一主两备 前言 PostgreSQL集群搭建有多种方式，本文仅展示异步流复制方式搭建PostgreSQL数据库一主两备。
+主库可进行插入，查询等操作，备库只能进行查询操作。
+步骤 以下命令均使用postgres账户执行。
+配置环境    主机名 IP地址 角色 数据目录     pg01 10.0.3.101 主库 /home/postgres/pgdata   pg02 10.0.3.102 备库 /home/postgres/pgdata   pg03 10.0.3.102 备库 /home/postgres/pgdata    主库设置 主库设置接受流复制的连接
+1 2 3 4 5 6 7  # pg_hba.conf # 允许来自所有机器ip的复制链接 host replication all 0/0 md5 # 允许来自所有机器ip的链接 host all all 0/0 md5   修改主库配置文件参数，如果一致就不用修改。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19  # postgresql." /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/%E5%BC%82%E6%AD%A5%E6%B5%81%E5%A4%8D%E5%88%B6%E6%90%AD%E5%BB%BApostgresql%E4%B8%80%E4%B8%BB%E4%B8%A4%E5%A4%87/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="" />
+<meta property="og:description" content="异步流复制搭建PostgreSQL一主两备 前言 PostgreSQL集群搭建有多种方式，本文仅展示异步流复制方式搭建PostgreSQL数据库一主两备。
+主库可进行插入，查询等操作，备库只能进行查询操作。
+步骤 以下命令均使用postgres账户执行。
+配置环境    主机名 IP地址 角色 数据目录     pg01 10.0.3.101 主库 /home/postgres/pgdata   pg02 10.0.3.102 备库 /home/postgres/pgdata   pg03 10.0.3.102 备库 /home/postgres/pgdata    主库设置 主库设置接受流复制的连接
+1 2 3 4 5 6 7  # pg_hba.conf # 允许来自所有机器ip的复制链接 host replication all 0/0 md5 # 允许来自所有机器ip的链接 host all all 0/0 md5   修改主库配置文件参数，如果一致就不用修改。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19  # postgresql." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/%E5%BC%82%E6%AD%A5%E6%B5%81%E5%A4%8D%E5%88%B6%E6%90%AD%E5%BB%BApostgresql%E4%B8%80%E4%B8%BB%E4%B8%A4%E5%A4%87/" /><meta property="article:section" content="" />
+
+
+
+<meta itemprop="name" content="">
+<meta itemprop="description" content="异步流复制搭建PostgreSQL一主两备 前言 PostgreSQL集群搭建有多种方式，本文仅展示异步流复制方式搭建PostgreSQL数据库一主两备。
+主库可进行插入，查询等操作，备库只能进行查询操作。
+步骤 以下命令均使用postgres账户执行。
+配置环境    主机名 IP地址 角色 数据目录     pg01 10.0.3.101 主库 /home/postgres/pgdata   pg02 10.0.3.102 备库 /home/postgres/pgdata   pg03 10.0.3.102 备库 /home/postgres/pgdata    主库设置 主库设置接受流复制的连接
+1 2 3 4 5 6 7  # pg_hba.conf # 允许来自所有机器ip的复制链接 host replication all 0/0 md5 # 允许来自所有机器ip的链接 host all all 0/0 md5   修改主库配置文件参数，如果一致就不用修改。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19  # postgresql.">
+
+<meta itemprop="wordCount" content="165">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="异步流复制搭建PostgreSQL一主两备 前言 PostgreSQL集群搭建有多种方式，本文仅展示异步流复制方式搭建PostgreSQL数据库一主两备。
+主库可进行插入，查询等操作，备库只能进行查询操作。
+步骤 以下命令均使用postgres账户执行。
+配置环境    主机名 IP地址 角色 数据目录     pg01 10.0.3.101 主库 /home/postgres/pgdata   pg02 10.0.3.102 备库 /home/postgres/pgdata   pg03 10.0.3.102 备库 /home/postgres/pgdata    主库设置 主库设置接受流复制的连接
+1 2 3 4 5 6 7  # pg_hba.conf # 允许来自所有机器ip的复制链接 host replication all 0/0 md5 # 允许来自所有机器ip的链接 host all all 0/0 md5   修改主库配置文件参数，如果一致就不用修改。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19  # postgresql."/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+  <div class="post-content">
+    <h1 id="异步流复制搭建postgresql一主两备">异步流复制搭建PostgreSQL一主两备</h1>
+<h2 id="前言">前言</h2>
+<p>PostgreSQL集群搭建有多种方式，本文仅展示异步流复制方式搭建PostgreSQL数据库一主两备。</p>
+<p>主库可进行插入，查询等操作，备库只能进行查询操作。</p>
+<h2 id="步骤">步骤</h2>
+<p>以下命令均使用postgres账户执行。</p>
+<h3 id="配置环境">配置环境</h3>
+<table>
+<thead>
+<tr>
+<th>主机名</th>
+<th>IP地址</th>
+<th>角色</th>
+<th>数据目录</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pg01</td>
+<td>10.0.3.101</td>
+<td>主库</td>
+<td>/home/postgres/pgdata</td>
+</tr>
+<tr>
+<td>pg02</td>
+<td>10.0.3.102</td>
+<td>备库</td>
+<td>/home/postgres/pgdata</td>
+</tr>
+<tr>
+<td>pg03</td>
+<td>10.0.3.102</td>
+<td>备库</td>
+<td>/home/postgres/pgdata</td>
+</tr>
+</tbody>
+</table>
+<h3 id="主库设置">主库设置</h3>
+<p>主库设置接受流复制的连接</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback"># pg_hba.conf
+
+# 允许来自所有机器ip的复制链接
+host    replication     all             0/0                     md5
+
+# 允许来自所有机器ip的链接
+host    all             all             0/0                     md5
+</code></pre></td></tr></table>
+</div>
+</div><p>修改主库配置文件参数，如果一致就不用修改。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback"># postgresql.conf
+
+listen_addresses = &#39;*&#39;
+max_wal_senders = 10
+wal_level = replica
+min_wal_size = 800MB
+wal_log_hints = on
+
+# 归档参数设置
+archive_mode = on
+archive_command = &#39;test ! -f /home/postgres/archive/%f &amp;&amp; cp %p /home/postgres/archive/%f&#39;
+wal_keep_segments = 256
+wal_sender_timeout = 60s
+
+# 当变成备库时，是否可以接受查询请求
+hot_standby = on
+
+# 配置文件最后添加如下行
+unix_socket_directories = &#39;/tmp&#39;
+</code></pre></td></tr></table>
+</div>
+</div><p>创建archive文件夹：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">mkdir /home/postgres/archive
+</code></pre></td></tr></table>
+</div>
+</div><p>重启主库，建议在第一次建立生产库的时候就设置好以上参数。</p>
+<h3 id="备库设置">备库设置</h3>
+<p>备库在pg02机器上试用pg_basebackup命令生成基础备份：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sh" data-lang="sh">pg_basebackup -h 10.0.3.101 -U postgres -F p -P -X stream -R -D <span class="nv">$PGDATA</span> -l liu20220729
+</code></pre></td></tr></table>
+</div>
+</div><p>执行完成后，在pg02机器上的/home/postgres/pgdata目录下看到复制过来的各种数据。</p>
+<p>检查备库的配置文件postgresql.conf中<code>hot_standby</code>是否为on。</p>
+<p><code>pg_ctl start</code>启动备库。</p>
+<p>备库pg03上的操作同pg02。</p>
+<h3 id="测试">测试</h3>
+<h4 id="测试1">测试1</h4>
+<p>在主库pg01的pg_stat_replication视图中，查看备库过来的流复制连接</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">select</span><span class="w"> </span><span class="n">client_addr</span><span class="p">,</span><span class="k">state</span><span class="p">,</span><span class="n">sync_state</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">pg_stat_replication</span><span class="p">;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><h4 id="测试2">测试2</h4>
+<p>在主库中新建表，并插入数据，然后在备库中检查：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span><span class="w"> </span><span class="n">pg01</span><span class="w">
+</span><span class="w"></span><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">test01</span><span class="p">(</span><span class="n">id</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="p">,</span><span class="w"> </span><span class="n">note</span><span class="w"> </span><span class="nb">text</span><span class="p">);</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">test01</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;11111&#39;</span><span class="p">);</span><span class="w">
+</span><span class="w"></span><span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">test01</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;22222&#39;</span><span class="p">);</span><span class="w">
+</span><span class="w"></span><span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">test01</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;33333&#39;</span><span class="p">);</span><span class="w">
+</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="o">#</span><span class="n">pg02</span><span class="w">
+</span><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">test01</span><span class="p">;</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="o">#</span><span class="n">pg03</span><span class="w">
+</span><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">test01</span><span class="p">;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div>
+  </div>
+</article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="guangxuanliu/guangxuanliu.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021 - 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>Liu Guangxuan</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
