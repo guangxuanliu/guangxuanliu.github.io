@@ -49,7 +49,7 @@
 <meta itemprop="name" content="离线环境安装PostgreSQL、PostGIS">
 <meta itemprop="description" content=""><meta itemprop="datePublished" content="2022-05-16T19:21:36&#43;08:00" />
 <meta itemprop="dateModified" content="2022-05-16T19:21:36&#43;08:00" />
-<meta itemprop="wordCount" content="1996">
+<meta itemprop="wordCount" content="2915">
 <meta itemprop="keywords" content="PostGIS,PostgreSQL," /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="离线环境安装PostgreSQL、PostGIS"/>
 <meta name="twitter:description" content=""/>
@@ -136,8 +136,8 @@
         <div class="post-category">
             <a href="/categories/postgresql/"> PostgreSQL </a>
             </div>
-          <span class="more-meta"> 约 1996 字 </span>
-          <span class="more-meta"> 预计阅读 4 分钟 </span>
+          <span class="more-meta"> 约 2915 字 </span>
+          <span class="more-meta"> 预计阅读 6 分钟 </span>
         
       </div>
     </header>
@@ -151,7 +151,11 @@
       <ul>
         <li><a href="#前言">前言</a></li>
         <li><a href="#挂载本地源">挂载本地源</a></li>
-        <li><a href="#安装基础库">安装基础库</a></li>
+        <li><a href="#安装基础库">安装基础库</a>
+          <ul>
+            <li><a href="#此处的坑">此处的坑</a></li>
+          </ul>
+        </li>
         <li><a href="#创建用户">创建用户</a></li>
         <li><a href="#所需源码包工具">所需源码包、工具</a></li>
         <li><a href="#安装步骤">安装步骤</a>
@@ -173,7 +177,7 @@
 <p>在联网的<code>Linux</code>环境上安装<code>PostgreSQL</code>、<code>PostGIS</code>，可能就是几句命令的事儿，相关的依赖可以自动安装，但是在离线的环境下安装，需要先编译安装各个依赖。</p>
 <p>本文以麒麟服务器<code>4.0.2</code>为测试环境，离线编译安装<code>PostgreSQL 12.2</code>和<code>PostGIS 3.0.5</code>。有联网的环境，安装方法请参考其他教程。</p>
 <h2 id="挂载本地源">挂载本地源</h2>
-<p>因为麒麟服务器<code>4.0.2</code>版本的镜像里面缺少<code>libssl-dev</code>这个包，但是麒麟桌面版4.0.2里面包含这个包，所以需要把桌面版的镜像挂载上，当作<code>apt</code>的源，从中安装依赖。</p>
+<p>因为是离线安装，所以此处将系统镜像挂载上，作为本地的镜像源，来安装一些基础包。注意镜像一定和系统对应上。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt"> 1
@@ -189,21 +193,38 @@
 </span><span class="lnt">11
 </span><span class="lnt">12
 </span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 将麒麟桌面版4.0.2上传到系统里面任意位置，比如/root/iso路径下</span>
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 将麒麟系统镜像上传到系统里面任意位置，比如/root/iso路径下</span>
 
 <span class="c1"># 编辑下方文件，注释掉其他无用的源，前面加上#即可</span>
 vim /etc/apt/sources.list
 
-<span class="c1"># 挂载镜像</span>
+<span class="c1"># 挂载镜像，注意此处一定要选择绝对路径，否则无法找到安装源</span>
 mount -o loop /root/iso/Kylin-4.0.2-desktop-sp2_Community-20171127-x86_64.iso /media/cdrom
 
 <span class="c1"># 添加镜像源</span>
-apt-cdrom -m -d/media/cdrom add
+vim /etc/apt/sources.list
+<span class="c1"># 添加如下行</span>
+deb file:///mnt/cdrom juniper main
 
-<span class="c1"># 更新</span>
+<span class="c1"># 更新镜像源</span>
 apt-get update
+</code></pre></td></tr></table>
+</div>
+</div><p>安装基础的开发环境：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell">tasksel
+
+<span class="c1"># 选择开发环境，然后确定，系统会自动安装跟开发有关的相关包</span>
 </code></pre></td></tr></table>
 </div>
 </div><h2 id="安装基础库">安装基础库</h2>
@@ -215,15 +236,33 @@ apt-get update
 <pre class="chroma"><code class="language-shell" data-lang="shell">apt-get install zlib1g-dev libreadline6-dev libssl-dev libxml2-dev
 </code></pre></td></tr></table>
 </div>
-</div><h2 id="创建用户">创建用户</h2>
+</div><h3 id="此处的坑">此处的坑</h3>
+<p>此处麒麟系统有两个坑，分别如下：</p>
+<ol>
+<li>麒麟server版本的镜像里面缺少<code>zlib1g-dev</code>这个包，但是麒麟desktop里面包含这个包，所以需要把桌面版的镜像挂载上，当作<code>apt</code>的源，从中安装依赖。然后再挂载server版的镜像，安装其他包。</li>
+<li><code>libxml2-dev</code>这个包，安装后，执行下面的编译依赖步骤的时候可能会报找不到xml这个库，当时一直很纳闷，后来才找到原因。因为官方给的安装包里面有问题，安装包会建立软链接，如libxml2.so-&gt;libxml2.so.2-&gt;libxml2.so.2.9.3，应该是这种指向关系，但是官方给的包安装后指向了错误的so文件，需要自己手动删除然后创建软链接来修复错误。</li>
+</ol>
+<h2 id="创建用户">创建用户</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">adduser postgres		<span class="c1"># 如果中间让输入fullname等其他信息，可以直接Ctrl+C退出，不影响后续的流程</span>
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 创建postgres用户</span>
+groupadd -g <span class="m">701</span> postgres
+useradd -g <span class="m">701</span> -u <span class="m">701</span> -s /bin/bash -m postgres
+
+<span class="c1"># 修改密码</span>
 passwd postgres
+
+<span class="c1"># 然后输入postgres用户的密码，回车</span>
 </code></pre></td></tr></table>
 </div>
 </div><h2 id="所需源码包工具">所需源码包、工具</h2>
@@ -304,27 +343,41 @@ make install
 </div>
 </div></li>
 <li>
-<p>添加至环境变量</p>
+<p>编辑环境变量</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span><span class="lnt">7
-</span><span class="lnt">8
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 打开文件</span>
-vim /etc/profile
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 切换到postgres用户</span>
+su - postgres
+
+<span class="c1"># 打开文件</span>
+vim ~/.bashrc
 
 <span class="c1"># 在最下面添加如下行</span>
-<span class="nv">PATH</span><span class="o">=</span>/usr/local/pgsql/bin/:<span class="nv">$PATH</span>
+<span class="nb">export</span> <span class="nv">PG_HOME</span><span class="o">=</span>/usr/local/pgsql
+<span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PG_HOME</span>/bin:/usr/local/bin:<span class="nv">$PATH</span>
+<span class="nb">export</span> <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$PG_HOME</span>/lib:/usr/local/lib:<span class="nv">$LD_LIBRARY_PATH</span>
+<span class="nb">export</span> <span class="nv">PGDATA</span><span class="o">=</span>/home/postgres/pgdata
+<span class="nb">export</span> <span class="nv">PGHOST</span><span class="o">=</span>/tmp
 
 <span class="c1"># 使文件生效</span>
-<span class="nb">source</span> /etc/profile
+<span class="nb">source</span> ~/.bashrc
 </code></pre></td></tr></table>
 </div>
 </div></li>
@@ -332,24 +385,28 @@ vim /etc/profile
 <p>初始化数据库实例</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span><span class="lnt">7
-</span><span class="lnt">8
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback"># 切换到postgres用户
-su - postgres
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># postgres用户执行</span>
 
-# 创建data文件夹
-mkdir /home/postgres/data
+<span class="c1"># 创建data文件夹</span>
+mkdir /home/postgres/pgdata
 
-# 初始化数据库实例
-initdb -D /home/postgres/data/
+<span class="c1"># 初始化数据库实例</span>
+initdb
+
+<span class="c1"># 启动数据库</span>
+pg_ctl -l logfile start
 </code></pre></td></tr></table>
 </div>
 </div></li>
@@ -377,6 +434,9 @@ initdb -D /home/postgres/data/
 </span><span class="lnt">18
 </span><span class="lnt">19
 </span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
 </span></code></pre></td>
 <td class="lntd">
 <pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 切换到data目录下</span>
@@ -398,18 +458,21 @@ vim postgresql.conf
 <span class="c1"># 将端口的注释放开</span>
 <span class="nv">port</span> <span class="o">=</span> <span class="m">5432</span>
 
+<span class="c1"># 在/home/postgres/pgdata/postgresql.conf文件的最后增加以下命令行：</span>
+<span class="nv">unix_socket_directories</span> <span class="o">=</span> <span class="s1">&#39;/tmp&#39;</span>
+
 <span class="c1"># 保存退出</span>
 </code></pre></td></tr></table>
 </div>
 </div></li>
 <li>
-<p>启动数据库</p>
+<p>重启数据库</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell">pg_ctl -D /home/postgres/data/ -l /home/postgres/logfile start
+<pre class="chroma"><code class="language-shell" data-lang="shell">pg_ctl restart
 </code></pre></td></tr></table>
 </div>
 </div></li>
@@ -488,9 +551,23 @@ psql
 </span><span class="lnt"> 8
 </span><span class="lnt"> 9
 </span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 因为默认cmake的版本较低，需要编译一个高版本</span>
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 因为安装geos依赖cmake，所以必须要有cmake</span>
+<span class="c1"># 首先检查系统中现有的cmake版本</span>
+cmake --version
+
+<span class="c1"># 如果系统中现有的cmake版本大于等于3.8，就可以跳过此步骤</span>
+
+
+<span class="c1"># 因为默认cmake的版本较低，或者系统中没有cmake，则需要编译一个高版本</span>
 tar -xzvf cmake-3.20.1.tar.gz
 <span class="nb">cd</span> cmake-3.20.1
 ./configure
@@ -609,7 +686,50 @@ make install
 </div>
 </div></li>
 <li>
+<p>编译<code>protobuf-c</code>（可选）</p>
+<p>protobuf-c为可选项，如果需要使用ST_AsGeobuf等函数，则需要安装protobuf-c。因为protobuf-c又依赖protobuf，所以先编译安装protobuf，然后再安装protobuf-c。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 编译安装protobuf</span>
+tar -xzvf protobuf-all-3.20.1.tar.gz
+<span class="nb">cd</span> protobuf-3.20.1
+./configure
+make -j<span class="k">$(</span>nproc<span class="k">)</span>
+make install
+</code></pre></td></tr></table>
+</div>
+</div><p>编译安装protobuf-c：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 编译安装protobuf-c</span>
+tar -xzvf protobuf-c-1.4.1.tar.gz
+<span class="nb">cd</span> protobuf-c-1.4.1
+./configure
+make -j<span class="k">$(</span>nproc<span class="k">)</span>
+make install
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
 <p>编译<code>postgis</code></p>
+<p>切记此处一定要最后再编译postgis，因为编译postgis的时候，会去搜索前面依赖的库，如果搜索到才会激活相关的特性，如果没有搜索到，则不激活相关的特性。</p>
+<p>如果先编译了postgis，而后安装的依赖库，则postgis没有检测到，则不会激活相应的特性。解决此问题的最好的办法就是最后再覆盖编译一下postgis插件。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt">1

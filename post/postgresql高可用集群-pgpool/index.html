@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>PostgreSQL高可用集群-pgpool - 刘光轩的个人博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="Liu Guangxuan" /><meta name="description" content="" /><meta name="keywords" content="刘光轩, 刘光轩的个人博客, liuguangxuan" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.83.1 with theme even" />
+
+
+<link rel="canonical" href="https://guangxuanliu.github.io/post/postgresql%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4-pgpool/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="/sass/main.min.b5a744db6de49a86cadafb3b70f555ab443f83c307a483402259e94726b045ff.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="PostgreSQL高可用集群-pgpool" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://guangxuanliu.github.io/post/postgresql%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4-pgpool/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-08-19T19:21:36&#43;08:00" />
+<meta property="article:modified_time" content="2022-08-19T19:21:36&#43;08:00" />
+
+<meta itemprop="name" content="PostgreSQL高可用集群-pgpool">
+<meta itemprop="description" content=""><meta itemprop="datePublished" content="2022-08-19T19:21:36&#43;08:00" />
+<meta itemprop="dateModified" content="2022-08-19T19:21:36&#43;08:00" />
+<meta itemprop="wordCount" content="8777">
+<meta itemprop="keywords" content="PostgreSQL,数据库集群," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="PostgreSQL高可用集群-pgpool"/>
+<meta name="twitter:description" content=""/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Liu&#39;s Blog</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">About</li>
+      </a>
+  </ul>
+
+  
+
+
+</nav>
+
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Liu&#39;s Blog</a>
+</div>
+
+
+
+
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">Categories</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">About</a>
+      </li>
+  </ul>
+</nav>
+
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">PostgreSQL高可用集群-pgpool</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2022-08-19 </span>
+        <div class="post-category">
+            <a href="/categories/postgresql/"> PostgreSQL </a>
+            </div>
+          <span class="more-meta"> 约 8777 字 </span>
+          <span class="more-meta"> 预计阅读 18 分钟 </span>
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#前言">前言</a></li>
+        <li><a href="#主机规划">主机规划</a></li>
+        <li><a href="#搭建异步流复制">搭建异步流复制</a></li>
+        <li><a href="#加载pgpool_recovery插件">加载pgpool_recovery插件</a></li>
+        <li><a href="#设置免密登录">设置免密登录</a>
+          <ul>
+            <li><a href="#配置别名">配置别名</a></li>
+            <li><a href="#设置免密登录-1">设置免密登录</a></li>
+          </ul>
+        </li>
+        <li><a href="#安装pgpool">安装pgpool</a>
+          <ul>
+            <li><a href="#pg1节点安装pgpool">pg1节点安装pgpool</a></li>
+            <li><a href="#pg2节点安装pgpool">pg2节点安装pgpool</a></li>
+            <li><a href="#pg2节点安装pgpool-1">pg2节点安装pgpool</a></li>
+          </ul>
+        </li>
+        <li><a href="#配置pgpool">配置pgpool</a>
+          <ul>
+            <li><a href="#pg1节点配置">pg1节点配置</a></li>
+            <li><a href="#pg2节点配置">pg2节点配置</a></li>
+            <li><a href="#pg3节点配置">pg3节点配置</a></li>
+          </ul>
+        </li>
+        <li><a href="#启动">启动</a>
+          <ul>
+            <li><a href="#启动postgresql">启动PostgreSQL</a></li>
+            <li><a href="#启动pgpool">启动pgpool</a></li>
+            <li><a href="#检查状态">检查状态</a></li>
+          </ul>
+        </li>
+        <li><a href="#测试">测试</a>
+          <ul>
+            <li><a href="#postgresql数据库宕机">PostgreSQL数据库宕机</a></li>
+            <li><a href="#pgpool节点宕机">pgpool节点宕机</a></li>
+          </ul>
+        </li>
+        <li><a href="#其他注意事项">其他注意事项</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="前言">前言</h2>
+<p>PostgreSQL自身只提供了流复制的功能，想要搭建高可用集群的话，需要借助第三方库pgpool来实现。pgpool之间互相通信，并且监控PostgreSQL数据库，当有一个数据库节点宕机时，可以保证整个集群可用。如果是primary节点宕机，则让另外的standby节点提升为primary节点。如果是standby节点宕机，则对整体集群无影响。以此来保证数据库集群的高可用。</p>
+<p>为了保证pgpool自身的高可用，所以pgpool也可以搭建多个节点，分为master节点和standby节点。并且设置一个vip（虚拟IP），用虚拟ip对外提供服务，当master节点宕机时，该虚拟IP漂移到其他机器上，保证pgpool的高可用。</p>
+<p>本文讲解使用pgpool搭建PostgreSQL高可用集群的步骤，前提是已经在各个节点安装了PostgreSQL数据库，并且配置好了异步流复制。</p>
+<p>安装PostgreSQL和配置异步流复制，之前写过两篇文章，可以查看之前的教程。</p>
+<ul>
+<li>PostgreSQL版本：12.2</li>
+<li>pgpool版本：4.1</li>
+</ul>
+<h2 id="主机规划">主机规划</h2>
+<table>
+<thead>
+<tr>
+<th>主机名</th>
+<th>IP</th>
+<th>角色</th>
+<th>端口</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pg1</td>
+<td>192.168.211.142</td>
+<td>主节点</td>
+<td>PostgreSQL：5432<br />pgpool：9999<br />pcp：9898<br/>wathchdog:9000</td>
+<td>运行数据库和pgpool</td>
+</tr>
+<tr>
+<td>pg2</td>
+<td>192.168.211.145</td>
+<td>备节点</td>
+<td>PostgreSQL：5432<br />pgpool：9999<br />pcp：9898<br/>wathchdog:9000</td>
+<td>运行数据库和pgpool</td>
+</tr>
+<tr>
+<td>pg3</td>
+<td>192.168.211.144</td>
+<td>备节点</td>
+<td>PostgreSQL：5432<br />pgpool：9999<br />pcp：9898<br/>wathchdog:9000</td>
+<td>运行数据库和pgpool</td>
+</tr>
+<tr>
+<td>vip</td>
+<td>192.168.211.215</td>
+<td>虚拟IP</td>
+<td>端口为pgpool的端口：9999</td>
+<td>该IP要选一个局域网中实际并不存在的IP</td>
+</tr>
+</tbody>
+</table>
+<p>因为在虚拟机里面做的测试，虚拟机给分配的IP不连续，这个不用管，按照自己的实际情况配置即可。</p>
+<h2 id="搭建异步流复制">搭建异步流复制</h2>
+<p>异步流复制比较简单，不涉及到pgpool，请参考之前的教程。</p>
+<p>如果这一步通不过的话，就不要往下看了，因为这一步是基础。</p>
+<h2 id="加载pgpool_recovery插件">加载pgpool_recovery插件</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 在主节点上执行下面的命令，加载pgpool_recovery插件</span>
+psql template1
+create extension pgpool_recovery<span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="设置免密登录">设置免密登录</h2>
+<h3 id="配置别名">配置别名</h3>
+<p>为方便以后的配置，给每个节点设置别名，分别编辑3个节点的/etc/hosts文件，并补充以下内容：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">192.168.211.142 pg1
+192.168.211.145 pg2
+192.168.211.144 pg3
+192.168.211.215 vip
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="设置免密登录-1">设置免密登录</h3>
+<p>需要设置3个节点之间postgres用户的免密登录，下面以pg1节点的设置为例，设置pg2、pg3节点对pg1节点postgres用户的免密登录，其他两个节点设置方法类似，按需修改以下节点名称即可。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 注意切换到postgres用户执行</span>
+
+<span class="c1"># 生成id_rsa.pub</span>
+ssh-keygen
+<span class="c1"># 一路回车</span>
+
+<span class="c1"># 上传到需要免密的节点上</span>
+ssh-copy-id -i ~/.ssh/id_rsa.pub postgres@pg2
+ssh-copy-id -i ~/.ssh/id_rsa.pub postgres@pg3
+
+<span class="c1"># 测试</span>
+<span class="c1"># 如果设置正确的话，此处不需要输入密码</span>
+ssh postgres@pg2 uptime
+ssh postgres@pg3 uptime
+</code></pre></td></tr></table>
+</div>
+</div><p>pg2节点设置免密登录：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 注意切换到postgres用户执行</span>
+
+<span class="c1"># 生成id_rsa.pub</span>
+ssh-keygen
+<span class="c1"># 一路回车</span>
+
+<span class="c1"># 上传到需要免密的节点上</span>
+ssh-copy-id -i ~/.ssh/id_rsa.pub postgres@pg1
+ssh-copy-id -i ~/.ssh/id_rsa.pub postgres@pg3
+
+<span class="c1"># 测试</span>
+<span class="c1"># 如果设置正确的话，此处不需要输入密码</span>
+ssh postgres@pg1 uptime
+ssh postgres@pg3 uptime
+</code></pre></td></tr></table>
+</div>
+</div><p>pg3节点设置免密登录：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 注意切换到postgres用户执行</span>
+
+<span class="c1"># 生成id_rsa.pub</span>
+ssh-keygen
+<span class="c1"># 一路回车</span>
+
+<span class="c1"># 上传到需要免密的节点上</span>
+ssh-copy-id -i ~/.ssh/id_rsa.pub postgres@pg1
+ssh-copy-id -i ~/.ssh/id_rsa.pub postgres@pg2
+
+<span class="c1"># 测试</span>
+<span class="c1"># 如果设置正确的话，此处不需要输入密码</span>
+ssh postgres@pg1 uptime
+ssh postgres@pg2 uptime
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="安装pgpool">安装pgpool</h2>
+<p>每个节点上均需要安装pgpool，此处使用的版本是<code>pgpool-II-4.1.0.tar.gz</code>，安装包可自行下载。</p>
+<h3 id="pg1节点安装pgpool">pg1节点安装pgpool</h3>
+<p>以一个节点为例，需要执行如下命令：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># root用户执行以下命令</span>
+mkdir /usr/local/pgpool
+
+<span class="c1"># 将pgpool上传到任意目录</span>
+tar -xzvf pgpool-II-4.1.0.tar.gz
+./configure --prefix<span class="o">=</span>/usr/local/pgpool
+make -j<span class="k">$(</span>nproc<span class="k">)</span>
+make install
+
+<span class="c1"># 如果下面的语句报错，pg_config找不到，请将pgsql/bin路径加入到环境变量中</span>
+<span class="c1"># export PATH=/usr/local/pgsql/bin:$PATH</span>
+<span class="nb">cd</span> src/sql
+make
+make install
+
+chown -R postgres.postgres /usr/local/pgpool/
+</code></pre></td></tr></table>
+</div>
+</div><p>配置postgres用户的环境变量</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 以postgres用户执行</span>
+<span class="c1"># 注意此处，不要覆盖了之前搭建异步流复制时pg的环境变量，应该在上面追加。</span>
+
+vim ~/.bashrc
+
+<span class="nb">export</span> <span class="nv">PGPOOL_HOME</span><span class="o">=</span>/usr/local/pgpool
+<span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PGPOOL_HOME</span>/bin:<span class="nv">$PATH</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="pg2节点安装pgpool">pg2节点安装pgpool</h3>
+<p>安装步骤相同，不再赘述。</p>
+<h3 id="pg2节点安装pgpool-1">pg2节点安装pgpool</h3>
+<p>安装步骤相同，不再赘述。</p>
+<h2 id="配置pgpool">配置pgpool</h2>
+<p>此处配置比较复杂，3个节点都需要配置，所以一般在1个节点上配好之后，把需要配置的东西拷贝到其他节点上，然后稍微做一些修改。</p>
+<p>每个节点均需要配置4个配置文件、3个脚本、2个可执行程序。</p>
+<p>4个配置文件为：</p>
+<ul>
+<li>pool_hba.conf</li>
+<li>pcp.conf</li>
+<li>pool_passwd</li>
+<li>pgpool.conf</li>
+</ul>
+<p>3个脚本为：</p>
+<ul>
+<li>failover.sh</li>
+<li>follow-master.sh</li>
+<li>pgpool_remote_start</li>
+</ul>
+<p>2个可执行程序为：</p>
+<ul>
+<li>ip</li>
+<li>arping</li>
+</ul>
+<p>下面以pg1节点为例，将pg1节点配置好之后，将配置文件同步到其他节点，稍作修改。</p>
+<h3 id="pg1节点配置">pg1节点配置</h3>
+<h4 id="配置文件4个">配置文件（4个）</h4>
+<p>配置文件官方均给出了模板，如果上面安装pgpool正确的话，模板文件在/usr/local/pgpool/etc路径下面。可以把模板文件拷贝一份，然后修改。</p>
+<ol>
+<li>
+<p>pool_hba.conf</p>
+<p>pool_hba.conf是对pgpool验证的，类似与PostgreSQL的pg_hba.conf。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 用postgres用户执行以下命令</span>
+<span class="nb">cd</span> /usr/local/pgpool/etc
+
+cp pool_hba.conf.sample pool_hba.conf
+
+vim pool_hba.conf
+
+<span class="c1"># 添加如下行</span>
+<span class="c1"># 此处配置的为trust，表示不用密码，在对外提供服务的互联网上，请把trust设置成md5.</span>
+host    all         all         0/0                   trust
+host    replication all         0/0                   trust
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>pcp.conf</p>
+<p>该配置文件用来验证pcp工具的用户名和密码，pcp工具用来查看节点信息、节点恢复、节点的添加与删除等。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 用postgres用户执行以下命令</span>
+<span class="nb">cd</span> /usr/local/pgpool/etc
+
+cp pcp.conf.sample pcp.conf
+
+<span class="c1"># 使用pg_md5生成配置的用户名密码</span>
+pg_md5 postgres
+e8a48653851e28c69d0506508fb27fc5
+
+<span class="c1">#编辑pcp.conf文件，添加如下内容</span>
+postgres:e8a48653851e28c69d0506508fb27fc5
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>pool_passwd</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 用postgres用户执行以下命令</span>
+<span class="nb">cd</span> /usr/local/pgpool/etc
+
+pg_md5 -p -m -u postgres pool_passwd
+<span class="c1">#输入数据库登录用户postgres密码，生成pool_passwd文件</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>pgpool.conf（核心文件）</p>
+<p>该文件为pgpool最重要的文件，配置的时候一定要小心。</p>
+<p>下面仅列出了该文件中需要修改的配置项，不需要修改的请保持默认配置即可。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span><span class="lnt">141
+</span><span class="lnt">142
+</span><span class="lnt">143
+</span><span class="lnt">144
+</span><span class="lnt">145
+</span><span class="lnt">146
+</span><span class="lnt">147
+</span><span class="lnt">148
+</span><span class="lnt">149
+</span><span class="lnt">150
+</span><span class="lnt">151
+</span><span class="lnt">152
+</span><span class="lnt">153
+</span><span class="lnt">154
+</span><span class="lnt">155
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback"># 用postgres用户执行以下命令
+cd /usr/local/pgpool/etc
+
+cp pgpool.conf.sample-master-slave pgpool.conf
+
+# 使用vim编辑
+vim pgpool.conf
+
+# 需要修改的配置如下：
+
+#------------------------------------------------------------------------------
+# CONNECTIONS
+#------------------------------------------------------------------------------
+# - pgpool Connection Settings -
+listen_addresses = &#39;*&#39;
+port = 9999
+
+# - pgpool Communication Manager Connection Settings -
+pcp_listen_addresses = &#39;*&#39;
+pcp_port = 9898
+
+# - Backend Connection Settings -
+# 此处填写各个pg数据库的配置参数，注意端口和路径要根据自己的实际情况填写
+backend_hostname0 = &#39;pg1&#39;
+backend_port0 = 5432
+backend_weight0 = 1
+# 此处填写pg1数据库的数据存储路径
+backend_data_directory0 = &#39;/home/postgres/pgdata&#39;
+backend_flag0 = &#39;ALLOW_TO_FAILOVER&#39;
+
+backend_hostname1 = &#39;pg2&#39;
+backend_port1 = 5432
+backend_weight1 = 1
+# 此处填写pg2数据库的数据存储路径
+backend_data_directory1 = &#39;/home/postgres/pgdata&#39;
+backend_flag1 = &#39;ALLOW_TO_FAILOVER&#39;
+
+backend_hostname2 = &#39;pg3&#39;
+backend_port2 = 5432
+backend_weight2 = 1
+# 此处填写pg3数据库的数据存储路径
+backend_data_directory2 = &#39;/home/postgres/pgdata&#39;
+backend_flag2 = &#39;ALLOW_TO_FAILOVER&#39;
+
+# - Authentication -
+enable_pool_hba = on
+# 此处的pool_passwd不是密码，而是文件的名字，见上面同章节的第3个配置文件。
+pool_passwd = &#39;pool_passwd&#39;
+
+
+#------------------------------------------------------------------------------
+# FILE LOCATIONS
+#------------------------------------------------------------------------------
+pid_file_name = &#39;/usr/local/pgpool/pgpool.pid&#39;
+
+#------------------------------------------------------------------------------
+# LOAD BALANCING MODE
+#------------------------------------------------------------------------------
+load_balance_mode = on
+
+#------------------------------------------------------------------------------
+# MASTER/SLAVE MODE
+#------------------------------------------------------------------------------
+master_slave_mode = on
+# 因为是流复制模式，所以此处修改成stream
+master_slave_sub_mode = &#39;stream&#39;
+
+# - Streaming -
+sr_check_period = 10
+sr_check_user = &#39;postgres&#39;
+sr_check_password = &#39;postgres&#39;
+sr_check_database = &#39;postgres&#39;
+
+# - Special commands -
+# 此处配置的脚本具体内容见下面脚本小节
+follow_master_command = &#39;/usr/local/pgpool/follow_master.sh %d %h %p %D %m %H %M %P %r %R %N %S&#39;
+
+#------------------------------------------------------------------------------
+# HEALTH CHECK GLOBAL PARAMETERS
+#------------------------------------------------------------------------------
+health_check_period = 10
+health_check_timeout = 20
+health_check_user = &#39;postgres&#39;
+health_check_password = &#39;postgres&#39;
+health_check_database = &#39;postgres&#39;
+
+
+#------------------------------------------------------------------------------
+# FAILOVER AND FAILBACK
+#------------------------------------------------------------------------------
+# 此处配置的脚本具体内容见下面脚本小节
+failover_command = &#39;/usr/local/pgpool/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S&#39;
+
+
+#------------------------------------------------------------------------------
+# ONLINE RECOVERY
+#------------------------------------------------------------------------------
+recovery_user = &#39;postgres&#39;
+recovery_password = &#39;postgres&#39;
+
+#------------------------------------------------------------------------------
+# WATCHDOG
+#------------------------------------------------------------------------------
+use_watchdog = on
+ping_path = &#39;/bin&#39;
+wd_hostname = &#39;pg1&#39;
+wd_port = 9000
+
+# - Virtual IP control Setting -
+# 虚拟ip，要求局域网中无机器使用该ip
+delegate_IP = &#39;192.168.211.215&#39;
+
+# 此处几个参数比较重要，容易出错，需要配置ip、arping两个程序的命令，当发生vip漂移的时候会调用下面的命令
+# 1、首先查看ip和arping在系统里面是否存在，然后检查其路径是否正确。如果不存在要安装对应的包
+# 2、$_IP_$字段对应的就是上面的delegate_IP字段，不用变,
+# 3、ens33为对应的网络连接，使用ip命令可以查看自己的网络信息，一般为eth0，但是我的网络连接为ens33，按照自己实际情况的填写。
+# 4、原来的配置文件中有/usr/bin/sudo前缀，记得删掉。
+if_cmd_path = &#39;/sbin&#39;
+if_up_cmd = &#39;/sbin/ip addr add $_IP_$/24 dev ens33&#39;
+if_down_cmd = &#39;/sbin/ip addr del $_IP_$/24 dev ens33&#39;
+arping_path = &#39;/usr/bin&#39;
+arping_cmd = &#39;/usr/bin/arping -U $_IP_$ -w 1 -I ens33&#39;
+
+
+# - Lifecheck Setting -
+# -- common --
+# 此处网络连接按照自己的实际情况填写
+wd_monitoring_interfaces_list = &#39;ens33&#39;
+
+# -- heartbeat mode --
+wd_heartbeat_port = 9694
+heartbeat_destination0 = &#39;pg2&#39;
+heartbeat_destination_port0 = 9694
+# 根据自己的实际网络连接填写
+heartbeat_device0 = &#39;ens33&#39;
+
+heartbeat_destination1 = &#39;pg3&#39;
+heartbeat_destination_port1 = 9694
+# 根据自己的实际网络连接填写
+heartbeat_device1 = &#39;ens33&#39;
+
+# -- query mode --
+wd_lifecheck_user = &#39;postgres&#39;
+wd_lifecheck_password = &#39;postgres&#39;
+
+# - Other pgpool Connection Settings -
+# 注意此处，官方给的模板中other_pgpool_port0的端口为5432，一定要修改成自己端口，此处为9999，否则pgpool集群会起不来。
+other_pgpool_hostname0 = &#39;pg2&#39;
+other_pgpool_port0 = 9999
+other_wd_port0 = 9000
+
+other_pgpool_hostname1 = &#39;pg3&#39;
+# 注意此处，官方给的模板中other_pgpool_port1的端口为5432，一定要修改成自己端口，此处为9999，否则pgpool集群会起不来。
+other_pgpool_port1 = 9999
+other_wd_port1 = 9000
+</code></pre></td></tr></table>
+</div>
+</div></li>
+</ol>
+<h4 id="脚本3个">脚本（3个）</h4>
+<p>3个脚本文件协助出现故障在线恢复时使用，failover.sh，follow_master.sh，pgpool_remote_start，3个文件官方均给出了模板，在模板上修改即可。</p>
+<ol>
+<li>
+<p>failover.sh</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 使用postgres用户执行</span>
+<span class="nb">cd</span> /usr/local/pgpool
+cp etc/failover.sh.sample ./failover.sh
+
+vim failover.sh
+
+<span class="c1"># 修改大约35行位置的PGHOME变量为自己安装PostgreSQL数据库的位置</span>
+<span class="c1"># 根据自己的实际情况修改</span>
+<span class="nv">PGHOME</span><span class="o">=</span>/usr/local/pgsql
+
+<span class="c1"># 保存退出</span>
+<span class="c1"># 添加可执行权限</span>
+chmod a+x failover.sh
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>follow_master.sh</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 使用postgres用户执行</span>
+<span class="nb">cd</span> /usr/local/pgpool
+cp etc/follow_master.sh.sample ./follow_master.sh
+
+vim follow_master.sh
+
+<span class="c1"># 修改大约34行位置的PGHOME，PGPOOL_PATH两个变量的值</span>
+<span class="c1"># 根据自己的实际情况修改</span>
+<span class="nv">PGHOME</span><span class="o">=</span>/usr/local/pgsql
+<span class="nv">PGPOOL_PATH</span><span class="o">=</span>/usr/local/pgpool/bin
+
+<span class="c1"># 保存退出</span>
+<span class="c1"># 添加可执行权限</span>
+chmod a+x follow_master.sh
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>pgpool_remote_start</p>
+<p>需要特别注意此文件，此文件是放置在数据目录下的，上面2个脚本文件放置在了pgpool目录下，路径不同。而且这个配置文件不带<code>.sh</code>后缀。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 使用postgres用户执行</span>
+<span class="nb">cd</span> ~/pgdata
+cp /usr/local/pgpool/etc/pgpool_remote_start.sample ./pgpool_remote_start
+
+vim pgpool_remote_start
+
+<span class="c1"># 修改大约第10行，PGHOME变量的值</span>
+<span class="c1"># 根据自己的实际情况修改</span>
+<span class="nv">PGHOME</span><span class="o">=</span>/usr/local/pgsql
+
+<span class="c1"># 保存退出</span>
+<span class="c1"># 添加可执行权限</span>
+chmod a+x pgpool_remote_start
+</code></pre></td></tr></table>
+</div>
+</div></li>
+</ol>
+<h4 id="可执行程序2个">可执行程序（2个）</h4>
+<ol>
+<li>
+<p>ip</p>
+<p>使用此命令可以建立虚拟ip，也可以查看ip。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 此处的配置对应pgpool.conf文件中的if_up_cmd、if_down_cmd两个字段</span>
+
+<span class="c1"># 赋予setuid权限，</span>
+<span class="c1"># 此处使用root执行</span>
+chmod u+s /sbin/ip
+
+<span class="c1"># 使用postgres用户来执行</span>
+<span class="c1"># 使用if_up_cmd中的命令来测试</span>
+/sbin/ip addr add 192.168.211.215/24 dev ens33
+
+<span class="c1"># 使用root用户来检查</span>
+ip a
+
+<span class="c1"># 查看是否有ens33下面是否多了192.168.211.215IP地址，或者ping以下192.168.211.215，看是否能ping通</span>
+<span class="c1"># 如果没有的话，请再次检查执行步骤是否少了某一步。</span>
+
+<span class="c1"># 使用root或者postgres用户均可</span>
+<span class="c1"># 使用if_down_cmd来删除vip</span>
+/sbin/ip addr del 192.168.211.215/24 dev ens33
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>arping</p>
+<p>此命令有的操作系统没有安装，可能需要安装，请先检查</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 此处的配置对应pgpool.conf文件中的arping_cmd字段</span>
+
+<span class="c1"># 检查是否存在arping命令，如果没有的话，先安装</span>
+apt-get install iputils-arping
+
+<span class="c1"># 赋予setuid权限，</span>
+<span class="c1"># 此处使用root执行</span>
+chmod u+s /usr/bin/arping
+</code></pre></td></tr></table>
+</div>
+</div></li>
+</ol>
+<h3 id="pg2节点配置">pg2节点配置</h3>
+<p>pg2节点的配置同pg1节点，共包含4个配置文件，3个脚本文件，2个可执行程序。</p>
+<p>把上述pg1上配置好的配置文件，脚本文件用scp或者其他工具传到pg2节点上，然后做对应的修改即可。</p>
+<p>注意点：</p>
+<ul>
+<li>配置文件、脚本文件可以传，但是可执行程序最好安装，不要传输。</li>
+<li>配置文件、脚本的所有者均为postgres，并且脚本文件应赋予可执行权限，可执行程序赋予设置用户setuid位。</li>
+<li>仅需修改pgpool.conf配置文件，其他配置文件，脚本文本不需要做任何修改。</li>
+</ul>
+<p>pgpool.conf文件具体修改内容如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 此处仅展示与pg1节点上pgpool.conf配置不同的部分，其余部分配置相同，不在此展示</span>
+<span class="c1">#------------------------------------------------------------------------------</span>
+<span class="c1"># WATCHDOG</span>
+<span class="c1">#------------------------------------------------------------------------------</span>
+
+<span class="nv">wd_hostname</span> <span class="o">=</span> <span class="s1">&#39;pg2&#39;</span>
+
+<span class="c1"># 以下字段中需要注意网卡，确保和本机器上的网口一致</span>
+<span class="c1"># if_up_cmd、if_down_cmd、arping_cmd、wd_monitoring_interfaces_list、heartbeat_device0、heartbeat_device1</span>
+
+<span class="nv">heartbeat_destination0</span> <span class="o">=</span> <span class="s1">&#39;pg1&#39;</span>
+<span class="nv">heartbeat_destination1</span> <span class="o">=</span> <span class="s1">&#39;pg3&#39;</span>
+
+<span class="nv">other_pgpool_hostname0</span> <span class="o">=</span> <span class="s1">&#39;pg1&#39;</span>
+<span class="nv">other_pgpool_hostname1</span> <span class="o">=</span> <span class="s1">&#39;pg3&#39;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="pg3节点配置">pg3节点配置</h3>
+<p>pg3节点的配置同pg1节点，共包含4个配置文件，3个脚本文件，2个可执行程序。</p>
+<p>把上述pg1上配置好的配置文件，脚本文件用scp或者其他工具传到pg3节点上，然后做对应的修改即可。</p>
+<p>注意点：</p>
+<ul>
+<li>配置文件、脚本文件可以传，但是可执行程序最好安装，不要传输。</li>
+<li>配置文件、脚本的所有者均为postgres，并且脚本文件应赋予可执行权限，可执行程序赋予设置用户setuid位。</li>
+<li>仅需修改pgpool.conf配置文件，其他配置文件，脚本文本不需要做任何修改。</li>
+</ul>
+<p>pgpool.conf文件具体修改内容如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 此处仅展示与pg1节点上pgpool.conf配置不同的部分，其余部分配置相同，不在此展示</span>
+<span class="c1">#------------------------------------------------------------------------------</span>
+<span class="c1"># WATCHDOG</span>
+<span class="c1">#------------------------------------------------------------------------------</span>
+
+<span class="nv">wd_hostname</span> <span class="o">=</span> <span class="s1">&#39;pg3&#39;</span>
+
+<span class="c1"># 以下字段中需要注意网卡，确保和本机器上的网口一致</span>
+<span class="c1"># if_up_cmd、if_down_cmd、arping_cmd、wd_monitoring_interfaces_list、heartbeat_device0、heartbeat_device1</span>
+
+<span class="nv">heartbeat_destination0</span> <span class="o">=</span> <span class="s1">&#39;pg1&#39;</span>
+<span class="nv">heartbeat_destination1</span> <span class="o">=</span> <span class="s1">&#39;pg2&#39;</span>
+
+<span class="nv">other_pgpool_hostname0</span> <span class="o">=</span> <span class="s1">&#39;pg1&#39;</span>
+<span class="nv">other_pgpool_hostname1</span> <span class="o">=</span> <span class="s1">&#39;pg2&#39;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="启动">启动</h2>
+<h3 id="启动postgresql">启动PostgreSQL</h3>
+<p>查看数据库是否在启动状态，如果没有在启动状态，则先要启动数据库</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 3个节点上均需要执行下面的命令，启动数据库</span>
+<span class="c1"># 使用postgres用户执行</span>
+
+<span class="c1"># 检查数据库进程是否存在</span>
+ps -ef <span class="p">|</span> grep postgres
+
+<span class="c1"># 如果没有启动，则启动数据库</span>
+pg_ctl -l logfile-pg start
+</code></pre></td></tr></table>
+</div>
+</div><p>对数据库异步流复制状态进行检查</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 使用postgres用户执行</span>
+<span class="c1"># 查看数据库是主库还是备库 </span>
+
+<span class="c1"># 方法一</span>
+<span class="c1"># 使用命令pg_controldata</span>
+pg_controldata <span class="p">|</span> grep cluster
+
+<span class="c1"># 主库输出如下所示</span>
+Database cluster state:               in production
+
+<span class="c1"># 备库输出如下所示</span>
+Database cluster state:               in archive recovery
+
+
+<span class="c1"># 方法二，使用sql命令</span>
+psql
+<span class="k">select</span> pg_is_in_recovery<span class="o">()</span><span class="p">;</span>
+
+<span class="c1"># 主库输出如下所示</span>
+ pg_is_in_recovery 
+-------------------
+ f
+<span class="o">(</span><span class="m">1</span> row<span class="o">)</span>
+
+<span class="c1"># 备库输出如下所示</span>
+ pg_is_in_recovery 
+-------------------
+ t
+<span class="o">(</span><span class="m">1</span> row<span class="o">)</span>
+
+
+<span class="c1"># 方法三</span>
+<span class="c1"># 在主库执行</span>
+<span class="k">select</span> client_addr,state,sync_state from pg_stat_replication<span class="p">;</span>
+
+<span class="c1"># 输出内容如下：</span>
+client_addr   <span class="p">|</span>   state   <span class="p">|</span> sync_state 
+-----------------+-----------+------------
+ 192.168.211.144 <span class="p">|</span> streaming <span class="p">|</span> async
+ 192.168.211.142 <span class="p">|</span> streaming <span class="p">|</span> async
+<span class="o">(</span><span class="m">2</span> rows<span class="o">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="启动pgpool">启动pgpool</h3>
+<p>分别在3个节点上启动pgpool，不过最好先启动一台，然后查看日志，看是否存在问题，如果不存在问题，再启动另一台，如果有问题的话，先排查问题。</p>
+<p>如果修改了pgpool.conf，记得其他节点要做同步的修改。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback"># postgres用户执行
+pgpool -n -d -D &gt; logfile-pgpool 2&gt;&amp;1 &amp;
+
+# 检查该节点是否有问题，如果有问题，pgpool进程会退出
+tailf logfile-pgpool
+</code></pre></td></tr></table>
+</div>
+</div><p>稍等一会儿，如果第一个节点pgpool没有退出，且日志文件里面没有异常的话（日志里面打印连接失败不算异常，因为其他的pgpool节点还没有启动），则依次启动pg2、pg3节点的pgpool。</p>
+<h3 id="检查状态">检查状态</h3>
+<p>依次执行下述检查，看是否存在问题。范围依次缩小。</p>
+<ol>
+<li>
+<p>使用PostgreSQL节点状态</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># -h指定连接哪个IP地址，这里指定连接vip</span>
+<span class="c1"># -p指定连接的端口，这里指定pgpool的端口</span>
+<span class="c1"># -U指定连接的用户</span>
+<span class="c1"># -d指定连接的数据库，此处不用添加</span>
+psql -h vip -p <span class="m">9999</span> -Upostgres
+
+<span class="c1"># 查看所有节点</span>
+show pool_nodes<span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果配置没问题的话，会正确显示3个PostgreSQL数据库节点，其中pg1节点为primary，pg2、pg3为standby节点；3个节点的状态均为up，如果此处为down的话，说明节点挂掉了，需要进一步排查原因：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="nv">postgres</span><span class="o">=</span><span class="c1"># show pool_nodes;</span>
+ node_id <span class="p">|</span> hostname <span class="p">|</span> port <span class="p">|</span> status <span class="p">|</span> lb_weight <span class="p">|</span>  role   <span class="p">|</span> select_cnt <span class="p">|</span> load_balance_node <span class="p">|</span> replication_delay <span class="p">|</span> replication_state <span class="p">|</span> replication_sync_state <span class="p">|</span> last_status_change  
+---------+----------+------+--------+-----------+---------+------------+-------------------+-------------------+-------------------+------------------------+---------------------
+ <span class="m">0</span>       <span class="p">|</span> pg1      <span class="p">|</span> <span class="m">5432</span> <span class="p">|</span> up     <span class="p">|</span> 0.333333  <span class="p">|</span> primary <span class="p">|</span> <span class="m">1</span>          <span class="p">|</span> <span class="nb">true</span>              <span class="p">|</span> <span class="m">0</span>                 <span class="p">|</span>                   <span class="p">|</span>                        <span class="p">|</span> 2022-08-19 17:09:49
+ <span class="m">1</span>       <span class="p">|</span> pg2      <span class="p">|</span> <span class="m">5432</span> <span class="p">|</span> up     <span class="p">|</span> 0.333333  <span class="p">|</span> standby <span class="p">|</span> <span class="m">0</span>          <span class="p">|</span> <span class="nb">false</span>             <span class="p">|</span> <span class="m">0</span>                 <span class="p">|</span>                   <span class="p">|</span>                        <span class="p">|</span> 2022-08-19 17:09:49
+ <span class="m">2</span>       <span class="p">|</span> pg3      <span class="p">|</span> <span class="m">5432</span> <span class="p">|</span> up     <span class="p">|</span> 0.333333  <span class="p">|</span> standby <span class="p">|</span> <span class="m">0</span>          <span class="p">|</span> <span class="nb">false</span>             <span class="p">|</span> <span class="m">0</span>                 <span class="p">|</span>                   <span class="p">|</span>                        <span class="p">|</span> 2022-08-19 17:09:49
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>检查pgpool节点状态</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 使用pcp工具，查看所有pgpool节点的状态</span>
+pcp_watchdog_info
+</code></pre></td></tr></table>
+</div>
+</div><p>如果正常的话，会输出下面的内容，pg1节点为master节点，pg2、pg3节点为standby节点。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="m">3</span> NO pg1:9999 Linux Kylin pg1
+
+pg3:9999 Linux Kylin pg3 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+pg1:9999 Linux Kylin pg1 <span class="m">9999</span> <span class="m">9000</span> <span class="m">4</span> MASTER
+pg2:9999 Linux Kylin pg2 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>检查PostgreSQL进程状态</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 如果某个节点的数据库状态不正常，可以去该节点查看进程是否存在</span>
+ps -ef <span class="p">|</span> grep postgres
+
+<span class="c1"># 如果不存在，需要进一步查看日志文件检查原因</span>
+<span class="c1"># 启动时用-l命令指定的日志文件</span>
+vim logfile-pg
+
+<span class="c1"># 问题解决后，使用pcp_recovery_node进行在线恢复该节点</span>
+<span class="c1"># 此处注意不要直接用pg_ctl启动，否则pgpool不认该节点</span>
+<span class="c1"># -h指定要恢复的节点</span>
+<span class="c1"># -U指定使用的账户</span>
+<span class="c1"># 0指定pgpool中该节点的node_id，此值请查看show pool_nodes的输出的第一列，请根据自己的实际情况恢复指定的节点</span>
+pcp_recovery_node -h pg2 -Upostgres <span class="m">0</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>检查pgpool进程状态</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 如果pcp_watchdog_info输出的pgpool节点状态不正常的话，可以去该节点查看进程是否存在</span>
+ps -ef <span class="p">|</span> grep pgpool
+
+<span class="c1"># 如果不存在，需要进一步查看日志文件检查原因</span>
+<span class="c1"># 启动时用&gt;重定向的日志文件</span>
+vim logfile-pgpool
+
+<span class="c1"># 问题解决后，可以使用命令直接重启pgpool</span>
+<span class="c1"># 记得重启前先删除原有的日志文件，避免以后干扰排查问题</span>
+rm -rf logfile-pgpool
+pgpool -n -d -D &gt; logfile-pgpool 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+</ol>
+<h2 id="测试">测试</h2>
+<h3 id="postgresql数据库宕机">PostgreSQL数据库宕机</h3>
+<ol>
+<li>
+<p>模拟主库宕机</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 查看主节点在哪台机器上</span>
+psql -h vip -p <span class="m">9999</span> -Upostgres
+show pool_nodes<span class="p">;</span>
+
+<span class="c1"># 显示pg1为primary</span>
+
+<span class="c1"># 去pg1节点上，执行命令，停止PostgreSQL数据库，模拟数据库主节点宕机</span>
+pg_ctl -m fast stop
+
+<span class="c1"># 然后再查看所有节点的状态</span>
+psql -h vip -p <span class="m">9999</span> -Upostgres
+show pool_nodes<span class="p">;</span>
+
+<span class="c1"># 此时显示pg1、pg3均为down的状态，</span>
+<span class="c1"># pg1节点因为手动停掉，所以显示为宕机</span>
+<span class="c1"># pg3节点因为原来连接的主库pg1，现在pg1停掉了，所以连接失败了，也没有重新连接上新主库pg2，所以状态也不正常</span>
+
+<span class="c1"># 恢复pg1</span>
+<span class="c1"># 因为pg1之前为主节点，所以恢复pg1之前，先要配置成新主库pg2的备节点</span>
+<span class="nb">cd</span> ~/pgdata
+touch standby.signal
+vim postgresql.auto.conf
+
+<span class="c1"># 添加如下内容</span>
+<span class="c1"># 其中的pg2为主库所在节点</span>
+<span class="nv">primary_conninfo</span> <span class="o">=</span> <span class="s1">&#39;user=postgres passfile=&#39;&#39;/home/postgres/.pgpass&#39;&#39; host=pg2 port=5432 sslmode=disable sslcompression=0 gssencmode=disable krbsrvname=postgres target_session_attrs=any&#39;</span>
+
+<span class="c1"># 此处可以先在pg1节点上手动启动一下数据库试试</span>
+<span class="c1"># 如果报错的话，先解决错误</span>
+<span class="c1"># 我碰到了requested timeline 2 is not a child of this server&#39;s history</span>
+<span class="c1"># 解决方法是把pg1节点下的pgdata/pg_wal/下的00000002.history删掉即可</span>
+
+<span class="c1"># 然后通过pcp_recovery_node重新恢复该节点</span>
+pcp_recovery_node -h pg1 -Upostgres <span class="m">0</span>
+
+<span class="c1"># 输入密码</span>
+<span class="c1"># 输出结果</span>
+pcp_recovery_node -- Command Successful
+
+<span class="c1"># 此时再查看节点的状态，pg1节点被正常拉起</span>
+psql -h vip -p <span class="m">9999</span> -Upostgres
+show pool_nodes<span class="p">;</span>
+
+<span class="c1"># 同样的方法恢复pg3</span>
+<span class="c1"># 先把pg3正常停止</span>
+pg_ctl -m fast stop
+
+<span class="c1"># 修改连接的配置文件</span>
+<span class="c1"># 将其中的配置指向新的主节点pg2</span>
+<span class="nb">cd</span> ~/pgdata
+vim postgresql.auto.conf
+
+<span class="c1">#删除日志并重启测试</span>
+<span class="nb">cd</span> ~/pgdata
+rm -rf ~/logfile-pg
+pg_ctl -l logfile-pg start
+
+<span class="c1"># 如果能正常启动的话，关闭即可，然后通过pcp_recovery_node来恢复，如果启动不了的话，根据日志文件，解决问题</span>
+pcp_recovery_node -h pg3 -Upostgres <span class="m">2</span>
+
+<span class="c1"># 此时再查看节点的状态，pg3节点被正常拉起</span>
+psql -h vip -p <span class="m">9999</span> -Upostgres
+show pool_nodes<span class="p">;</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>模拟备库宕机</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 此时备节点为pg1、pg3，随便停一个即可</span>
+<span class="c1"># 该场景同上面恢复pg3，不再赘述</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+</ol>
+<h3 id="pgpool节点宕机">pgpool节点宕机</h3>
+<ol>
+<li>
+<p>模拟主节点宕机</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 使用pcp_watchdog_info命令查看主节点</span>
+pcp_watchdog_info
+
+<span class="c1"># 输入密码，显示主节点在pg1上</span>
+pg3:9999 Linux Kylin pg3 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+pg1:9999 Linux Kylin pg1 <span class="m">9999</span> <span class="m">9000</span> <span class="m">4</span> MASTER
+pg2:9999 Linux Kylin pg2 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+
+<span class="c1"># 查看ip确认</span>
+<span class="c1"># 在pg1上执行</span>
+<span class="c1"># 从输出内容看到了vip节点的ip</span>
+ip a
+
+<span class="c1"># 强制关闭pgpool，模拟pgpool节点宕机</span>
+pgpool -m fast stop
+
+<span class="c1"># 使用pcp_watchdog_info查看所有pgpool节点的状态</span>
+<span class="c1"># 显示pg1上的pgpool为宕机状态，先在主节点在pg2上</span>
+pg3:9999 Linux Kylin pg3 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+pg1:9999 Linux Kylin pg1 <span class="m">9999</span> <span class="m">9000</span> <span class="m">10</span> SHUTDOWN
+pg2:9999 Linux Kylin pg2 <span class="m">9999</span> <span class="m">9000</span> <span class="m">4</span> MASTER
+
+<span class="c1"># 尝试连接vip节点</span>
+<span class="c1"># 此时再查看节点的状态，pg3节点被正常拉起</span>
+psql -h vip -p <span class="m">9999</span> -Upostgres
+show pool_nodes<span class="p">;</span>
+
+<span class="c1"># 正常</span>
+
+<span class="c1"># 恢复pg1上的pgpool</span>
+rm -rf logfile-pgpool
+pgpool -n -d -D &gt; logfile-pgpool 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+
+<span class="c1"># 使用pcp_watchdog_info命令查看节点的状态</span>
+<span class="c1"># pg1节点显示loading？</span>
+pg3:9999 Linux Kylin pg3 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+pg1:9999 Linux Kylin pg1 <span class="m">9999</span> <span class="m">9000</span> <span class="m">1</span> LOADING
+pg2:9999 Linux Kylin pg2 <span class="m">9999</span> <span class="m">9000</span> <span class="m">4</span> MASTER
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>模拟备节点宕机</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 使用pcp_watchdog_info命令查看备节点</span>
+pcp_watchdog_info
+
+<span class="c1"># 输入密码，显示主节点在pg1上</span>
+pg3:9999 Linux Kylin pg3 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+pg1:9999 Linux Kylin pg1 <span class="m">9999</span> <span class="m">9000</span> <span class="m">1</span> LOADING
+pg2:9999 Linux Kylin pg2 <span class="m">9999</span> <span class="m">9000</span> <span class="m">4</span> MASTER
+
+<span class="c1"># 停止pg3节点</span>
+<span class="c1"># 强制关闭pgpool，模拟pgpool节点宕机</span>
+pgpool -m fast stop
+
+<span class="c1"># 恢复pg3上的pgpool</span>
+rm -rf logfile-pgpool
+pgpool -n -d -D &gt; logfile-pgpool 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+
+<span class="c1"># 使用pcp_watchdog_info查看节点的状态</span>
+<span class="c1"># 一切恢复正常</span>
+pg3:9999 Linux Kylin pg3 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+pg1:9999 Linux Kylin pg1 <span class="m">9999</span> <span class="m">9000</span> <span class="m">7</span> STANDBY
+pg2:9999 Linux Kylin pg2 <span class="m">9999</span> <span class="m">9000</span> <span class="m">4</span> MASTER
+</code></pre></td></tr></table>
+</div>
+</div></li>
+</ol>
+<h2 id="其他注意事项">其他注意事项</h2>
+<ol>
+<li>
+<p>数据恢复</p>
+<p>如果节点宕机后，和主节点数据不同步，可以使用pg_rewind命令进行差量拉取，仅仅拉取差量部分的数据。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 根据需要修改参数</span>
+<span class="c1"># 此命令要求postgresql.conf配置文件中wal_log_hints = on</span>
+<span class="c1"># 所以最好在安装好数据库时就配置好该参数</span>
+
+pg_rewind -D <span class="nv">$PGDATA</span> --source-server<span class="o">=</span><span class="s1">&#39;host=pg1 user=postgres password=postgres&#39;</span>
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>关闭节点</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-shell" data-lang="shell"><span class="c1"># 关闭postgresql</span>
+pg_ctl -m fast stop
+
+<span class="c1"># 关闭pgpool</span>
+pgpool -m fast stop
+</code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p>vip节点</p>
+<p>vip节点的建立需要最低两个pgpool节点，如果只启动一个pgpool，则无法ping通vip节点ip，节点漂移最低需要3个节点，允许1个宕机。</p>
+</li>
+<li>
+<p>当主库变成备库后</p>
+<ul>
+<li>新建空的standby.signal文件</li>
+<li>在postgresql.auto.conf中，填写primary_conninfo信息，为新主库的连接信息</li>
+<li>启动新备库</li>
+</ul>
+</li>
+<li>
+<p>当备库变成新主库后</p>
+<ul>
+<li>把postgresql.auto.conf中的primary_conninfo注释掉，不然它下次启动的时候还以为自己是备库</li>
+<li>把standby.signal删掉</li>
+</ul>
+</li>
+</ol>
+    </div>
+
+    
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/postgresql/">PostgreSQL</a>
+          <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E9%9B%86%E7%BE%A4/">数据库集群</a>
+          </div>
+      <nav class="post-nav">
+        
+        <a class="next" href="/post/postgresql%E4%B8%BB%E4%BB%8E%E5%A4%87%E4%BB%BD-%E5%BC%82%E6%AD%A5%E6%B5%81%E5%A4%8D%E5%88%B6/">
+            <span class="next-text nav-default">PostgreSQL主从备份-异步流复制</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        
+
+  
+
+  
+    <script src="https://utteranc.es/client.js"
+            repo="guangxuanliu/guangxuanliu.github.io"
+            issue-term="pathname"
+            theme="github-light"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/utterance">comments powered by utterances.</a></noscript>
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:guangxuanliu@gmail.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/guangxuanliu" class="iconfont icon-github" title="github"></a>
+  <a href="https://guangxuanliu.github.io/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2021 - 
+    2022<span class="heart"><i class="iconfont icon-heart"></i></span><span>Liu Guangxuan</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.c99b103c33d1539acf3025e1913697534542c4a5aa5af0ccc20475ed2863603b.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
